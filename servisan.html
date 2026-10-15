@@ -111,6 +111,14 @@ body.dark .popup-box{background:#111827!important;color:#e5e7eb!important;border
 body.dark .template-card{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}
 body.dark .template-preview{background:#111827!important;border-color:#475569!important}
 
+.qr-content{text-align:center;padding:8px 0}
+.qr-display{display:flex;justify-content:center;align-items:center;min-height:210px;margin:12px auto;padding:12px;background:#fff;border:2px dashed #111827;border-radius:12px;max-width:240px}
+.qr-display img,.qr-display canvas{display:block;max-width:100%;height:auto}
+.qr-nota{font-weight:900;font-size:13px;letter-spacing:.5px;margin-top:8px;word-break:break-word}
+.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.qr-actions button{min-width:0}
+.whatsapp-btn{background:#16a34a!important;color:#fff!important;border-color:#14532d!important}
+@media(max-width:420px){.qr-actions{grid-template-columns:1fr}}
 #printArea{display:none}
 @media print{
  body{background:#fff}
@@ -314,6 +322,24 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 </div>
 
+<div class="popup" id="qrPopup">
+ <div class="popup-box">
+  <h3>✅ Servisan Berhasil Disimpan</h3>
+  <p style="font-size:12px;color:#667085;margin:0">QR Code nota sudah dibuat. Unduh QR, lalu kirim informasi servis ke WhatsApp pelanggan.</p>
+  <div class="qr-content">
+   <div id="savedQr" class="qr-display"><span>Membuat QR Code...</span></div>
+   <div id="savedQrNota" class="qr-nota">-</div>
+   <div id="savedQrStatus" class="status-msg">Menyiapkan QR Code...</div>
+  </div>
+  <div class="qr-actions">
+   <button class="action secondary" type="button" onclick="downloadSavedQr()">⬇ Download QR</button>
+   <button class="action primary whatsapp-btn" type="button" onclick="downloadAndOpenWhatsApp()">📲 Download & Buka WA</button>
+   <button class="action secondary" type="button" onclick="printSavedNota()">🖨️ Cetak Nota</button>
+   <button class="action secondary" type="button" onclick="selesaiNota()">Selesai</button>
+  </div>
+ </div>
+</div>
+
 <div id="printArea"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -338,7 +364,7 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 
 let uid=null,businessUid=null,profile={},role="";
-let employees=[],pendingData=null;
+let employees=[],pendingData=null,savedQrReady=false;
 let selectedTemplate=2,pageReady=false;
 let polaUrutan=[];
 
@@ -610,6 +636,113 @@ function makePrintHTML(d){
  </div>`;
 }
 
+function tampilkanQrTersimpan(d){
+ pendingData=d;
+ savedQrReady=false;
+ $("qrPopup").classList.add("show");
+ $("savedQr").innerHTML="";
+ $("savedQrNota").textContent=d.nomorNota||"-";
+ $("savedQrStatus").textContent="Menyiapkan QR Code...";
+ try{
+  if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
+  new QRCode($("savedQr"),{
+   text:makeQrValue(d.nomorNota),width:200,height:200,
+   correctLevel:QRCode.CorrectLevel.H
+  });
+  setTimeout(()=>{
+   const box=$("savedQr");
+   savedQrReady=!!(box.querySelector("canvas")||box.querySelector("img"));
+   $("savedQrStatus").textContent=savedQrReady?
+    "QR siap. Tekan Download QR & Buka WA untuk mengunduh dan menghubungi pelanggan.":
+    "QR belum berhasil dibuat. Periksa koneksi internet lalu muat ulang halaman.";
+  },500);
+ }catch(e){
+  console.error(e);
+  $("savedQrStatus").textContent="Gagal membuat QR: "+e.message;
+ }
+}
+
+function getSavedQrDataUrl(){
+ const box=$("savedQr");
+ const canvas=box.querySelector("canvas");
+ if(canvas)return canvas.toDataURL("image/png");
+ const img=box.querySelector("img");
+ if(img&&img.complete&&img.naturalWidth){
+  const c=document.createElement("canvas");
+  c.width=img.naturalWidth;c.height=img.naturalHeight;
+  c.getContext("2d").drawImage(img,0,0);
+  return c.toDataURL("image/png");
+ }
+ throw new Error("QR belum siap. Tunggu sebentar, lalu coba lagi.");
+}
+
+window.downloadSavedQr=()=>{
+ try{
+  const url=getSavedQrDataUrl();
+  const a=document.createElement("a");
+  a.href=url;a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.png`;
+  document.body.appendChild(a);a.click();a.remove();
+  $("savedQrStatus").textContent="QR berhasil diunduh. Selanjutnya tekan Buka WhatsApp untuk mengirim pesan ke pelanggan.";
+ }catch(e){alert(e.message)}
+};
+
+function nomorWhatsApp(no){
+ let n=String(no||"").replace(/\D/g,"");
+ if(n.startsWith("0"))n="62"+n.slice(1);
+ else if(n.startsWith("8"))n="62"+n;
+ return n;
+}
+
+function bukaWhatsAppPelanggan(){
+ if(!pendingData)throw new Error("Data nota tidak ditemukan.");
+ const d=pendingData;
+ const no=nomorWhatsApp(d.pelanggan?.wa);
+ if(!no||no.length<9)throw new Error("Nomor WhatsApp pelanggan tidak valid.");
+ const pesan=[
+  `Halo ${d.pelanggan?.nama||"Kak"}, servis HP Anda sudah kami catat di ${d.namaKonter||"FIXZY"}.`,
+  "",
+  `Nomor nota: ${d.nomorNota}`,
+  `HP: ${d.servisan?.brandTipe||"-"}`,
+  `Kerusakan: ${d.servisan?.jenisKerusakan||"-"}`,
+  `Status: ${String(d.status||"masuk").toUpperCase()}`,
+  `Estimasi biaya: ${rupiah(d.estimasi?.biayaService)}`,
+  `Diskon: ${rupiah(d.estimasi?.diskon)}`,
+  `Total estimasi: ${rupiah(d.estimasi?.total)}`,
+  `DP: ${rupiah(d.estimasi?.dp)}`,
+  `Sisa: ${rupiah(d.estimasi?.sisa)}`,
+  "",
+  `Cek nota/status servis: ${makeQrValue(d.nomorNota)}`,
+  "Mohon simpan nomor nota ini untuk pengecekan servis. Terima kasih."
+ ].join("\n");
+ window.open(`https://wa.me/${no}?text=${encodeURIComponent(pesan)}`,"_blank","noopener");
+}
+
+window.downloadAndOpenWhatsApp=()=>{
+ try{
+  // Download QR dan buka WhatsApp dari klik pengguna yang sama agar tidak diblokir browser.
+  const url=getSavedQrDataUrl();
+  const a=document.createElement("a");
+  a.href=url;a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.png`;
+  document.body.appendChild(a);a.click();a.remove();
+  bukaWhatsAppPelanggan();
+  $("savedQrStatus").textContent="QR diunduh. WhatsApp pelanggan dibuka di tab baru.";
+ }catch(e){alert(e.message)}
+};
+
+window.printSavedNota=()=>{
+ if(!pendingData)return;
+ // Buka pemilihan template nota setelah QR berhasil dibuat.
+ $("qrPopup").classList.remove("show");
+ renderTemplateGrid();
+ $("templatePopup").classList.add("show");
+};
+
+window.selesaiNota=()=>{
+ $("qrPopup").classList.remove("show");
+ pendingData=null;
+ resetForm();
+};
+
 window.cetakTemplate=()=>{
  if(!pendingData)return;
 
@@ -692,25 +825,8 @@ async function executeSave(printAfter){
    "ok"
   );
 
-  /*
-   * TOMBOL:
-   * 💾 Simpan
-   * Setelah berhasil langsung ke DATA SERVIS.
-   */
-  if(!printAfter){
-   setTimeout(()=>{
-    window.location.href="data-servis.html";
-   },300);
-   return;
-  }
-
-  /*
-   * 🖨️ Simpan & Pilih Template
-   * Tetap membuka pilihan template.
-   */
-  pendingData=d;
-  renderTemplateGrid();
-  $("templatePopup").classList.add("show");
+  // Setelah data tersimpan, tampilkan QR Code untuk diunduh dan dikirim ke WhatsApp pelanggan.
+  tampilkanQrTersimpan(d);
 
  }catch(e){
   console.error(e);

@@ -427,6 +427,15 @@ function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
 function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
 
+// QR hanya menyimpan tautan pemeriksaan, bukan data pribadi pelanggan.
+function makeQrValue(nota){
+ const path=location.pathname.replace(/[^/]*$/, "scan-barcode.html");
+ return location.origin+path+"?nota="+encodeURIComponent(nota);
+}
+function makeQrPayload(d){
+ return makeQrValue(d.nomorNota);
+}
+
 const TEMPLATES=[
  {id:1,name:"Klasik Hitam",desc:"Hitam putih minimalis",color:"black",cls:"black"},
  {id:2,name:"Modern Biru",desc:"🔥 Populer - Biru profesional",color:"#2563eb",cls:"blue"},
@@ -758,43 +767,61 @@ function buildData(){
 async function saveData(d){
  const notaRef=doc(db,"servis",d.nomorNota);
 
- if(d.penggunaanProduk.sumber!=="firebase"){
+ // 1. Simpan data lengkap ke koleksi servis seperti alur lama.
+ //    Jika menggunakan sparepart dari stok Firebase, stok tetap dipotong
+ //    dalam transaksi yang sama seperti sebelumnya.
+ if(!d.penggunaanProduk || d.penggunaanProduk.sumber!=="firebase"){
   await setDoc(notaRef,{...d,stokDikurangi:false});
-  return;
+ }else{
+  const stockRef=doc(db,"stok",d.penggunaanProduk.produkId);
+
+  await runTransaction(db,async tx=>{
+   const stockSnap=await tx.get(stockRef);
+   if(!stockSnap.exists())throw new Error("Stok tidak ada");
+
+   const stock=stockSnap.data()||{};
+   const stockOwner=String(stock.ownerUid||stock.ownerId||"");
+   if(stockOwner!==businessUid)throw new Error("Stok bukan milik akun ini");
+
+   const lama=Number(stock.sisa??stock.stok??0);
+   const qty=Number(d.penggunaanProduk.qty)||1;
+   if(lama<qty)throw new Error(`Stok kurang. Sisa ${lama}`);
+
+   const baru=lama-qty;
+   tx.update(stockRef,{
+    sisa:baru,
+    stok:baru,
+    status:baru>0?"tersedia":"kosong",
+    updatedAt:serverTimestamp()
+   });
+
+   tx.set(notaRef,{
+    ...d,
+    stokDikurangi:true,
+    stokSebelum:lama,
+    stokSesudah:baru
+   });
+  });
  }
 
- const stockRef=doc(db,"stok",d.penggunaanProduk.produkId);
-
- await runTransaction(db,async tx=>{
-  const stockSnap=await tx.get(stockRef);
-
-  if(!stockSnap.exists())throw new Error("Stok tidak ada");
-
-  const stock=stockSnap.data()||{};
-  const stockOwner=String(stock.ownerUid||stock.ownerId||"");
-
-  if(stockOwner!==businessUid)throw new Error("Stok bukan milik akun ini");
-
-  const lama=Number(stock.sisa??stock.stok??0);
-  const qty=Number(d.penggunaanProduk.qty)||1;
-
-  if(lama<qty)throw new Error(`Stok kurang. Sisa ${lama}`);
-
-  const baru=lama-qty;
-
-  tx.update(stockRef,{
-   sisa:baru,
-   stok:baru,
-   status:baru>0?"tersedia":"kosong",
-   updatedAt:serverTimestamp()
-  });
-
-  tx.set(notaRef,{
-   ...d,
-   stokDikurangi:true,
-   stokSebelum:lama,
-   stokSesudah:baru
-  });
+ // 2. Buat/perbarui salinan publik yang aman untuk halaman cek QR.
+ //    Tidak menyimpan nama/WA/alamat pelanggan, IMEI, PIN, atau pola sandi.
+ //    ownerUid/uid diperlukan agar cocok dengan isMyData() pada Rules lama.
+ const estimasi=d.estimasi||{};
+ await setDoc(doc(db,"cek_servis_public",d.nomorNota),{
+  uid:businessUid,
+  ownerUid:businessUid,
+  nomorNota:d.nomorNota,
+  tanggal:d.tanggal||"",
+  namaKonter:d.namaKonter||"FIXZY",
+  brandTipe:d.servisan?.brandTipe||"",
+  jenisKerusakan:d.servisan?.jenisKerusakan||"",
+  namaTeknisi:d.namaTeknisi||"",
+  status:d.status||"masuk",
+  estimasiBiaya:Number(estimasi.biayaService??d.estimasiBiaya??0),
+  dp:Number(estimasi.dp??d.dp??0),
+  sisa:Number(estimasi.sisa??d.sisa??0),
+  updatedAt:serverTimestamp()
  });
 }
 

@@ -301,10 +301,9 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 
  <div class="card">
-  <div class="title">Simpan & Cetak - TEMPLATE MODERN</div>
+  <div class="title">Simpan Servis & Buat QR Barcode</div>
   <div class="actions">
-   <button class="action secondary" type="button" onclick="simpan(false)">💾 Simpan</button>
-   <button class="action primary" type="button" onclick="simpan(true)">🖨️ Simpan & Pilih Template</button>
+   <button class="action primary" type="button" onclick="simpan(false)">💾 Simpan & Buat QR Barcode</button>
   </div>
   <div id="saveStatus" class="status-msg">Menunggu akun...</div>
  </div>
@@ -335,14 +334,13 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   <div class="title">QR CEK SERVIS FIXZY</div>
   <p id="qrNotaLabel" style="font-weight:900;margin:4px 0 12px"></p>
   <div style="display:flex;justify-content:center;padding:14px;background:#fff;border:2px solid #111827;border-radius:12px;margin:0 auto 12px;width:max-content;max-width:100%">
-   <canvas id="qrCanvas" width="280" height="280" style="width:min(280px,68vw);height:min(280px,68vw);display:block"></canvas>
+   <div id="qrCanvas" style="width:min(280px,68vw);height:min(280px,68vw);display:flex;align-items:center;justify-content:center;background:#fff"></div>
   </div>
   <p id="qrStatus" class="status-msg">QR memuat...</p>
   <div class="actions" style="margin-top:12px">
    <button type="button" class="action secondary" onclick="downloadQR()">Simpan QR JPEG</button>
    <button type="button" class="action primary" onclick="finishQR()">Selesai</button>
    <button type="button" class="action secondary full" onclick="sendQRWhatsApp()">Kirim Link ke WhatsApp</button>
-   <button type="button" class="action secondary full" onclick="printAfterQR()">Lanjut Pilih Template Nota</button>
   </div>
  </div>
 </div>
@@ -350,7 +348,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <div id="printArea"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -960,6 +958,27 @@ function getPublicCheckUrl(nota){
  return url.href;
 }
 
+async function ensureQRCodeLibrary(){
+ if(window.QRCode && typeof window.QRCode==="function") return;
+ const sources=[
+  "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js",
+  "https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js",
+  "https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"
+ ];
+ for(const src of sources){
+  try{
+   await new Promise((resolve,reject)=>{
+    const script=document.createElement("script");
+    script.src=src;script.async=true;
+    script.onload=()=>resolve();script.onerror=()=>reject(new Error("Gagal memuat "+src));
+    document.head.appendChild(script);
+   });
+   if(window.QRCode && typeof window.QRCode==="function") return;
+  }catch(err){console.warn("Library QR gagal dimuat:",src);}
+ }
+ throw new Error("Library QR tidak dapat dimuat dari CDN. Periksa koneksi internet atau blokir jaringan.");
+}
+
 async function showQR(d,printAfter){
  qrCurrentData=d;
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
@@ -967,11 +986,24 @@ async function showQR(d,printAfter){
  $("qrStatus").textContent="Membuat QR...";
  $("qrPopup").classList.add("show");
  try{
-  if(!window.QRCode || typeof QRCode.toCanvas!=="function") throw new Error("Library QR tidak termuat. Periksa koneksi internet.");
-  await QRCode.toCanvas($("qrCanvas"),qrPublicUrl,{width:560,margin:2,errorCorrectionLevel:"H",color:{dark:"#000000",light:"#ffffff"}});
+  const qrBox=$("qrCanvas");
+  qrBox.innerHTML="";
+  await ensureQRCodeLibrary();
+  new QRCode(qrBox,{text:String(qrPublicUrl),width:560,height:560,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});
+  await new Promise((resolve,reject)=>{
+   let tries=0;
+   const check=()=>{
+    if(qrBox.querySelector("canvas, img")) return resolve();
+    if(++tries>30) return reject(new Error("QR belum selesai dibuat."));
+    setTimeout(check,100);
+   }; check();
+  });
+  const generated=qrBox.querySelector("canvas, img");
+  if(generated && generated.tagName==="CANVAS") generated.style.cssText="width:100%;height:100%;display:block;image-rendering:pixelated";
+  if(generated && generated.tagName==="IMG") generated.style.cssText="width:100%;height:100%;display:block;image-rendering:pixelated";
   $("qrStatus").textContent=qrPublicSaved
    ? "QR siap dipindai. Simpan sebagai JPEG atau kirim tautan cek servis ke pelanggan."
-   : "PERINGATAN: data servis utama tersimpan, tetapi dokumen cek_servis_public gagal disimpan. QR belum bisa menampilkan status sampai izin penulisan koleksi cek_servis_public diperiksa.";
+   : "QR terbentuk, tetapi data cek publik belum tersimpan. Pelanggan belum bisa melihat status sampai izin koleksi cek_servis_public diperiksa.";
  }catch(e){
   console.error(e);
   $("qrStatus").textContent="QR gagal dibuat: "+e.message;
@@ -980,11 +1012,14 @@ async function showQR(d,printAfter){
 }
 
 window.downloadQR=function(){
- const canvas=$("qrCanvas");
+ const box=$("qrCanvas");
  try{
-  const out=document.createElement("canvas");out.width=canvas.width;out.height=canvas.height;
-  const ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(canvas,0,0);
-  const a=document.createElement("a");a.download="QR-CEK-SERVIS-"+(qrCurrentData?.nomorNota||"FIXZY").replace(/[^a-zA-Z0-9_-]/g,"-")+".jpg";a.href=out.toDataURL("image/jpeg",0.96);a.click();
+  const source=box.querySelector("canvas, img");
+  if(!source) throw new Error("QR belum terbentuk. Muat ulang lalu coba lagi.");
+  const size=source.width||source.naturalWidth||560;
+  const out=document.createElement("canvas");out.width=size;out.height=size;
+  const ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,size,size);ctx.drawImage(source,0,0,size,size);
+  const a=document.createElement("a");a.download="QR-CEK-SERVIS-"+(qrCurrentData?.nomorNota||"FIXZY").replace(/[^a-zA-Z0-9_-]/g,"-")+".jpg";a.href=out.toDataURL("image/jpeg",0.96);document.body.appendChild(a);a.click();a.remove();
  }catch(e){alert("QR belum siap diunduh. "+e.message)}
 };
 
@@ -998,14 +1033,9 @@ window.sendQRWhatsApp=function(){
 };
 
 window.finishQR=function(){
- const shouldPrint=$("qrPopup").dataset.printAfter==="1";
+ // Alur yang dipakai hanya QR/barcode; tidak membuka fitur cetak nota.
  $("qrPopup").classList.remove("show");
- if(shouldPrint){pendingData=qrCurrentData;renderTemplateGrid();$("templatePopup").classList.add("show");}
- else if(qrCurrentData){window.location.href="data-servis.html";}
-};
-window.printAfterQR=function(){
- $("qrPopup").classList.remove("show");
- pendingData=qrCurrentData;renderTemplateGrid();$("templatePopup").classList.add("show");
+ if(qrCurrentData){window.location.href="data-servis.html";}
 };
 
 async function executeSave(printAfter){

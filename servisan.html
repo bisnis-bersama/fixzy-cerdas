@@ -111,14 +111,17 @@ body.dark .popup-box{background:#111827!important;color:#e5e7eb!important;border
 body.dark .template-card{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}
 body.dark .template-preview{background:#111827!important;border-color:#475569!important}
 
+/* QR SERVIS */
 .qr-content{text-align:center;padding:8px 0}
-.qr-display{display:flex;justify-content:center;align-items:center;min-height:210px;margin:12px auto;padding:12px;background:#fff;border:2px dashed #111827;border-radius:12px;max-width:240px}
+.qr-display{display:flex;justify-content:center;align-items:center;min-height:220px;margin:12px auto;padding:12px;background:#fff;border:2px dashed #111827;border-radius:12px;max-width:250px}
 .qr-display img,.qr-display canvas{display:block;max-width:100%;height:auto}
 .qr-nota{font-weight:900;font-size:13px;letter-spacing:.5px;margin-top:8px;word-break:break-word}
 .qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.qr-actions button{min-width:0}
 .whatsapp-btn{background:#16a34a!important;color:#fff!important;border-color:#14532d!important}
 @media(max-width:420px){.qr-actions{grid-template-columns:1fr}}
+.print-qr{text-align:center;padding:8px 0}
+.print-qr img,.print-qr canvas{width:32mm!important;height:32mm!important;image-rendering:pixelated}
+
 #printArea{display:none}
 @media print{
  body{background:#fff}
@@ -149,7 +152,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  .print-total td{border-top:2px solid #111;padding-top:5px!important;font-size:10px;font-weight:900}
  .print-status{text-align:center;padding:6px;border:2px solid #111;border-radius:6px;margin-top:6px;font-weight:900;font-size:9px;text-transform:uppercase}
  .print-barcode{text-align:center;padding:8px 0}
- .print-barcode img,.print-barcode canvas{width:32mm!important;height:32mm!important;image-rendering:pixelated}
+ .print-qr img,.print-qr canvas{width:32mm!important;height:32mm!important}
  .print-footer{text-align:center;border-top:1px dashed #999;padding-top:6px;margin-top:6px;font-size:7px;color:#555;line-height:1.4}
 }
 
@@ -194,12 +197,12 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  <div class="card">
   <div class="title">Informasi Transaksi</div>
   <input type="hidden" id="nomorNota">
-  <input type="hidden" id="qrValue">
+  <input type="hidden" id="barcode">
   <input type="hidden" id="tanggalNota">
   <div class="info">
    <div class="info-row"><span>Nomor Nota</span><b id="infoNota">-</b></div>
    <div class="info-row"><span>Tanggal</span><b id="infoTanggal">-</b></div>
-   <div class="info-row"><span>QR Nota</span><b id="infoQr">-</b></div>
+   <div class="info-row"><span>Barcode</span><b id="infoBarcode">-</b></div>
   </div>
  </div>
 
@@ -258,6 +261,22 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
     </div>
     <input id="pola" type="hidden" value="">
    </div>
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="title">Sparepart / Produk yang Digunakan</div>
+  <div class="grid">
+   <div class="full">
+    <label>CARI PRODUK STOK</label>
+    <div class="product-search">
+     <input id="cariProduk" placeholder="Ketik nama/kode...">
+     <div id="hasilProduk" class="results"></div>
+    </div>
+    <div id="produkTerpilih" class="selected empty">Belum memilih produk.</div>
+   </div>
+   <div><label>QTY</label><input id="qtyProduk" value="1"></div>
+   <div><label>MANUAL</label><input id="produkManual" placeholder="Jika tidak ada di stok"></div>
   </div>
  </div>
 
@@ -326,7 +345,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <div class="popup" id="qrPopup">
  <div class="popup-box">
   <h3>✅ Servisan Berhasil Disimpan</h3>
-  <p style="font-size:12px;color:#667085;margin:0">QR Code mengarah ke halaman scan publik FIXZY. Simpan gambar JPEG ke galeri, lalu tekan Selesai & Buka WA untuk menyiapkan pesan pemeriksaan servis.</p>
+  <p style="font-size:12px;color:#667085;margin:0">QR Code ini membuka halaman scan publik FIXZY. Simpan sebagai JPEG, lalu kirim tautan pemeriksaan kepada pelanggan melalui WhatsApp.</p>
   <div class="qr-content">
    <div id="savedQr" class="qr-display"><span>Membuat QR Code...</span></div>
    <div id="savedQrNota" class="qr-nota">-</div>
@@ -336,7 +355,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
    <button class="action secondary" type="button" onclick="downloadSavedQr()">⬇ Simpan QR JPEG</button>
    <button class="action primary whatsapp-btn" type="button" onclick="selesaiNota()">✅ Selesai & Buka WA</button>
    <button class="action secondary" type="button" onclick="printSavedNota()">🖨️ Cetak Nota</button>
-   <button class="action secondary" type="button" onclick="selesaiNota()">Selesai</button>
+   <button class="action secondary" type="button" onclick="tutupQr()">Tutup</button>
   </div>
  </div>
 </div>
@@ -365,7 +384,7 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 
 let uid=null,businessUid=null,profile={},role="";
-let employees=[],pendingData=null,savedQrReady=false;
+let products=[],employees=[],selectedProduct=null,pendingData=null,savedQrReady=false;
 let selectedTemplate=2,pageReady=false;
 let polaUrutan=[];
 
@@ -399,15 +418,14 @@ function notaBaru(){
  return "SRV-"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+String(d.getMilliseconds()).padStart(3,"0");
 }
 
+function makeBarcode(nota){
+ return "FX-"+nota.replace(/^SRV-/,"");
+}
+
+function namaProduk(p){return String(p.nama||p.namaProduk||"-")}
+function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
+function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
-function makeQrValue(nota){
-  const path=location.pathname.replace(/[^/]*$/, "scan-barcode.html");
-  return location.origin+path+"?nota="+encodeURIComponent(nota);
-}
-function makeQrPayload(d){
-  // QR hanya memuat tautan pemeriksaan, tidak memuat data pelanggan atau data rahasia.
-  return makeQrValue(d.nomorNota);
-}
 
 const TEMPLATES=[
  {id:1,name:"Klasik Hitam",desc:"Hitam putih minimalis",color:"black",cls:"black"},
@@ -442,7 +460,7 @@ window.tutupTemplate=()=>{
 function setInfo(){
  $("infoNota").textContent=$("nomorNota").value;
  $("infoTanggal").textContent=$("tanggalNota").value;
- $("infoQr").textContent=$("nomorNota").value;
+ $("infoBarcode").textContent=$("barcode").value;
 }
 
 /*
@@ -493,6 +511,83 @@ async function loadEmployees(){
   employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
 }
 
+async function loadProducts(){
+ products=[];
+ const map=new Map();
+
+ const queries=[
+  query(collection(db,"stok"),where("ownerUid","==",businessUid)),
+  query(collection(db,"stok"),where("ownerId","==",businessUid))
+ ];
+
+ for(const q of queries){
+  const snap=await getDocs(q);
+  snap.forEach(d=>{
+   const data=d.data()||{};
+   const stokVal=Number(data.sisa??data.stok??0)||0;
+   const produk={id:d.id,_stok:stokVal,...data};
+   const key=String(data.kode||data.nama||d.id).toLowerCase();
+   if(!map.has(key)||produk._stok>map.get(key)._stok)map.set(key,produk);
+  });
+ }
+
+ products=Array.from(map.values());
+}
+
+function filterProduk(q=""){
+ const box=$("hasilProduk");
+ const key=String(q).trim().toLowerCase();
+
+ const list=products.filter(p=>
+  String(p.nama||"").toLowerCase().includes(key)||
+  String(p.kode||"").toLowerCase().includes(key)
+ ).slice(0,50);
+
+ if(!list.length){
+  box.innerHTML='<div class="result">Tidak ada produk pada stok akun ini.</div>';
+ }else{
+  box.innerHTML=list.map(p=>`
+   <button type="button" class="result" data-id="${p.id}">
+    <div class="pname">${esc(p.nama||"-")}</div>
+    <div class="pmeta">Kode: ${esc(p.kode||"-")} • Stok: ${p._stok}</div>
+   </button>`).join("");
+ }
+
+ box.classList.add("show");
+}
+
+$("cariProduk").addEventListener("input",e=>filterProduk(e.target.value));
+$("cariProduk").addEventListener("focus",e=>filterProduk(e.target.value));
+
+$("hasilProduk").addEventListener("click",e=>{
+ const b=e.target.closest(".result[data-id]");
+ if(!b)return;
+
+ const p=products.find(x=>x.id===b.dataset.id);
+ if(!p)return;
+
+ selectedProduct=p;
+ $("cariProduk").value=p.nama;
+ $("produkManual").value="";
+ $("produkTerpilih").className="selected";
+ $("produkTerpilih").innerHTML=`<b>${esc(p.nama)}</b> • Stok: ${p._stok}`;
+ $("hasilProduk").classList.remove("show");
+});
+
+$("produkManual").addEventListener("input",()=>{
+ if($("produkManual").value.trim()){
+  selectedProduct=null;
+  $("cariProduk").value="";
+  $("produkTerpilih").className="selected";
+  $("produkTerpilih").textContent="Manual: "+$("produkManual").value;
+ }
+});
+
+document.addEventListener("click",e=>{
+ const w=document.querySelector(".product-search");
+ if(w&&!w.contains(e.target))$("hasilProduk").classList.remove("show");
+});
+
 window.pilihDot=function(n){
  const i=polaUrutan.indexOf(n);
  if(i!==-1)polaUrutan.splice(i,1);
@@ -520,53 +615,186 @@ function buildData(){
  const wa=$("waPelanggan").value.trim();
  const hp=$("brandTipe").value.trim();
  const kerusakan=$("kerusakan").value.trim();
+
  if(!nama)throw new Error("Nama wajib");
  if(!wa)throw new Error("WA wajib");
  if(!hp)throw new Error("Brand wajib");
  if(!kerusakan)throw new Error("Kerusakan wajib");
- const pay=hitung(),status=$("status").value;
- const pendapatan=status==="diambil"?pay.total:status==="selesai"?pay.dp:0;
+
+ const q=Math.max(1,num("qtyProduk")||1);
+ const manual=$("produkManual").value.trim();
+
+ if(!selectedProduct&&!manual)throw new Error("Pilih produk");
+
+ const pay=hitung();
+
+ const produkObj=selectedProduct
+  ? {
+      produkId:selectedProduct.id,
+      nama:namaProduk(selectedProduct),
+      kode:kodeProduk(selectedProduct),
+      qty:q,
+      modalSatuan:modalProduk(selectedProduct),
+      totalModal:modalProduk(selectedProduct)*q,
+      sumber:"firebase"
+    }
+  : {
+      produkId:null,
+      nama:manual,
+      kode:"",
+      qty:q,
+      modalSatuan:0,
+      totalModal:0,
+      sumber:"manual"
+    };
+
+ const produkText=produkObj.nama+(produkObj.qty>1?` x${produkObj.qty}`:"");
+ const status=$("status").value;
+
+ /*
+   PENTING:
+   - estimasi/biaya awal = pay.biaya
+   - diskon = pay.diskon
+   - total akhir = pay.total
+   - DP = pay.dp
+   - sisa = pay.sisa
+   - pendapatan = DP saat status selesai
+   - pendapatan = total saat status diambil
+   - status lain = 0 pendapatan
+ */
+ const pendapatan=status==="diambil"
+  ? pay.total
+  : status==="selesai"
+   ? pay.dp
+   : 0;
+
  return {
-  uid:businessUid,ownerUid:businessUid,createdBy:uid,
-  nomorNota:$("nomorNota").value,qrValue:$("qrValue").value,tanggal:$("tanggalNota").value,
+  uid:businessUid,
+  ownerUid:businessUid,
+  createdBy:uid,
+
+  nomorNota:$("nomorNota").value,
+  barcode:$("barcode").value,
+  tanggal:$("tanggalNota").value,
+
   namaKonter:profile.namaKonter||"FIXZY",
-  teknisiId:$("teknisi").value,namaTeknisi:$("teknisi").selectedOptions[0]?.textContent||"",
-  pelanggan:{nama,wa,alamat:$("alamatPelanggan").value.trim()},
+
+  teknisiId:$("teknisi").value,
+  namaTeknisi:$("teknisi").selectedOptions[0]?.textContent||"",
+
+  pelanggan:{
+   nama,
+   wa,
+   alamat:$("alamatPelanggan").value.trim()
+  },
+
   servisan:{
-   brandTipe:hp,imei:$("imei").value.trim(),jenisKerusakan:kerusakan,
+   brandTipe:hp,
+   imei:$("imei").value.trim(),
+   jenisKerusakan:kerusakan,
    kelengkapan:[...document.querySelectorAll(".kelengkapan:checked")].map(x=>x.value),
-   sandi:$("sandi").value.trim(),pola:$("pola").value.trim()
+   sandi:$("sandi").value.trim(),
+   pola:$("pola").value.trim()
   },
-  penggunaanProduk:null,produkDigunakan:"",produk:"",sparepart:"",items:[],produkList:[],
+
+  penggunaanProduk:produkObj,
+  produkDigunakan:produkText,
+  produk:produkText,
+  sparepart:produkText,
+  items:[produkObj],
+  produkList:[produkObj],
+
+  /*
+    Field lengkap + alias kompatibilitas supaya halaman
+    DATA SERVIS bisa membaca nilai lama maupun struktur baru.
+  */
   estimasi:{
-   biayaService:pay.biaya,biaya:pay.biaya,nilai:pay.biaya,hargaAwal:pay.biaya,
-   estimasiBiaya:pay.biaya,diskon:pay.diskon,total:pay.total,totalBayar:pay.total,
-   dp:pay.dp,uangMuka:pay.dp,sisa:pay.sisa,sisaBayar:pay.sisa
+   biayaService:pay.biaya,
+   biaya:pay.biaya,
+   nilai:pay.biaya,
+   hargaAwal:pay.biaya,
+   estimasiBiaya:pay.biaya,
+
+   diskon:pay.diskon,
+
+   total:pay.total,
+   totalBayar:pay.total,
+
+   dp:pay.dp,
+   uangMuka:pay.dp,
+
+   sisa:pay.sisa,
+   sisaBayar:pay.sisa
   },
-  biayaService:pay.biaya,estimasiBiaya:pay.biaya,hargaAwal:pay.biaya,
-  diskon:pay.diskon,total:pay.total,totalBayar:pay.total,dp:pay.dp,uangMuka:pay.dp,
-  sisa:pay.sisa,sisaBayar:pay.sisa,subtotal:pay.biaya,subtotalSebelumDiskon:pay.biaya,
-  status,pendapatan,createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+
+  // Field utama transaksi
+  biayaService:pay.biaya,
+  estimasiBiaya:pay.biaya,
+  hargaAwal:pay.biaya,
+
+  diskon:pay.diskon,
+
+  total:pay.total,
+  totalBayar:pay.total,
+
+  dp:pay.dp,
+  uangMuka:pay.dp,
+
+  sisa:pay.sisa,
+  sisaBayar:pay.sisa,
+
+  // Nilai sebelum diskon tetap disimpan terpisah.
+  subtotal:pay.biaya,
+  subtotalSebelumDiskon:pay.biaya,
+
+  status,
+  pendapatan,
+
+  createdAt:serverTimestamp(),
+  updatedAt:serverTimestamp()
  };
 }
 
 async function saveData(d){
  const notaRef=doc(db,"servis",d.nomorNota);
- await setDoc(notaRef,d);
- // Dokumen publik terpisah: hanya kolom yang boleh dilihat pelanggan.
- // Jangan menambahkan nama pelanggan, WA, alamat, IMEI, PIN, atau pola.
- await setDoc(doc(db,"cek_servis_public",d.nomorNota),{
-  nomorNota:d.nomorNota,
-  tanggal:d.tanggal,
-  namaKonter:d.namaKonter||"FIXZY",
-  brandTipe:d.servisan?.brandTipe||"",
-  jenisKerusakan:d.servisan?.jenisKerusakan||"",
-  namaTeknisi:d.namaTeknisi||"",
-  status:d.status||"masuk",
-  estimasiBiaya:d.estimasi?.biayaService??0,
-  dp:d.estimasi?.dp??0,
-  sisa:d.estimasi?.sisa??0,
-  updatedAt:serverTimestamp()
+
+ if(d.penggunaanProduk.sumber!=="firebase"){
+  await setDoc(notaRef,{...d,stokDikurangi:false});
+  return;
+ }
+
+ const stockRef=doc(db,"stok",d.penggunaanProduk.produkId);
+
+ await runTransaction(db,async tx=>{
+  const stockSnap=await tx.get(stockRef);
+
+  if(!stockSnap.exists())throw new Error("Stok tidak ada");
+
+  const stock=stockSnap.data()||{};
+  const stockOwner=String(stock.ownerUid||stock.ownerId||"");
+
+  if(stockOwner!==businessUid)throw new Error("Stok bukan milik akun ini");
+
+  const lama=Number(stock.sisa??stock.stok??0);
+  const qty=Number(d.penggunaanProduk.qty)||1;
+
+  if(lama<qty)throw new Error(`Stok kurang. Sisa ${lama}`);
+
+  const baru=lama-qty;
+
+  tx.update(stockRef,{
+   sisa:baru,
+   stok:baru,
+   status:baru>0?"tersedia":"kosong",
+   updatedAt:serverTimestamp()
+  });
+
+  tx.set(notaRef,{
+   ...d,
+   stokDikurangi:true,
+   stokSebelum:lama,
+   stokSesudah:baru
+  });
  });
 }
 
@@ -628,6 +856,13 @@ function makePrintHTML(d){
       <td>${rupiah(e.biayaService)}</td>
       <td>${rupiah(e.biayaService)}</td>
      </tr>
+     ${produk.nama?`
+     <tr>
+      <td>${esc(produk.nama)}</td>
+      <td>${produk.qty}</td>
+      <td>${rupiah(produk.modalSatuan)}</td>
+      <td>${rupiah(produk.totalModal)}</td>
+     </tr>`:""}
     </tbody>
    </table>
 
@@ -642,10 +877,10 @@ function makePrintHTML(d){
 
   <div class="print-status">STATUS: ${esc(d.status.toUpperCase())}</div>
 
-  <div class="print-barcode">
+  <div class="print-qr">
    <div id="printQr" style="display:flex;justify-content:center"></div>
    <div style="font:8px monospace;margin-top:3px">${esc(d.nomorNota)}</div>
-   <div style="font-size:7px;margin-top:2px">QR identitas nota servis</div>
+   <div style="font-size:7px;margin-top:2px">Scan untuk cek status servis</div>
   </div>
 
   <div class="print-footer">
@@ -656,145 +891,62 @@ function makePrintHTML(d){
  </div>`;
 }
 
-function tampilkanQrTersimpan(d){
- pendingData=d;
- savedQrReady=false;
- $("qrPopup").classList.add("show");
- $("savedQr").innerHTML="";
- $("savedQrNota").textContent=d.nomorNota||"-";
- $("savedQrStatus").textContent="Menyiapkan QR Code...";
- try{
-  if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
-  new QRCode($("savedQr"),{
-   text:makeQrPayload(d),width:320,height:320,
-   correctLevel:QRCode.CorrectLevel.H
-  });
-  setTimeout(()=>{
-   const box=$("savedQr");
-   savedQrReady=!!(box.querySelector("canvas")||box.querySelector("img"));
-   $("savedQrStatus").textContent=savedQrReady?
-    "QR siap. Simpan gambar JPEG, lalu tekan Selesai & Buka WA.":
-    "QR belum berhasil dibuat. Periksa koneksi internet lalu muat ulang halaman.";
-  },500);
- }catch(e){
-  console.error(e);
-  $("savedQrStatus").textContent="Gagal membuat QR: "+e.message;
- }
-}
-
-function getSavedQrDataUrl(){
- const box=$("savedQr");
- const canvas=box.querySelector("canvas");
- if(canvas)return canvas.toDataURL("image/jpeg",0.96);
- const img=box.querySelector("img");
- if(img&&img.complete&&img.naturalWidth){
-  const c=document.createElement("canvas");
-  c.width=img.naturalWidth;c.height=img.naturalHeight;
-  c.getContext("2d").drawImage(img,0,0);
-  return c.toDataURL("image/jpeg",0.96);
- }
- throw new Error("QR belum siap. Tunggu sebentar, lalu coba lagi.");
-}
-
-window.downloadSavedQr=()=>{
- try{
-  const url=getSavedQrDataUrl();
-  const a=document.createElement("a");
-  a.href=url;a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.jpg`;
-  document.body.appendChild(a);a.click();a.remove();
-  $("savedQrStatus").textContent="QR JPEG berhasil diunduh. Tekan Selesai & Buka WA untuk menyiapkan pesan pelanggan.";
- }catch(e){alert(e.message)}
-};
-
-function nomorWhatsApp(no){
- let n=String(no||"").replace(/\D/g,"");
- if(n.startsWith("0"))n="62"+n.slice(1);
- else if(n.startsWith("8"))n="62"+n;
- return n;
-}
-
-function bukaWhatsAppPelanggan(){
- if(!pendingData)throw new Error("Data nota tidak ditemukan.");
- const d=pendingData;
- const no=nomorWhatsApp(d.pelanggan?.wa);
- if(!no||no.length<9)throw new Error("Nomor WhatsApp pelanggan tidak valid.");
- const pesan=[
-  `Halo ${d.pelanggan?.nama||"Kak"}, servis HP Anda sudah kami catat di ${d.namaKonter||"FIXZY"}.`,
-  "",
-  `Nomor nota: ${d.nomorNota}`,
-  `HP: ${d.servisan?.brandTipe||"-"}`,
-  `Kerusakan: ${d.servisan?.jenisKerusakan||"-"}`,
-  `Status: ${String(d.status||"masuk").toUpperCase()}`,
-  `Estimasi biaya: ${rupiah(d.estimasi?.biayaService)}`,
-  `Diskon: ${rupiah(d.estimasi?.diskon)}`,
-  `Total estimasi: ${rupiah(d.estimasi?.total)}`,
-  `DP: ${rupiah(d.estimasi?.dp)}`,
-  `Sisa: ${rupiah(d.estimasi?.sisa)}`,
-  "",
-  `Cek nota/status servis: ${makeQrValue(d.nomorNota)}`,
-  "Mohon simpan nomor nota ini untuk pengecekan servis. Terima kasih."
- ].join("\n");
- window.open(`https://wa.me/${no}?text=${encodeURIComponent(pesan)}`,"_blank","noopener");
-}
-
-window.downloadAndOpenWhatsApp=()=>{
- try{downloadSavedQr();bukaWhatsAppPelanggan();}
- catch(e){alert(e.message)}
-};
-
-window.printSavedNota=()=>{
- if(!pendingData)return;
- // Buka pemilihan template nota setelah QR berhasil dibuat.
- $("qrPopup").classList.remove("show");
- renderTemplateGrid();
- $("templatePopup").classList.add("show");
-};
-
-window.selesaiNota=()=>{
- try{
-  if(pendingData)bukaWhatsAppPelanggan();
- }catch(e){alert("QR sudah tersimpan, tetapi WhatsApp tidak bisa dibuka: "+e.message)}
- $("qrPopup").classList.remove("show");
- pendingData=null;
- resetForm();
-};
-
 window.cetakTemplate=()=>{
  if(!pendingData)return;
 
  $("printArea").innerHTML=makePrintHTML(pendingData);
  $("templatePopup").classList.remove("show");
 
+ const dataForPrint=pendingData;
  const qrBox=$("printQr");
  qrBox.innerHTML="";
  try{
-  if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
-  new QRCode(qrBox,{
-   text:makeQrPayload(pendingData),
-   width:320,
-   height:320,
-   correctLevel:QRCode.CorrectLevel.H
-  });
-  // Tunggu QR selesai dibuat sebelum membuka dialog cetak.
-  setTimeout(()=>{
-   if(!qrBox.querySelector("img")&&!qrBox.querySelector("canvas")){
-    qrBox.innerHTML='<div style="font-size:8px;color:#b91c1c">QR gagal dibuat. Muat ulang halaman dan coba lagi.</div>';
-   }
-   window.print();
-   pendingData=null;
-  },900);
- }catch(e){
-  console.error("QR gagal dibuat:",e);
-  qrBox.innerHTML='<div style="font-size:8px;color:#b91c1c">QR tidak dapat dibuat. Periksa koneksi internet.</div>';
-  setTimeout(()=>window.print(),300);
-  pendingData=null;
- }
+  if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat.");
+  new QRCode(qrBox,{text:makeQrPayload(dataForPrint),width:320,height:320,correctLevel:QRCode.CorrectLevel.H});
+ }catch(e){console.error(e)}
+ setTimeout(()=>{window.print();pendingData=null;},700);
 };
+
+function tampilkanQrTersimpan(d){
+ pendingData=d;savedQrReady=false;
+ $("qrPopup").classList.add("show");
+ $("savedQr").innerHTML="";
+ $("savedQrNota").textContent=d.nomorNota||"-";
+ $("savedQrStatus").textContent="Menyiapkan QR Code...";
+ try{
+  if(typeof QRCode==="undefined")throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
+  new QRCode($("savedQr"),{text:makeQrPayload(d),width:320,height:320,correctLevel:QRCode.CorrectLevel.H});
+  setTimeout(()=>{
+   const box=$("savedQr");
+   savedQrReady=!!(box.querySelector("canvas")||box.querySelector("img"));
+   $("savedQrStatus").textContent=savedQrReady?"QR siap. Simpan JPEG atau kirim tautan melalui WhatsApp.":"QR belum berhasil dibuat. Periksa koneksi internet.";
+  },500);
+ }catch(e){console.error(e);$("savedQrStatus").textContent="Gagal membuat QR: "+e.message;}
+}
+function getSavedQrDataUrl(){
+ const box=$("savedQr"),canvas=box.querySelector("canvas");
+ if(canvas)return canvas.toDataURL("image/jpeg",0.96);
+ const img=box.querySelector("img");
+ if(img&&img.complete&&img.naturalWidth){const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);return c.toDataURL("image/jpeg",0.96);}
+ throw new Error("QR belum siap. Tunggu sebentar lalu coba lagi.");
+}
+window.downloadSavedQr=()=>{try{const a=document.createElement("a");a.href=getSavedQrDataUrl();a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.jpg`;document.body.appendChild(a);a.click();a.remove();$("savedQrStatus").textContent="File JPEG diunduh. Di HP, periksa folder Download/Galeri.";}catch(e){alert(e.message)}};
+function nomorWhatsApp(no){let n=String(no||"").replace(/\D/g,"");if(n.startsWith("0"))n="62"+n.slice(1);else if(n.startsWith("8"))n="62"+n;return n;}
+function bukaWhatsAppPelanggan(){
+ if(!pendingData)throw new Error("Data nota tidak ditemukan.");
+ const d=pendingData,no=nomorWhatsApp(d.pelanggan?.wa);
+ if(!no||no.length<9)throw new Error("Nomor WhatsApp pelanggan tidak valid.");
+ const pesan=[`Halo ${d.pelanggan?.nama||"Kak"}, servis HP Anda sudah kami catat di ${d.namaKonter||"FIXZY"}.`,"",`Nomor nota: ${d.nomorNota}`,`HP: ${d.servisan?.brandTipe||"-"}`,`Status: ${String(d.status||"masuk").toUpperCase()}`,`Cek status servis: ${makeQrValue(d.nomorNota)}`,"Terima kasih."] .join("\n");
+ window.open(`https://wa.me/${no}?text=${encodeURIComponent(pesan)}`,"_blank","noopener");
+}
+window.selesaiNota=()=>{try{bukaWhatsAppPelanggan();}catch(e){alert(e.message)}$("qrPopup").classList.remove("show");pendingData=null;resetForm();};
+window.tutupQr=()=>{$("qrPopup").classList.remove("show");};
+window.printSavedNota=()=>{if(!pendingData)return;$("qrPopup").classList.remove("show");renderTemplateGrid();$("templatePopup").classList.add("show");};
 
 function resetForm(){
  [
   "namaPelanggan","waPelanggan","alamatPelanggan","brandTipe","imei",
-  "kerusakan","biayaService","diskon","dp","sandi"
+  "kerusakan","cariProduk","produkManual","biayaService","diskon","dp","sandi"
  ].forEach(id=>{
   const el=$(id);
   if(el)el.value="";
@@ -804,8 +956,14 @@ function resetForm(){
 
  hapusPola();
 
+ $("qtyProduk").value="1";
+ selectedProduct=null;
+
+ $("produkTerpilih").className="selected empty";
+ $("produkTerpilih").textContent="Belum memilih produk.";
+
  $("nomorNota").value=notaBaru();
- $("qrValue").value=makeQrValue($("nomorNota").value);
+ $("barcode").value=makeBarcode($("nomorNota").value);
  $("tanggalNota").value=dateOnly();
 
  setInfo();
@@ -832,17 +990,30 @@ async function executeSave(printAfter){
   $("saveStatus").textContent="Menyimpan...";
   setNotice("Menyimpan data servisan...");
 
-  // SIMPAN KE FIREBASE
+  // SIMPAN KE FIREBASE menggunakan logika asli, termasuk transaksi pengurangan stok.
   await saveData(d);
 
-  $("saveStatus").textContent=`Berhasil • ${d.nomorNota}`;
-  setNotice(
-   `Servisan ${d.nomorNota} berhasil disimpan pada akun ${businessUid}.`,
-   "ok"
-  );
+  // Salinan terbatas untuk halaman pemeriksaan publik. Tidak memuat nama/WA/alamat,
+  // IMEI, PIN, atau pola sandi. Data lengkap tetap berada di koleksi servis.
+  await setDoc(doc(db,"cek_servis_public",d.nomorNota),{
+   nomorNota:d.nomorNota,
+   tanggal:d.tanggal,
+   namaKonter:d.namaKonter||"FIXZY",
+   brandTipe:d.servisan?.brandTipe||"",
+   jenisKerusakan:d.servisan?.jenisKerusakan||"",
+   namaTeknisi:d.namaTeknisi||"",
+   status:d.status||"masuk",
+   estimasiBiaya:d.estimasi?.biayaService??0,
+   dp:d.estimasi?.dp??0,
+   sisa:d.estimasi?.sisa??0,
+   updatedAt:serverTimestamp()
+  });
 
-  // Setelah data tersimpan, tampilkan QR Code untuk diunduh dan dikirim ke WhatsApp pelanggan.
+  $("saveStatus").textContent=`Berhasil • ${d.nomorNota}`;
+  setNotice(`Servisan ${d.nomorNota} berhasil disimpan. QR pemeriksaan siap dibuat.`,"ok");
+  pendingData=d;
   tampilkanQrTersimpan(d);
+  if(printAfter){renderTemplateGrid();}
 
  }catch(e){
   console.error(e);
@@ -901,17 +1072,18 @@ onAuthStateChanged(auth,async user=>{
   badge.style.display="inline-flex";
 
   $("nomorNota").value=notaBaru();
-  $("qrValue").value=makeQrValue($("nomorNota").value);
+  $("barcode").value=makeBarcode($("nomorNota").value);
   $("tanggalNota").value=dateOnly();
 
   setInfo();
 
   await loadEmployees();
+  await loadProducts();
 
   pageReady=true;
 
   $("saveStatus").textContent=
-   `${employees.length} teknisi • mode nota servis • akun terisolasi`;
+   `${products.length} produk • ${employees.length} teknisi • akun terisolasi`;
 
   setNotice(
    `Akun aktif: ${roleLabel} • Business UID: ${businessUid} • Data dibatasi ke owner ini.`,
@@ -931,4 +1103,3 @@ onAuthStateChanged(auth,async user=>{
 </script>
 </body>
 </html>
-i

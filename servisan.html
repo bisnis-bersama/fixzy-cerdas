@@ -141,7 +141,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  .print-total td{border-top:2px solid #111;padding-top:5px!important;font-size:10px;font-weight:900}
  .print-status{text-align:center;padding:6px;border:2px solid #111;border-radius:6px;margin-top:6px;font-weight:900;font-size:9px;text-transform:uppercase}
  .print-barcode{text-align:center;padding:8px 0}
- .print-barcode svg{width:90%!important;height:14mm!important}
+ .print-barcode img,.print-barcode canvas{width:24mm!important;height:24mm!important}
  .print-footer{text-align:center;border-top:1px dashed #999;padding-top:6px;margin-top:6px;font-size:7px;color:#555;line-height:1.4}
 }
 
@@ -186,12 +186,12 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  <div class="card">
   <div class="title">Informasi Transaksi</div>
   <input type="hidden" id="nomorNota">
-  <input type="hidden" id="barcode">
+  <input type="hidden" id="qrValue">
   <input type="hidden" id="tanggalNota">
   <div class="info">
    <div class="info-row"><span>Nomor Nota</span><b id="infoNota">-</b></div>
    <div class="info-row"><span>Tanggal</span><b id="infoTanggal">-</b></div>
-   <div class="info-row"><span>Barcode</span><b id="infoBarcode">-</b></div>
+   <div class="info-row"><span>QR Nota</span><b id="infoQr">-</b></div>
   </div>
  </div>
 
@@ -250,22 +250,6 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
     </div>
     <input id="pola" type="hidden" value="">
    </div>
-  </div>
- </div>
-
- <div class="card">
-  <div class="title">Sparepart / Produk yang Digunakan</div>
-  <div class="grid">
-   <div class="full">
-    <label>CARI PRODUK STOK</label>
-    <div class="product-search">
-     <input id="cariProduk" placeholder="Ketik nama/kode...">
-     <div id="hasilProduk" class="results"></div>
-    </div>
-    <div id="produkTerpilih" class="selected empty">Belum memilih produk.</div>
-   </div>
-   <div><label>QTY</label><input id="qtyProduk" value="1"></div>
-   <div><label>MANUAL</label><input id="produkManual" placeholder="Jika tidak ada di stok"></div>
   </div>
  </div>
 
@@ -332,7 +316,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 
 <div id="printArea"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -354,7 +338,7 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 
 let uid=null,businessUid=null,profile={},role="";
-let products=[],employees=[],selectedProduct=null,pendingData=null;
+let employees=[],pendingData=null;
 let selectedTemplate=2,pageReady=false;
 let polaUrutan=[];
 
@@ -388,14 +372,11 @@ function notaBaru(){
  return "SRV-"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+String(d.getMilliseconds()).padStart(3,"0");
 }
 
-function makeBarcode(nota){
- return "FX-"+nota.replace(/^SRV-/,"");
-}
-
-function namaProduk(p){return String(p.nama||p.namaProduk||"-")}
-function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
-function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
+function makeQrValue(nota){
+  const path=location.pathname.replace(/[^/]*$/, "data-servis.html");
+  return location.origin+path+"?nota="+encodeURIComponent(nota);
+}
 
 const TEMPLATES=[
  {id:1,name:"Klasik Hitam",desc:"Hitam putih minimalis",color:"black",cls:"black"},
@@ -430,7 +411,7 @@ window.tutupTemplate=()=>{
 function setInfo(){
  $("infoNota").textContent=$("nomorNota").value;
  $("infoTanggal").textContent=$("tanggalNota").value;
- $("infoBarcode").textContent=$("barcode").value;
+ $("infoQr").textContent=$("nomorNota").value;
 }
 
 /*
@@ -481,83 +462,6 @@ async function loadEmployees(){
   employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
 }
 
-async function loadProducts(){
- products=[];
- const map=new Map();
-
- const queries=[
-  query(collection(db,"stok"),where("ownerUid","==",businessUid)),
-  query(collection(db,"stok"),where("ownerId","==",businessUid))
- ];
-
- for(const q of queries){
-  const snap=await getDocs(q);
-  snap.forEach(d=>{
-   const data=d.data()||{};
-   const stokVal=Number(data.sisa??data.stok??0)||0;
-   const produk={id:d.id,_stok:stokVal,...data};
-   const key=String(data.kode||data.nama||d.id).toLowerCase();
-   if(!map.has(key)||produk._stok>map.get(key)._stok)map.set(key,produk);
-  });
- }
-
- products=Array.from(map.values());
-}
-
-function filterProduk(q=""){
- const box=$("hasilProduk");
- const key=String(q).trim().toLowerCase();
-
- const list=products.filter(p=>
-  String(p.nama||"").toLowerCase().includes(key)||
-  String(p.kode||"").toLowerCase().includes(key)
- ).slice(0,50);
-
- if(!list.length){
-  box.innerHTML='<div class="result">Tidak ada produk pada stok akun ini.</div>';
- }else{
-  box.innerHTML=list.map(p=>`
-   <button type="button" class="result" data-id="${p.id}">
-    <div class="pname">${esc(p.nama||"-")}</div>
-    <div class="pmeta">Kode: ${esc(p.kode||"-")} • Stok: ${p._stok}</div>
-   </button>`).join("");
- }
-
- box.classList.add("show");
-}
-
-$("cariProduk").addEventListener("input",e=>filterProduk(e.target.value));
-$("cariProduk").addEventListener("focus",e=>filterProduk(e.target.value));
-
-$("hasilProduk").addEventListener("click",e=>{
- const b=e.target.closest(".result[data-id]");
- if(!b)return;
-
- const p=products.find(x=>x.id===b.dataset.id);
- if(!p)return;
-
- selectedProduct=p;
- $("cariProduk").value=p.nama;
- $("produkManual").value="";
- $("produkTerpilih").className="selected";
- $("produkTerpilih").innerHTML=`<b>${esc(p.nama)}</b> • Stok: ${p._stok}`;
- $("hasilProduk").classList.remove("show");
-});
-
-$("produkManual").addEventListener("input",()=>{
- if($("produkManual").value.trim()){
-  selectedProduct=null;
-  $("cariProduk").value="";
-  $("produkTerpilih").className="selected";
-  $("produkTerpilih").textContent="Manual: "+$("produkManual").value;
- }
-});
-
-document.addEventListener("click",e=>{
- const w=document.querySelector(".product-search");
- if(w&&!w.contains(e.target))$("hasilProduk").classList.remove("show");
-});
-
 window.pilihDot=function(n){
  const i=polaUrutan.indexOf(n);
  if(i!==-1)polaUrutan.splice(i,1);
@@ -585,187 +489,39 @@ function buildData(){
  const wa=$("waPelanggan").value.trim();
  const hp=$("brandTipe").value.trim();
  const kerusakan=$("kerusakan").value.trim();
-
  if(!nama)throw new Error("Nama wajib");
  if(!wa)throw new Error("WA wajib");
  if(!hp)throw new Error("Brand wajib");
  if(!kerusakan)throw new Error("Kerusakan wajib");
-
- const q=Math.max(1,num("qtyProduk")||1);
- const manual=$("produkManual").value.trim();
-
- if(!selectedProduct&&!manual)throw new Error("Pilih produk");
-
- const pay=hitung();
-
- const produkObj=selectedProduct
-  ? {
-      produkId:selectedProduct.id,
-      nama:namaProduk(selectedProduct),
-      kode:kodeProduk(selectedProduct),
-      qty:q,
-      modalSatuan:modalProduk(selectedProduct),
-      totalModal:modalProduk(selectedProduct)*q,
-      sumber:"firebase"
-    }
-  : {
-      produkId:null,
-      nama:manual,
-      kode:"",
-      qty:q,
-      modalSatuan:0,
-      totalModal:0,
-      sumber:"manual"
-    };
-
- const produkText=produkObj.nama+(produkObj.qty>1?` x${produkObj.qty}`:"");
- const status=$("status").value;
-
- /*
-   PENTING:
-   - estimasi/biaya awal = pay.biaya
-   - diskon = pay.diskon
-   - total akhir = pay.total
-   - DP = pay.dp
-   - sisa = pay.sisa
-   - pendapatan = DP saat status selesai
-   - pendapatan = total saat status diambil
-   - status lain = 0 pendapatan
- */
- const pendapatan=status==="diambil"
-  ? pay.total
-  : status==="selesai"
-   ? pay.dp
-   : 0;
-
+ const pay=hitung(),status=$("status").value;
+ const pendapatan=status==="diambil"?pay.total:status==="selesai"?pay.dp:0;
  return {
-  uid:businessUid,
-  ownerUid:businessUid,
-  createdBy:uid,
-
-  nomorNota:$("nomorNota").value,
-  barcode:$("barcode").value,
-  tanggal:$("tanggalNota").value,
-
+  uid:businessUid,ownerUid:businessUid,createdBy:uid,
+  nomorNota:$("nomorNota").value,qrValue:$("qrValue").value,tanggal:$("tanggalNota").value,
   namaKonter:profile.namaKonter||"FIXZY",
-
-  teknisiId:$("teknisi").value,
-  namaTeknisi:$("teknisi").selectedOptions[0]?.textContent||"",
-
-  pelanggan:{
-   nama,
-   wa,
-   alamat:$("alamatPelanggan").value.trim()
-  },
-
+  teknisiId:$("teknisi").value,namaTeknisi:$("teknisi").selectedOptions[0]?.textContent||"",
+  pelanggan:{nama,wa,alamat:$("alamatPelanggan").value.trim()},
   servisan:{
-   brandTipe:hp,
-   imei:$("imei").value.trim(),
-   jenisKerusakan:kerusakan,
+   brandTipe:hp,imei:$("imei").value.trim(),jenisKerusakan:kerusakan,
    kelengkapan:[...document.querySelectorAll(".kelengkapan:checked")].map(x=>x.value),
-   sandi:$("sandi").value.trim(),
-   pola:$("pola").value.trim()
+   sandi:$("sandi").value.trim(),pola:$("pola").value.trim()
   },
-
-  penggunaanProduk:produkObj,
-  produkDigunakan:produkText,
-  produk:produkText,
-  sparepart:produkText,
-  items:[produkObj],
-  produkList:[produkObj],
-
-  /*
-    Field lengkap + alias kompatibilitas supaya halaman
-    DATA SERVIS bisa membaca nilai lama maupun struktur baru.
-  */
+  penggunaanProduk:null,produkDigunakan:"",produk:"",sparepart:"",items:[],produkList:[],
   estimasi:{
-   biayaService:pay.biaya,
-   biaya:pay.biaya,
-   nilai:pay.biaya,
-   hargaAwal:pay.biaya,
-   estimasiBiaya:pay.biaya,
-
-   diskon:pay.diskon,
-
-   total:pay.total,
-   totalBayar:pay.total,
-
-   dp:pay.dp,
-   uangMuka:pay.dp,
-
-   sisa:pay.sisa,
-   sisaBayar:pay.sisa
+   biayaService:pay.biaya,biaya:pay.biaya,nilai:pay.biaya,hargaAwal:pay.biaya,
+   estimasiBiaya:pay.biaya,diskon:pay.diskon,total:pay.total,totalBayar:pay.total,
+   dp:pay.dp,uangMuka:pay.dp,sisa:pay.sisa,sisaBayar:pay.sisa
   },
-
-  // Field utama transaksi
-  biayaService:pay.biaya,
-  estimasiBiaya:pay.biaya,
-  hargaAwal:pay.biaya,
-
-  diskon:pay.diskon,
-
-  total:pay.total,
-  totalBayar:pay.total,
-
-  dp:pay.dp,
-  uangMuka:pay.dp,
-
-  sisa:pay.sisa,
-  sisaBayar:pay.sisa,
-
-  // Nilai sebelum diskon tetap disimpan terpisah.
-  subtotal:pay.biaya,
-  subtotalSebelumDiskon:pay.biaya,
-
-  status,
-  pendapatan,
-
-  createdAt:serverTimestamp(),
-  updatedAt:serverTimestamp()
+  biayaService:pay.biaya,estimasiBiaya:pay.biaya,hargaAwal:pay.biaya,
+  diskon:pay.diskon,total:pay.total,totalBayar:pay.total,dp:pay.dp,uangMuka:pay.dp,
+  sisa:pay.sisa,sisaBayar:pay.sisa,subtotal:pay.biaya,subtotalSebelumDiskon:pay.biaya,
+  status,pendapatan,createdAt:serverTimestamp(),updatedAt:serverTimestamp()
  };
 }
 
 async function saveData(d){
  const notaRef=doc(db,"servis",d.nomorNota);
-
- if(d.penggunaanProduk.sumber!=="firebase"){
-  await setDoc(notaRef,{...d,stokDikurangi:false});
-  return;
- }
-
- const stockRef=doc(db,"stok",d.penggunaanProduk.produkId);
-
- await runTransaction(db,async tx=>{
-  const stockSnap=await tx.get(stockRef);
-
-  if(!stockSnap.exists())throw new Error("Stok tidak ada");
-
-  const stock=stockSnap.data()||{};
-  const stockOwner=String(stock.ownerUid||stock.ownerId||"");
-
-  if(stockOwner!==businessUid)throw new Error("Stok bukan milik akun ini");
-
-  const lama=Number(stock.sisa??stock.stok??0);
-  const qty=Number(d.penggunaanProduk.qty)||1;
-
-  if(lama<qty)throw new Error(`Stok kurang. Sisa ${lama}`);
-
-  const baru=lama-qty;
-
-  tx.update(stockRef,{
-   sisa:baru,
-   stok:baru,
-   status:baru>0?"tersedia":"kosong",
-   updatedAt:serverTimestamp()
-  });
-
-  tx.set(notaRef,{
-   ...d,
-   stokDikurangi:true,
-   stokSebelum:lama,
-   stokSesudah:baru
-  });
- });
+ await setDoc(notaRef,d);
 }
 
 function makePrintHTML(d){
@@ -826,13 +582,6 @@ function makePrintHTML(d){
       <td>${rupiah(e.biayaService)}</td>
       <td>${rupiah(e.biayaService)}</td>
      </tr>
-     ${produk.nama?`
-     <tr>
-      <td>${esc(produk.nama)}</td>
-      <td>${produk.qty}</td>
-      <td>${rupiah(produk.modalSatuan)}</td>
-      <td>${rupiah(produk.totalModal)}</td>
-     </tr>`:""}
     </tbody>
    </table>
 
@@ -848,8 +597,9 @@ function makePrintHTML(d){
   <div class="print-status">STATUS: ${esc(d.status.toUpperCase())}</div>
 
   <div class="print-barcode">
-   <svg id="printBarcode"></svg>
-   <div style="font:8px monospace;margin-top:2px">${esc(d.barcode)}</div>
+   <div id="printQr" style="display:flex;justify-content:center"></div>
+   <div style="font:8px monospace;margin-top:3px">${esc(d.nomorNota)}</div>
+   <div style="font-size:7px;margin-top:2px">QR identitas nota servis</div>
   </div>
 
   <div class="print-footer">
@@ -867,14 +617,9 @@ window.cetakTemplate=()=>{
  $("templatePopup").classList.remove("show");
 
  try{
-  JsBarcode("#printBarcode",pendingData.barcode,{
-   format:"CODE128",
-   width:1.5,
-   height:40,
-   displayValue:false,
-   margin:0
-  });
- }catch(e){}
+  $("printQr").innerHTML="";
+  new QRCode($("printQr"),{text:makeQrValue(pendingData.nomorNota),width:110,height:110,correctLevel:QRCode.CorrectLevel.M});
+ }catch(e){console.error("QR gagal dibuat",e);}
 
  setTimeout(()=>window.print(),300);
  pendingData=null;
@@ -883,7 +628,7 @@ window.cetakTemplate=()=>{
 function resetForm(){
  [
   "namaPelanggan","waPelanggan","alamatPelanggan","brandTipe","imei",
-  "kerusakan","cariProduk","produkManual","biayaService","diskon","dp","sandi"
+  "kerusakan","biayaService","diskon","dp","sandi"
  ].forEach(id=>{
   const el=$(id);
   if(el)el.value="";
@@ -893,14 +638,8 @@ function resetForm(){
 
  hapusPola();
 
- $("qtyProduk").value="1";
- selectedProduct=null;
-
- $("produkTerpilih").className="selected empty";
- $("produkTerpilih").textContent="Belum memilih produk.";
-
  $("nomorNota").value=notaBaru();
- $("barcode").value=makeBarcode($("nomorNota").value);
+ $("qrValue").value=makeQrValue($("nomorNota").value);
  $("tanggalNota").value=dateOnly();
 
  setInfo();
@@ -1013,18 +752,17 @@ onAuthStateChanged(auth,async user=>{
   badge.style.display="inline-flex";
 
   $("nomorNota").value=notaBaru();
-  $("barcode").value=makeBarcode($("nomorNota").value);
+  $("qrValue").value=makeQrValue($("nomorNota").value);
   $("tanggalNota").value=dateOnly();
 
   setInfo();
 
   await loadEmployees();
-  await loadProducts();
 
   pageReady=true;
 
   $("saveStatus").textContent=
-   `${products.length} produk • ${employees.length} teknisi • akun terisolasi`;
+   `${employees.length} teknisi • mode nota servis • akun terisolasi`;
 
   setNotice(
    `Akun aktif: ${roleLabel} • Business UID: ${businessUid} • Data dibatasi ke owner ini.`,

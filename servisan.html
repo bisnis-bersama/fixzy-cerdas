@@ -111,17 +111,6 @@ body.dark .popup-box{background:#111827!important;color:#e5e7eb!important;border
 body.dark .template-card{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}
 body.dark .template-preview{background:#111827!important;border-color:#475569!important}
 
-/* QR SERVIS */
-.qr-content{text-align:center;padding:8px 0}
-.qr-display{display:flex;justify-content:center;align-items:center;min-height:220px;margin:12px auto;padding:12px;background:#fff;border:2px dashed #111827;border-radius:12px;max-width:250px}
-.qr-display img,.qr-display canvas{display:block;max-width:100%;height:auto}
-.qr-nota{font-weight:900;font-size:13px;letter-spacing:.5px;margin-top:8px;word-break:break-word}
-.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.whatsapp-btn{background:#16a34a!important;color:#fff!important;border-color:#14532d!important}
-@media(max-width:420px){.qr-actions{grid-template-columns:1fr}}
-.print-qr{text-align:center;padding:8px 0}
-.print-qr img,.print-qr canvas{width:32mm!important;height:32mm!important;image-rendering:pixelated}
-
 #printArea{display:none}
 @media print{
  body{background:#fff}
@@ -152,7 +141,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  .print-total td{border-top:2px solid #111;padding-top:5px!important;font-size:10px;font-weight:900}
  .print-status{text-align:center;padding:6px;border:2px solid #111;border-radius:6px;margin-top:6px;font-weight:900;font-size:9px;text-transform:uppercase}
  .print-barcode{text-align:center;padding:8px 0}
- .print-qr img,.print-qr canvas{width:32mm!important;height:32mm!important}
+ .print-barcode svg{width:90%!important;height:14mm!important}
  .print-footer{text-align:center;border-top:1px dashed #999;padding-top:6px;margin-top:6px;font-size:7px;color:#555;line-height:1.4}
 }
 
@@ -318,7 +307,6 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
    <button class="action primary" type="button" onclick="simpan(true)">🖨️ Simpan & Pilih Template</button>
   </div>
   <div id="saveStatus" class="status-msg">Menunggu akun...</div>
-  <div id="accessNotice" class="notice">Menyiapkan halaman...</div>
  </div>
 </main>
 
@@ -342,27 +330,27 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 </div>
 
-<div class="popup" id="qrPopup">
- <div class="popup-box">
-  <h3>✅ Servisan Berhasil Disimpan</h3>
-  <p style="font-size:12px;color:#667085;margin:0">QR Code ini membuka halaman scan publik FIXZY. Simpan sebagai JPEG, lalu kirim tautan pemeriksaan kepada pelanggan melalui WhatsApp.</p>
-  <div class="qr-content">
-   <div id="savedQr" class="qr-display"><span>Membuat QR Code...</span></div>
-   <div id="savedQrNota" class="qr-nota">-</div>
-   <div id="savedQrStatus" class="status-msg">Menyiapkan QR Code...</div>
+<div class="popup" id="qrPopup" style="z-index:10050">
+ <div class="card" style="width:min(440px,100%);max-height:90vh;overflow:auto;text-align:center;margin:0">
+  <div class="title">QR CEK SERVIS FIXZY</div>
+  <p id="qrNotaLabel" style="font-weight:900;margin:4px 0 12px"></p>
+  <div style="display:flex;justify-content:center;padding:14px;background:#fff;border:2px solid #111827;border-radius:12px;margin:0 auto 12px;width:max-content;max-width:100%">
+   <canvas id="qrCanvas" width="280" height="280" style="width:min(280px,68vw);height:min(280px,68vw);display:block"></canvas>
   </div>
-  <div class="qr-actions">
-   <button class="action secondary" type="button" onclick="downloadSavedQr()">⬇ Simpan QR JPEG</button>
-   <button class="action primary whatsapp-btn" type="button" onclick="selesaiNota()">✅ Selesai & Buka WA</button>
-   <button class="action secondary" type="button" onclick="printSavedNota()">🖨️ Cetak Nota</button>
-   <button class="action secondary" type="button" onclick="tutupQr()">Tutup</button>
+  <p id="qrStatus" class="status-msg">QR memuat...</p>
+  <div class="actions" style="margin-top:12px">
+   <button type="button" class="action secondary" onclick="downloadQR()">Simpan QR JPEG</button>
+   <button type="button" class="action primary" onclick="finishQR()">Selesai</button>
+   <button type="button" class="action secondary full" onclick="sendQRWhatsApp()">Kirim Link ke WhatsApp</button>
+   <button type="button" class="action secondary full" onclick="printAfterQR()">Lanjut Pilih Template Nota</button>
   </div>
  </div>
 </div>
 
 <div id="printArea"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -384,7 +372,7 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 
 let uid=null,businessUid=null,profile={},role="";
-let products=[],employees=[],selectedProduct=null,pendingData=null,savedQrReady=false;
+let products=[],employees=[],selectedProduct=null,pendingData=null;
 let selectedTemplate=2,pageReady=false;
 let polaUrutan=[];
 
@@ -426,15 +414,6 @@ function namaProduk(p){return String(p.nama||p.namaProduk||"-")}
 function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
 function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
-
-// QR hanya menyimpan tautan pemeriksaan, bukan data pribadi pelanggan.
-function makeQrValue(nota){
- const path=location.pathname.replace(/[^/]*$/, "scan-barcode.html");
- return location.origin+path+"?nota="+encodeURIComponent(nota);
-}
-function makeQrPayload(d){
- return makeQrValue(d.nomorNota);
-}
 
 const TEMPLATES=[
  {id:1,name:"Klasik Hitam",desc:"Hitam putih minimalis",color:"black",cls:"black"},
@@ -767,61 +746,43 @@ function buildData(){
 async function saveData(d){
  const notaRef=doc(db,"servis",d.nomorNota);
 
- // 1. Simpan data lengkap ke koleksi servis seperti alur lama.
- //    Jika menggunakan sparepart dari stok Firebase, stok tetap dipotong
- //    dalam transaksi yang sama seperti sebelumnya.
- if(!d.penggunaanProduk || d.penggunaanProduk.sumber!=="firebase"){
+ if(d.penggunaanProduk.sumber!=="firebase"){
   await setDoc(notaRef,{...d,stokDikurangi:false});
- }else{
-  const stockRef=doc(db,"stok",d.penggunaanProduk.produkId);
-
-  await runTransaction(db,async tx=>{
-   const stockSnap=await tx.get(stockRef);
-   if(!stockSnap.exists())throw new Error("Stok tidak ada");
-
-   const stock=stockSnap.data()||{};
-   const stockOwner=String(stock.ownerUid||stock.ownerId||"");
-   if(stockOwner!==businessUid)throw new Error("Stok bukan milik akun ini");
-
-   const lama=Number(stock.sisa??stock.stok??0);
-   const qty=Number(d.penggunaanProduk.qty)||1;
-   if(lama<qty)throw new Error(`Stok kurang. Sisa ${lama}`);
-
-   const baru=lama-qty;
-   tx.update(stockRef,{
-    sisa:baru,
-    stok:baru,
-    status:baru>0?"tersedia":"kosong",
-    updatedAt:serverTimestamp()
-   });
-
-   tx.set(notaRef,{
-    ...d,
-    stokDikurangi:true,
-    stokSebelum:lama,
-    stokSesudah:baru
-   });
-  });
+  return;
  }
 
- // 2. Buat/perbarui salinan publik yang aman untuk halaman cek QR.
- //    Tidak menyimpan nama/WA/alamat pelanggan, IMEI, PIN, atau pola sandi.
- //    ownerUid/uid diperlukan agar cocok dengan isMyData() pada Rules lama.
- const estimasi=d.estimasi||{};
- await setDoc(doc(db,"cek_servis_public",d.nomorNota),{
-  uid:businessUid,
-  ownerUid:businessUid,
-  nomorNota:d.nomorNota,
-  tanggal:d.tanggal||"",
-  namaKonter:d.namaKonter||"FIXZY",
-  brandTipe:d.servisan?.brandTipe||"",
-  jenisKerusakan:d.servisan?.jenisKerusakan||"",
-  namaTeknisi:d.namaTeknisi||"",
-  status:d.status||"masuk",
-  estimasiBiaya:Number(estimasi.biayaService??d.estimasiBiaya??0),
-  dp:Number(estimasi.dp??d.dp??0),
-  sisa:Number(estimasi.sisa??d.sisa??0),
-  updatedAt:serverTimestamp()
+ const stockRef=doc(db,"stok",d.penggunaanProduk.produkId);
+
+ await runTransaction(db,async tx=>{
+  const stockSnap=await tx.get(stockRef);
+
+  if(!stockSnap.exists())throw new Error("Stok tidak ada");
+
+  const stock=stockSnap.data()||{};
+  const stockOwner=String(stock.ownerUid||stock.ownerId||"");
+
+  if(stockOwner!==businessUid)throw new Error("Stok bukan milik akun ini");
+
+  const lama=Number(stock.sisa??stock.stok??0);
+  const qty=Number(d.penggunaanProduk.qty)||1;
+
+  if(lama<qty)throw new Error(`Stok kurang. Sisa ${lama}`);
+
+  const baru=lama-qty;
+
+  tx.update(stockRef,{
+   sisa:baru,
+   stok:baru,
+   status:baru>0?"tersedia":"kosong",
+   updatedAt:serverTimestamp()
+  });
+
+  tx.set(notaRef,{
+   ...d,
+   stokDikurangi:true,
+   stokSebelum:lama,
+   stokSesudah:baru
+  });
  });
 }
 
@@ -904,10 +865,9 @@ function makePrintHTML(d){
 
   <div class="print-status">STATUS: ${esc(d.status.toUpperCase())}</div>
 
-  <div class="print-qr">
-   <div id="printQr" style="display:flex;justify-content:center"></div>
-   <div style="font:8px monospace;margin-top:3px">${esc(d.nomorNota)}</div>
-   <div style="font-size:7px;margin-top:2px">Scan untuk cek status servis</div>
+  <div class="print-barcode">
+   <svg id="printBarcode"></svg>
+   <div style="font:8px monospace;margin-top:2px">${esc(d.barcode)}</div>
   </div>
 
   <div class="print-footer">
@@ -924,51 +884,19 @@ window.cetakTemplate=()=>{
  $("printArea").innerHTML=makePrintHTML(pendingData);
  $("templatePopup").classList.remove("show");
 
- const dataForPrint=pendingData;
- const qrBox=$("printQr");
- qrBox.innerHTML="";
  try{
-  if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat.");
-  new QRCode(qrBox,{text:makeQrPayload(dataForPrint),width:320,height:320,correctLevel:QRCode.CorrectLevel.H});
- }catch(e){console.error(e)}
- setTimeout(()=>{window.print();pendingData=null;},700);
-};
+  JsBarcode("#printBarcode",pendingData.barcode,{
+   format:"CODE128",
+   width:1.5,
+   height:40,
+   displayValue:false,
+   margin:0
+  });
+ }catch(e){}
 
-function tampilkanQrTersimpan(d){
- pendingData=d;savedQrReady=false;
- $("qrPopup").classList.add("show");
- $("savedQr").innerHTML="";
- $("savedQrNota").textContent=d.nomorNota||"-";
- $("savedQrStatus").textContent="Menyiapkan QR Code...";
- try{
-  if(typeof QRCode==="undefined")throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
-  new QRCode($("savedQr"),{text:makeQrPayload(d),width:320,height:320,correctLevel:QRCode.CorrectLevel.H});
-  setTimeout(()=>{
-   const box=$("savedQr");
-   savedQrReady=!!(box.querySelector("canvas")||box.querySelector("img"));
-   $("savedQrStatus").textContent=savedQrReady?"QR siap. Simpan JPEG atau kirim tautan melalui WhatsApp.":"QR belum berhasil dibuat. Periksa koneksi internet.";
-  },500);
- }catch(e){console.error(e);$("savedQrStatus").textContent="Gagal membuat QR: "+e.message;}
-}
-function getSavedQrDataUrl(){
- const box=$("savedQr"),canvas=box.querySelector("canvas");
- if(canvas)return canvas.toDataURL("image/jpeg",0.96);
- const img=box.querySelector("img");
- if(img&&img.complete&&img.naturalWidth){const c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);return c.toDataURL("image/jpeg",0.96);}
- throw new Error("QR belum siap. Tunggu sebentar lalu coba lagi.");
-}
-window.downloadSavedQr=()=>{try{const a=document.createElement("a");a.href=getSavedQrDataUrl();a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.jpg`;document.body.appendChild(a);a.click();a.remove();$("savedQrStatus").textContent="File JPEG diunduh. Di HP, periksa folder Download/Galeri.";}catch(e){alert(e.message)}};
-function nomorWhatsApp(no){let n=String(no||"").replace(/\D/g,"");if(n.startsWith("0"))n="62"+n.slice(1);else if(n.startsWith("8"))n="62"+n;return n;}
-function bukaWhatsAppPelanggan(){
- if(!pendingData)throw new Error("Data nota tidak ditemukan.");
- const d=pendingData,no=nomorWhatsApp(d.pelanggan?.wa);
- if(!no||no.length<9)throw new Error("Nomor WhatsApp pelanggan tidak valid.");
- const pesan=[`Halo ${d.pelanggan?.nama||"Kak"}, servis HP Anda sudah kami catat di ${d.namaKonter||"FIXZY"}.`,"",`Nomor nota: ${d.nomorNota}`,`HP: ${d.servisan?.brandTipe||"-"}`,`Status: ${String(d.status||"masuk").toUpperCase()}`,`Cek status servis: ${makeQrValue(d.nomorNota)}`,"Terima kasih."] .join("\n");
- window.open(`https://wa.me/${no}?text=${encodeURIComponent(pesan)}`,"_blank","noopener");
-}
-window.selesaiNota=()=>{try{bukaWhatsAppPelanggan();}catch(e){alert(e.message)}$("qrPopup").classList.remove("show");pendingData=null;resetForm();};
-window.tutupQr=()=>{$("qrPopup").classList.remove("show");};
-window.printSavedNota=()=>{if(!pendingData)return;$("qrPopup").classList.remove("show");renderTemplateGrid();$("templatePopup").classList.add("show");};
+ setTimeout(()=>window.print(),300);
+ pendingData=null;
+};
 
 function resetForm(){
  [
@@ -997,6 +925,89 @@ function resetForm(){
  hitung();
 }
 
+let qrCurrentData=null, qrPublicUrl="", qrPublicSaved=false;
+
+function publicServisData(d){
+ // Hanya proyeksi aman untuk pelanggan. Jangan masukkan WA, alamat, IMEI, sandi atau pola.
+ return {
+  uid:businessUid,
+  ownerUid:businessUid,
+  ownerId:businessUid,
+  nomorNota:String(d.nomorNota||""),
+  tanggal:String(d.tanggal||""),
+  namaKonter:String(d.namaKonter||"FIXZY"),
+  brandTipe:String(d.servisan?.brandTipe||"-"),
+  jenisKerusakan:String(d.servisan?.jenisKerusakan||"-"),
+  namaTeknisi:String(d.namaTeknisi||"-"),
+  status:String(d.status||"Dalam proses"),
+  estimasiBiaya:Number(d.estimasiBiaya??d.estimasi?.biayaService??0),
+  dp:Number(d.dp??d.estimasi?.dp??0),
+  sisa:Number(d.sisa??d.estimasi?.sisa??0),
+  updatedAt:serverTimestamp()
+ };
+}
+
+async function savePublicServis(d){
+ const publicData=publicServisData(d);
+ if(!publicData.nomorNota) throw new Error("Nomor nota kosong untuk data publik.");
+ // Satu-satunya penulisan proyeksi publik; ID dokumen harus sama dengan nomorNota.
+ await setDoc(doc(db,"cek_servis_public",publicData.nomorNota),publicData,{merge:true});
+}
+
+function getPublicCheckUrl(nota){
+ const url=new URL("scan-barcode.html",window.location.href);
+ url.searchParams.set("nota",nota);
+ return url.href;
+}
+
+async function showQR(d,printAfter){
+ qrCurrentData=d;
+ qrPublicUrl=getPublicCheckUrl(d.nomorNota);
+ $("qrNotaLabel").textContent="Nomor Nota: "+d.nomorNota;
+ $("qrStatus").textContent="Membuat QR...";
+ $("qrPopup").classList.add("show");
+ try{
+  if(!window.QRCode || typeof QRCode.toCanvas!=="function") throw new Error("Library QR tidak termuat. Periksa koneksi internet.");
+  await QRCode.toCanvas($("qrCanvas"),qrPublicUrl,{width:560,margin:2,errorCorrectionLevel:"H",color:{dark:"#000000",light:"#ffffff"}});
+  $("qrStatus").textContent=qrPublicSaved
+   ? "QR siap dipindai. Simpan sebagai JPEG atau kirim tautan cek servis ke pelanggan."
+   : "PERINGATAN: data servis utama tersimpan, tetapi dokumen cek_servis_public gagal disimpan. QR belum bisa menampilkan status sampai izin penulisan koleksi cek_servis_public diperiksa.";
+ }catch(e){
+  console.error(e);
+  $("qrStatus").textContent="QR gagal dibuat: "+e.message;
+ }
+ $("qrPopup").dataset.printAfter=printAfter?"1":"0";
+}
+
+window.downloadQR=function(){
+ const canvas=$("qrCanvas");
+ try{
+  const out=document.createElement("canvas");out.width=canvas.width;out.height=canvas.height;
+  const ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(canvas,0,0);
+  const a=document.createElement("a");a.download="QR-CEK-SERVIS-"+(qrCurrentData?.nomorNota||"FIXZY").replace(/[^a-zA-Z0-9_-]/g,"-")+".jpg";a.href=out.toDataURL("image/jpeg",0.96);a.click();
+ }catch(e){alert("QR belum siap diunduh. "+e.message)}
+};
+
+window.sendQRWhatsApp=function(){
+ if(!qrCurrentData)return;
+ const raw=String(qrCurrentData.pelanggan?.wa||"").replace(/\D/g,"");
+ let phone=raw.startsWith("0")?"62"+raw.slice(1):raw.startsWith("62")?raw:raw;
+ if(!phone){alert("Nomor WhatsApp pelanggan belum tersedia.");return;}
+ const message=`Halo, servis HP dengan nomor nota ${qrCurrentData.nomorNota} sudah tercatat di FIXZY. Cek status servis melalui tautan ini: ${qrPublicUrl}`;
+ window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(message),"_blank","noopener");
+};
+
+window.finishQR=function(){
+ const shouldPrint=$("qrPopup").dataset.printAfter==="1";
+ $("qrPopup").classList.remove("show");
+ if(shouldPrint){pendingData=qrCurrentData;renderTemplateGrid();$("templatePopup").classList.add("show");}
+ else if(qrCurrentData){window.location.href="data-servis.html";}
+};
+window.printAfterQR=function(){
+ $("qrPopup").classList.remove("show");
+ pendingData=qrCurrentData;renderTemplateGrid();$("templatePopup").classList.add("show");
+};
+
 async function executeSave(printAfter){
  if(!pageReady){
   setNotice("Halaman belum siap atau akun tidak memiliki akses.","error");
@@ -1017,30 +1028,35 @@ async function executeSave(printAfter){
   $("saveStatus").textContent="Menyimpan...";
   setNotice("Menyimpan data servisan...");
 
-  // SIMPAN KE FIREBASE menggunakan logika asli, termasuk transaksi pengurangan stok.
+  // SIMPAN DATA UTAMA KE KOLEKSI ASLI (aturan dan struktur servis tidak diubah).
   await saveData(d);
 
-  // Salinan terbatas untuk halaman pemeriksaan publik. Tidak memuat nama/WA/alamat,
-  // IMEI, PIN, atau pola sandi. Data lengkap tetap berada di koleksi servis.
-  await setDoc(doc(db,"cek_servis_public",d.nomorNota),{
-   nomorNota:d.nomorNota,
-   tanggal:d.tanggal,
-   namaKonter:d.namaKonter||"FIXZY",
-   brandTipe:d.servisan?.brandTipe||"",
-   jenisKerusakan:d.servisan?.jenisKerusakan||"",
-   namaTeknisi:d.namaTeknisi||"",
-   status:d.status||"masuk",
-   estimasiBiaya:d.estimasi?.biayaService??0,
-   dp:d.estimasi?.dp??0,
-   sisa:d.estimasi?.sisa??0,
-   updatedAt:serverTimestamp()
-  });
+  // Simpan proyeksi aman untuk halaman cek publik tepat satu kali.
+  // Jika rules menolak proyeksi, data servis utama tetap dianggap tersimpan;
+  // jangan memaksa pengguna menyimpan ulang transaksi yang sudah berhasil.
+  try{
+   await savePublicServis(d);
+   qrPublicSaved=true;
+  }catch(publicError){
+   qrPublicSaved=false;
+   console.error("Gagal menyimpan cek_servis_public:",publicError);
+  }
 
   $("saveStatus").textContent=`Berhasil • ${d.nomorNota}`;
-  setNotice(`Servisan ${d.nomorNota} berhasil disimpan. QR pemeriksaan siap dibuat.`,"ok");
-  pendingData=d;
-  tampilkanQrTersimpan(d);
-  if(printAfter){renderTemplateGrid();}
+  setNotice(
+   qrPublicSaved
+    ? `Servisan ${d.nomorNota} tersimpan dan data cek publik berhasil dibuat.`
+    : `Servisan ${d.nomorNota} tersimpan, tetapi data cek publik ditolak Rules Firebase. Periksa izin create/update cek_servis_public; jangan ubah Rules servis yang sudah ada.`,
+   qrPublicSaved?"ok":"error"
+  );
+
+  /*
+   * TOMBOL:
+   * 💾 Simpan
+   * Setelah berhasil langsung ke DATA SERVIS.
+   */
+  // Tampilkan QR setelah penyimpanan; tombol pada popup menentukan langkah berikutnya.
+  await showQR(d,printAfter);
 
  }catch(e){
   console.error(e);

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#111111">
+<title>FIXZY | Produk Spreadsheet</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f5f7fb;--card:#fff;--line:#e5e7eb;--y:#ffc107;--txt:#172033;--muted:#64748b;--green:#16a34a;--red:#dc2626}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif}
+body{background:linear-gradient(180deg,#fff 0,#f5f7fb 250px)}
+button,input{font:inherit}button{cursor:pointer}
+.header{position:sticky;top:0;z-index:20;background:#111827;border-bottom:1px solid #111827;box-shadow:0 2px 12px #17203322}
+.header-in{max-width:1180px;margin:auto;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}.logo{width:42px;height:42px;border-radius:12px;object-fit:cover;background:#fff}
+.brand h1{font-size:18px;font-weight:900;color:#fff}.brand p{font-size:10px;color:#cbd5e1;margin-top:3px}
+.head-btn{height:40px;border:0;border-radius:10px;background:#fff;color:#111827;padding:0 12px;font-size:13px;font-weight:800}.head-btn.refresh{background:var(--y)}
+.container{width:min(1180px,100%);margin:auto;padding:16px 14px 70px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:14px;box-shadow:0 5px 18px #17203308}
+.title{font-size:15px;font-weight:900;margin-bottom:5px}.sub{font-size:11px;color:var(--muted);line-height:1.5}
+.sheetbox{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:12px}
+.sheetbox input{height:46px;width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:0 13px;outline:none}
+.sheetbox input:focus{border-color:#f59e0b;box-shadow:0 0 0 3px #f59e0b18}
+.btn{min-height:44px;border:0;border-radius:11px;padding:10px 15px;font-weight:900}.primary{background:linear-gradient(135deg,#ffc107,#f59e0b);color:#111827}.dark{background:#111827;color:#fff}.green{background:var(--green);color:#fff}
+.msg{display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:11px;white-space:pre-line;line-height:1.5;overflow-wrap:anywhere}.msg.show{display:block}.msg.ok{color:#166534;background:#f0fdf4;border:1px solid #bbf7d0}.msg.err{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca}.msg.info{color:#92400e;background:#fffbeb;border:1px solid #fde68a}
+.saved{margin-top:10px;padding:10px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);font-size:10px;color:#475569;overflow-wrap:anywhere}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.search{flex:1;min-width:210px;height:43px;border:1px solid #cbd5e1;border-radius:11px;padding:0 12px;outline:none}
+.count{font-size:11px;color:var(--muted);font-weight:800}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;min-width:760px;border-collapse:collapse}th{padding:11px;background:#f8fafc;color:#475569;font-size:10px;text-align:left;position:sticky;top:0}td{padding:10px;border-bottom:1px solid #edf0f3;font-size:11px;vertical-align:middle}.price{font-weight:900;color:#b45309}.supplier{font-weight:800;color:#475569}
+.mobile-list{display:none;gap:9px}.m-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 4px 12px #17203308}.m-name{font-size:12px;font-weight:900;line-height:1.35}.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.m-grid div{background:#f8fafc;border-radius:8px;padding:8px;font-size:10px}.m-grid b{display:block;color:#94a3b8;font-size:8px;margin-bottom:2px}
+.loading{display:none;position:fixed;inset:0;z-index:100;background:#11182766;align-items:center;justify-content:center}.loading.show{display:flex}.loader{background:#fff;border-radius:16px;padding:23px;text-align:center}.spin{width:30px;height:30px;border:4px solid #e5e7eb;border-top-color:#f59e0b;border-radius:50%;animation:s .8s linear infinite;margin:auto auto 10px}@keyframes s{to{transform:rotate(360deg)}}
+@media(max-width:600px){.header-in{padding:9px 10px}.brand h1{font-size:16px}.brand p{font-size:9px}.head-btn{height:38px;padding:0 9px}.container{padding:10px}.sheetbox{grid-template-columns:1fr}.table-wrap{display:none}.mobile-list{display:grid}.toolbar{display:grid;grid-template-columns:1fr}.search{width:100%}.modal-actions{grid-template-columns:1fr}.card{padding:12px}}
+
+.multilinks{display:grid;gap:9px;margin-top:12px}
+.linkrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.linkrow input{height:44px;width:100%;border:1px solid #cbd5e1;border-radius:11px;padding:0 12px;outline:none}
+.linkrow input:focus{border-color:#f59e0b;box-shadow:0 0 0 3px #f59e0b18}
+.linknum{font-size:10px;font-weight:900;color:#64748b;margin-bottom:3px}
+.link-remove{height:44px;border:0;border-radius:10px;padding:0 12px;background:#fee2e2;color:#b91c1c;font-weight:900}
+@media(max-width:600px){.linkrow{grid-template-columns:1fr auto}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-in">
+    <div class="brand">
+      <img src="logo.png" class="logo" onerror="this.style.display='none'">
+      <div><h1>FIXZY</h1><p>Produk dari Spreadsheet</p></div>
+    </div>
+    <button class="head-btn refresh" id="refreshBtn" onclick="location.reload()">↻ Refresh</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="card">
+    <div class="title">🔗 Hubungkan Spreadsheet Produk</div>
+    <div class="sub">Firebase hanya menyimpan link spreadsheet. Nama produk, harga, supplier, dan stok dibaca langsung dari Spreadsheet.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn dark" id="addLinkBtn" onclick="addLinkRow()">＋ Tambah Link</button>
+      <button class="btn primary" id="saveBtn" onclick="saveSpreadsheet()">💾 SIMPAN SEMUA LINK</button>
+    </div>
+    <div id="linkRows" class="multilinks" style="display:none"></div>
+    <div id="msg" class="msg"></div>
+    <div id="saved" class="saved" style="display:none"></div>
+  </section>
+
+  <section class="card">
+    <div class="toolbar">
+      <input id="search" class="search" placeholder="🔎 Cari nama produk / supplier...">
+      <span id="count" class="count">0 produk</span>
+      <button class="btn dark" onclick="loadSpreadsheet()">↻ RELOAD DATA</button>
+    </div>
+    <div id="listMsg" class="sub">Belum ada Spreadsheet yang dihubungkan.</div>
+
+    <div class="table-wrap" style="margin-top:11px">
+      <table>
+        <thead><tr>
+          <th>Nama Produk</th><th>Supplier</th><th>Harga Tunai</th><th>Harga Tempo</th><th>Stok</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="mobileList" class="mobile-list" style="margin-top:11px"></div>
+  </section>
+</main>
+
+<div class="loading" id="loading"><div class="loader"><div class="spin"></div><b id="loadingText">Memuat...</b></div></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",
+  authDomain:"fixzy-update.firebaseapp.com",
+  projectId:"fixzy-update",
+  storageBucket:"fixzy-update.firebasestorage.app",
+  messagingSenderId:"995892519622",
+  appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"
+};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+let uid=null,products=[];
+
+const $=id=>document.getElementById(id);
+const money=n=>"Rp "+Number(n||0).toLocaleString("id-ID");
+const clean=s=>String(s??"").trim().toLowerCase().replace(/[\s_\-()./]+/g,"");
+const num=s=>{
+  if(typeof s==="number")return s;
+  let x=String(s??"").trim().replace(/[^\d,.-]/g,"");
+  if(!x)return 0;
+  const dots=(x.match(/\./g)||[]).length;
+  const commas=(x.match(/,/g)||[]).length;
+  if(dots&&commas){
+    const lastDot=x.lastIndexOf(".");
+    const lastComma=x.lastIndexOf(",");
+    if(lastComma>lastDot){
+      const dec=x.length-lastComma-1;
+      x=dec<=2?x.replace(/\./g,"").replace(",","."):x.replace(/,/g,"").replace(/\./g,"");
+    }else{
+      const dec=x.length-lastDot-1;
+      x=dec<=2?x.replace(/,/g,""):x.replace(/,/g,"").replace(/\./g,"");
+    }
+  }else if(commas){
+    const parts=x.split(",");
+    x=parts.length===2 && parts[1].length<=2 ? x.replace(",",".") : x.replace(/,/g,"");
+  }else if(dots){
+    const parts=x.split(".");
+    x=parts.length===2 && parts[1].length<=2 ? x : x.replace(/\./g,"");
+  }
+  const n=parseFloat(x);
+  return Number.isFinite(n)?n:0;
+};
+function pick(o,keys){for(const k of keys){const v=o[clean(k)];if(v!==undefined&&String(v).trim()!=="")return v}return""}
+function showLoading(v,t="Memuat..."){$("loadingText").textContent=t;$("loading").classList.toggle("show",v)}
+function message(t,type="info"){$("msg").textContent=t;$("msg").className="msg show "+type}
+function parseCSV(text){
+  const out=[];let row=[],cell="",q=false;text=text.replace(/^\uFEFF/,"");
+  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];
+    if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}
+    else if(c===","&&!q){row.push(cell);cell=""}
+    else if((c==="\n"||c==="\r")&&!q){if(c==="\r"&&n==="\n")i++;row.push(cell);cell="";if(row.some(v=>String(v).trim()))out.push(row);row=[]}
+    else cell+=c;
+  }
+  if(cell!==""||row.length){row.push(cell);if(row.some(v=>String(v).trim()))out.push(row)}
+  return out;
+}
+function normalize(rows){
+  if(!rows.length)throw Error("Spreadsheet kosong.");
+  const h=rows[0].map(clean),data=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i],o={};h.forEach((k,j)=>o[k]=r[j]??"");
+    const nama=pick(o,["nama barang","nama produk","nama","produk","product","barang"]);
+    if(!nama)continue;
+
+    // Struktur Spreadsheet A Yudi:
+    // A = Barang/kode, B = Nama Barang, C = kosong,
+    // D = modal, E = jual, F = supplier, G = stock.
+    // Utamakan nama kolom; posisi kolom menjadi fallback agar
+    // harga tetap terbaca walaupun header CSV berubah sedikit.
+    const modalValue=pick(o,["modal","harga modal","harga beli","harga modal produk","hpp","harga pokok"]);
+    const jualValue=pick(o,["jual","harga jual","harga jual produk","harga penjualan"]);
+    const supplier=pick(o,["supplier","suplier","nama supplier","nama suplier","vendor"]);
+    const stokValue=pick(o,["stock","stok","sisa stok","sisa","jumlah stok"]);
+
+    const modal=num(modalValue!==""?modalValue:(r[3]??""));
+    const jual=num(jualValue!==""?jualValue:(r[4]??""));
+    const stok=num(stokValue!==""?stokValue:(r[6]??""));
+    const kode=pick(o,["kode","sku","kode produk","id"]);
+    data.push({id:crypto.randomUUID(),kode,nama:String(nama).trim(),supplier:String(supplier||"").trim(),modal,jual,stok:Math.max(0,stok)});
+  }
+  if(!data.length)throw Error("Tidak ada produk yang dikenali. Pastikan ada kolom Nama Produk.");
+  return data;
+}
+function csvUrlFromSheet(url){
+  const u=new URL(url);
+  const host=u.hostname.toLowerCase();
+  if(!host.includes("docs.google.com")||!u.pathname.includes("/spreadsheets/"))return url;
+
+  const gid=u.searchParams.get("gid") ||
+    (url.match(/[?#&]gid=([^&#]+)/i)||[])[1] || "0";
+
+  // Link Publish to web: /spreadsheets/d/e/2PACX-.../pubhtml
+  const pub=u.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub(?:html)?/i);
+  if(pub){
+    return `https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv`;
+  }
+
+  // Link spreadsheet biasa: /spreadsheets/d/FILE_ID/edit
+  const id=u.pathname.match(/\/spreadsheets\/d\/([^/]+)/i);
+  if(id){
+    return `https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`;
+  }
+
+  return url;
+}
+async function readSheet(url){
+  const csv=csvUrlFromSheet(url);
+  let res;
+  try{
+    res=await fetch(csv,{cache:"no-store"});
+  }catch(e){
+    throw Error("Tidak bisa mengakses Google Sheets. Pastikan link sudah Publish to web dan dapat dibuka tanpa login.");
+  }
+  if(!res.ok)throw Error("Google Sheets mengembalikan HTTP "+res.status);
+  const text=await res.text();
+  if(!text||text.trim().length<2)throw Error("Data spreadsheet kosong.");
+  if(/<html|<!doctype/i.test(text.slice(0,500))){
+    throw Error("Google tidak mengirim data CSV. Pastikan Spreadsheet sudah Publish to web.");
+  }
+  return normalize(parseCSV(text));
+}
+function getLinkInputs(){
+  return [...document.querySelectorAll("#linkRows .sheet-link")];
+}
+
+function addLinkRow(value=""){
+  const box=$("linkRows");
+  box.style.display="grid";
+
+  const row=document.createElement("div");
+  row.className="linkrow";
+
+  const wrap=document.createElement("div");
+  const num=document.createElement("div");
+  num.className="linknum";
+  num.textContent="Spreadsheet "+(box.children.length+1);
+
+  const input=document.createElement("input");
+  input.className="sheet-link";
+  input.type="url";
+  input.placeholder="Tempel link Google Sheets / link Publish CSV";
+  input.value=value||"";
+
+  wrap.appendChild(num);
+  wrap.appendChild(input);
+
+  const del=document.createElement("button");
+  del.className="link-remove";
+  del.type="button";
+  del.textContent="Hapus";
+  del.onclick=()=>{
+    row.remove();
+    renumberLinks();
+    if(!box.children.length)box.style.display="none";
+  };
+
+  row.appendChild(wrap);
+  row.appendChild(del);
+  box.appendChild(row);
+  renumberLinks();
+}
+
+function renumberLinks(){
+  [...document.querySelectorAll("#linkRows .linkrow")].forEach((row,i)=>{
+    const n=row.querySelector(".linknum");
+    if(n)n.textContent="Spreadsheet "+(i+1);
+  });
+}
+
+window.addLinkRow=addLinkRow;
+
+async function saveSpreadsheet(){
+  if(!uid){message("Belum login Firebase.","err");return}
+
+  const inputs=getLinkInputs();
+  const links=inputs.map(x=>x.value.trim()).filter(Boolean);
+
+  if(!links.length){
+    message("Belum ada link Spreadsheet. Tekan ＋ Tambah Link terlebih dahulu.","err");
+    return;
+  }
+
+  const invalid=links.find(x=>!/^https?:\/\//i.test(x));
+  if(invalid){
+    message("Ada link Spreadsheet yang tidak valid.","err");
+    return;
+  }
+
+  showLoading(true,"Menyimpan semua link...");
+  try{
+    // spreadsheetLinks adalah format baru multi-link.
+    // spreadsheetUrl tetap disimpan agar data lama tidak hilang.
+    await setDoc(
+      doc(db,"pengaturan_spreadsheet",uid),
+      {
+        uid,
+        spreadsheetLinks:links,
+        spreadsheetUrl:links[0],
+        updatedAt:serverTimestamp()
+      },
+      {merge:true}
+    );
+
+    message(
+      `${links.length} link Spreadsheet berhasil disimpan di Firebase.\n`+
+      "Semua produk dari link yang tersimpan akan dibaca saat Reload Data.",
+      "ok"
+    );
+
+    await loadSpreadsheet();
+  }catch(e){
+    message("Gagal menyimpan link:\n"+e.message,"err");
+  }finally{
+    showLoading(false);
+  }
+}
+
+async function getSavedLinks(){
+  const snap=await getDoc(doc(db,"pengaturan_spreadsheet",uid));
+  if(!snap.exists())return [];
+
+  const d=snap.data()||{};
+  let links=Array.isArray(d.spreadsheetLinks)
+    ? d.spreadsheetLinks.map(x=>String(x||"").trim()).filter(Boolean)
+    : [];
+
+  // Kompatibilitas data lama: spreadsheetUrl tetap dibaca.
+  if(!links.length && d.spreadsheetUrl){
+    links=[String(d.spreadsheetUrl).trim()].filter(Boolean);
+  }
+
+  return [...new Set(links)];
+}
+
+async function loadSpreadsheet(){
+  if(!uid){
+    $("listMsg").textContent="Menunggu login Firebase...";
+    return;
+  }
+
+  showLoading(true,"Membaca semua Spreadsheet...");
+
+  try{
+    const links=await getSavedLinks();
+
+    if(!links.length){
+      products=[];
+      render();
+      $("listMsg").textContent="Belum ada Spreadsheet yang dihubungkan.";
+      return;
+    }
+
+    // Tampilkan kembali link yang tersimpan.
+    $("linkRows").innerHTML="";
+    $("linkRows").style.display="grid";
+    links.forEach(link=>addLinkRow(link));
+
+    const results=[];
+    const errors=[];
+
+    for(let i=0;i<links.length;i++){
+      try{
+        const rows=await readSheet(links[i]);
+
+        // Supplier tetap mengikuti kolom supplier dari masing-masing Spreadsheet.
+        // Jika suatu sheet tidak mengisi supplier, gunakan label sumber sheet.
+        const sourceLabel=`Spreadsheet ${i+1}`;
+
+        rows.forEach(p=>{
+          if(!p.supplier)p.supplier=sourceLabel;
+          p.sourceSpreadsheet=links[i];
+          p.sourceIndex=i+1;
+          results.push(p);
+        });
+      }catch(e){
+        errors.push(`Spreadsheet ${i+1}: ${e.message}`);
+      }
+    }
+
+    products=results;
+    render();
+
+    if(errors.length){
+      $("listMsg").textContent=
+        `Berhasil membaca ${results.length} produk dari ${links.length} Spreadsheet, `+
+        `tetapi ada ${errors.length} link yang gagal dibaca.\n`+
+        errors.join("\n");
+      message(
+        "Sebagian Spreadsheet gagal dibaca:\n"+errors.join("\n")+
+        "\n\nPastikan setiap Spreadsheet sudah dipublish sebagai CSV dan dapat dibuka tanpa login.",
+        "err"
+      );
+    }else{
+      $("listMsg").textContent=
+        `Semua ${links.length} Spreadsheet berhasil dibaca. `+
+        `${results.length} produk digabung dalam satu daftar. `+
+        "Data tetap dibaca langsung dari Spreadsheet.";
+    }
+  }catch(e){
+    products=[];
+    render();
+    $("listMsg").textContent="Gagal membaca Spreadsheet: "+e.message;
+    message("Gagal membaca data:\n"+e.message,"err");
+  }finally{
+    showLoading(false);
+  }
+}
+
+function render(){
+  const q=$("search").value.toLowerCase().trim();
+  const arr=products.filter(p=>[p.nama,p.supplier,p.kode].join(" ").toLowerCase().includes(q));
+  $("count").textContent=`${arr.length} produk`;
+  $("tbody").innerHTML=arr.map(rowHTML).join("")||'<tr><td colspan="5" style="text-align:center;padding:25px;color:#777">Tidak ada produk.</td></tr>';
+  $("mobileList").innerHTML=arr.map(mobileHTML).join("")||'<div class="sub">Tidak ada produk.</div>';
+}
+function rowHTML(p){
+  return `<tr>
+    <td><b>${esc(p.nama)}</b><div style="font-size:9px;color:#94a3b8">${esc(p.kode||"")}</div></td>
+    <td class="supplier">${esc(p.supplier||"-")}</td>
+    <td class="price">${money(p.modal)}</td>
+    <td class="price">${money(p.jual)}</td>
+    <td>${p.stok}</td>
+  </tr>`;
+}
+function mobileHTML(p){
+  return `<div class="m-card">
+    <div class="m-name">${esc(p.nama)}</div><div style="font-size:9px;color:#94a3b8">${esc(p.supplier||"-")}</div>
+    <div class="m-grid"><div><b>Harga Tunai</b><span class="price">${money(p.modal)}</span></div><div><b>Harga Tempo</b><span class="price">${money(p.jual)}</span></div><div><b>Stok</b>${p.stok}</div><div><b>Kode</b>${esc(p.kode||"-")}</div></div>
+  </div>`;
+}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+$("search").addEventListener("input",render);
+onAuthStateChanged(auth,async user=>{
+  if(!user){
+    message("Session akun FIXZY belum aktif. Halaman ini tidak meminta login ulang. Buka Halaman 1 dari aplikasi FIXZY yang sudah login.","err");
+    return;
+  }
+  uid=user.uid;
+  const akunInfo=user.email ? `Akun aktif: ${user.email}` : `Akun aktif: ${user.uid}`;
+  $("saved").style.display="block";
+  $("saved").textContent=akunInfo;
+  const links=await getSavedLinks().catch(()=> []);
+  if(links.length){
+    $("linkRows").innerHTML="";
+    $("linkRows").style.display="grid";
+    links.forEach(link=>addLinkRow(link));
+    $("saved").style.display="block";
+    $("saved").textContent=`${links.length} Spreadsheet tersimpan`;
+    loadSpreadsheet();
+  }
+});
+window.saveSpreadsheet=saveSpreadsheet;window.loadSpreadsheet=loadSpreadsheet;
+</script>
+</body>
+</html>

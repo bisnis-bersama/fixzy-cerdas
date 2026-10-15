@@ -930,9 +930,9 @@ let qrCurrentData=null, qrPublicUrl="", qrPublicSaved=false;
 function publicServisData(d){
  // Hanya proyeksi aman untuk pelanggan. Jangan masukkan WA, alamat, IMEI, sandi atau pola.
  return {
-  uid:businessUid,
-  ownerUid:businessUid,
-  ownerId:businessUid,
+  uid:String(d.uid||businessUid||uid||""),
+  ownerUid:String(d.ownerUid||businessUid||d.uid||uid||""),
+  ownerId:String(d.ownerId||businessUid||d.ownerUid||d.uid||uid||""),
   nomorNota:String(d.nomorNota||""),
   tanggal:String(d.tanggal||""),
   namaKonter:String(d.namaKonter||"FIXZY"),

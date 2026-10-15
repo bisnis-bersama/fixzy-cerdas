@@ -111,45 +111,6 @@ body.dark .popup-box{background:#111827!important;color:#e5e7eb!important;border
 body.dark .template-card{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}
 body.dark .template-preview{background:#111827!important;border-color:#475569!important}
 
-#printArea{display:none}
-@media print{
- body{background:#fff}
- header,main,.popup{display:none!important}
- #printArea{display:block!important}
- @page{margin:0}
- .paper-58{width:58mm;padding:3mm;font:8.5px Arial;color:#111}
- .paper-80{width:80mm;padding:4mm;font:9px Arial;color:#111}
- .paper-5x8{width:5in;height:8in;padding:6mm;font:10px Arial;color:#111;border:1px solid #eee}
- .print-modern{border-radius:0}
- .print-modern.shop-header{padding:10px;border-radius:8px 8px 0 0;text-align:center}
- .print-modern.blue .shop-header{background:#2563eb;color:#fff}
- .print-modern.yellow .shop-header{background:#facc15;color:#111}
- .print-modern.green .shop-header{background:#16a34a;color:#fff}
- .print-modern.black .shop-header{background:#111827;color:#fff}
- .print-modern.shop-header h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.5px}
- .print-modern.shop-header div{font-size:7.5px;opacity:.9;margin-top:2px}
- .print-meta{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;padding:6px 0;border-bottom:1px dashed #999;font-size:8px}
- .print-section{padding:6px 0;border-bottom:1px dashed #999}
- .print-section b.tt{display:block;font-size:8px;text-transform:uppercase;margin-bottom:3px;color:#555;letter-spacing:.5px}
- .print-grid{display:grid;grid-template-columns:65px 1fr;gap:2px;font-size:8px}
- .print-items{width:100%;border-collapse:collapse;margin-top:4px}
- .print-items th{font-size:7px;text-transform:uppercase;background:#f3f4f6;padding:3px;text-align:left}
- .print-items td{font-size:8px;padding:3px;border-bottom:1px solid #eee}
- .print-money{width:100%;border-collapse:collapse}
- .print-money td{padding:2px 0;font-size:8px}
- .print-money td:last-child{text-align:right;font-weight:700}
- .print-total td{border-top:2px solid #111;padding-top:5px!important;font-size:10px;font-weight:900}
- .print-status{text-align:center;padding:6px;border:2px solid #111;border-radius:6px;margin-top:6px;font-weight:900;font-size:9px;text-transform:uppercase}
- .print-barcode{text-align:center;padding:8px 0;margin:8px auto;max-width:100%;break-inside:avoid}
- .qr-ticket{border:2px solid #ffc107;border-radius:12px;padding:8px;margin:0 auto;max-width:260px;background:#fff;color:#111}
- .qr-heading{font-size:10px;font-weight:900;letter-spacing:.5px;background:#111;color:#ffc107;border-radius:6px;padding:6px;margin-bottom:7px}
- .qr-frame{border:2px solid #ffc107;border-radius:8px;padding:6px;display:inline-block;line-height:0}
- .print-barcode canvas,.print-barcode img{width:42mm!important;height:42mm!important;max-width:100%;image-rendering:pixelated}
- .qr-number{background:#111;color:#ffc107;border-radius:7px;padding:6px;margin-top:6px;font-weight:900;font-size:12px;letter-spacing:1px}
- .qr-hint{font-size:8px;margin-top:5px;color:#333;line-height:1.3}
- .print-footer{text-align:center;border-top:1px dashed #999;padding-top:6px;margin-top:6px;font-size:7px;color:#555;line-height:1.4}
-}
-
 @media(max-width:650px){
  .kelengkapan-grid{grid-template-columns:1fr}
  .pattern-grid{max-width:180px}
@@ -166,6 +127,15 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  header{height:68px}
  main{padding-top:80px}
 }
+
+/* QR NOTA SERVIS FIXZY — desain hitam/kuning, tanpa fitur cetak */
+.qr-ticket{width:min(680px,100%);max-height:94vh;overflow:auto;background:#fff;border:5px solid #ffc107;border-radius:20px;padding:12px;color:#111;box-shadow:0 0 0 4px #111;}
+.qr-ticket-head{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#080808;color:#fff;border-radius:12px;padding:14px;border-bottom:4px solid #ffc107}
+.qr-brand{display:flex;flex-direction:column;line-height:1}.qr-brand strong{font-size:clamp(22px,5vw,38px);font-style:italic;color:#ffc107;letter-spacing:1px}.qr-brand span{font-weight:900;letter-spacing:4px;font-size:12px}.qr-brand small{margin-top:8px;color:#ffc107;font-size:8px;font-weight:800}
+.qr-head-title{text-align:right;display:flex;flex-direction:column;gap:4px}.qr-head-title strong{font-size:clamp(18px,4vw,28px);color:#ffc107}.qr-head-title span{font-size:9px;font-weight:900}
+.qr-main{background:#fff;border:3px solid #ffc107;border-radius:14px;margin-top:12px;padding:18px 10px 8px;text-align:center}.qr-frame{width:min(350px,100%);margin:auto;border:5px solid #ffc107;border-radius:16px;padding:12px;background:#fff}.qr-frame canvas{display:block;width:100%;height:auto;image-rendering:pixelated}.qr-number{display:flex;flex-direction:column;background:#080808;color:#ffc107;border-radius:14px;margin-top:10px;padding:8px}.qr-number span{font-size:12px;color:#fff;font-weight:900}.qr-number strong{font-size:clamp(23px,6vw,38px);letter-spacing:4px;overflow-wrap:anywhere}.qr-caption{font-size:14px;line-height:1.4;margin:8px 0 0}.qr-status{font-size:11px;text-align:center;padding:8px;color:#333}.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.qr-actions button{border:2px solid #111;background:#ffc107;color:#111;border-radius:9px;padding:12px 8px;font-weight:900;cursor:pointer}.qr-actions .wa-action{background:#111;color:#ffc107;grid-column:1/-1}
+@media(max-width:480px){.qr-ticket{padding:7px;border-width:3px}.qr-ticket-head{padding:10px}.qr-brand small{font-size:6px}.qr-head-title span{font-size:7px}.qr-main{padding:10px 5px 5px}.qr-frame{padding:7px;border-width:3px}.qr-caption{font-size:12px}.qr-actions button{font-size:11px;padding:10px 5px}}
+
 </style>
 </head>
 
@@ -196,7 +166,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   <div class="info">
    <div class="info-row"><span>Nomor Nota</span><b id="infoNota">-</b></div>
    <div class="info-row"><span>Tanggal</span><b id="infoTanggal">-</b></div>
-   <div class="info-row"><span>Barcode</span><b id="infoBarcode">-</b></div>
+   <div class="info-row"><span>QR Cek Servis</span><b>Otomatis dibuat setelah disimpan</b></div>
   </div>
  </div>
 
@@ -306,38 +276,36 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 
  <div class="card">
-  <div class="title">Simpan & Cetak - TEMPLATE MODERN</div>
+  <div class="title">Simpan Servisan</div>
   <div class="actions">
-   <button class="action secondary" type="button" onclick="simpan(false)">💾 Simpan</button>
-   <button class="action primary" type="button" onclick="simpan(true)">🖨️ Simpan & Pilih Template</button>
+   <button class="action primary full" type="button" onclick="simpan()">💾 Simpan Servisan &amp; Buat QR</button>
   </div>
   <div id="saveStatus" class="status-msg">Menunggu akun...</div>
  </div>
 </main>
 
-<div class="popup" id="templatePopup">
- <div class="popup-box">
-  <h3>🎨 Pilih Template Nota - Modern Warna</h3>
-  <p style="font-size:11px;color:#667085;margin:0 0 10px">Pilih desain + ukuran kertas. Template tidak disimpan ke Firebase.</p>
-  <div class="template-grid" id="templateGrid"></div>
-  <div style="margin-top:12px">
-   <label>UKURAN KERTAS</label>
-   <select id="paperSize">
-    <option value="80">80mm Thermal (Umum Konter)</option>
-    <option value="58">58mm Thermal (Kecil)</option>
-    <option value="5x8">5 x 8 inch (Kertas Nota 5x8)</option>
-   </select>
+<div class="popup" id="qrPopup" style="z-index:10050">
+ <div class="qr-ticket">
+  <div class="qr-ticket-head">
+   <div class="qr-brand"><strong>FIXZY</strong><span>BUSINESS</span><small>SISTEM KASIR &amp; MANAJEMEN KONTER</small></div>
+   <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>SCAN QR UNTUK MELIHAT DETAIL SERVIS</span></div>
   </div>
-  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-   <button class="action secondary" type="button" onclick="tutupTemplate()">Batal</button>
-   <button class="action primary" type="button" onclick="cetakTemplate()">🖨️ Cetak Sekarang</button>
+  <div class="qr-main">
+   <div class="qr-frame"><canvas id="qrCanvas" width="560" height="560"></canvas>
+    <div class="qr-number"><span>NO. NOTA SERVIS</span><strong id="qrNotaNumber">-</strong></div>
+   </div>
+   <p class="qr-caption">Scan QR ini untuk melihat detail servis<br>secara online tanpa perlu login.</p>
+  </div>
+  <div id="qrStatus" class="qr-status">QR memuat...</div>
+  <div class="qr-actions">
+   <button type="button" onclick="downloadQR()">Simpan QR JPEG</button>
+   <button type="button" class="wa-action" onclick="sendQRWhatsApp()">Kirim Link ke WhatsApp Pelanggan</button>
+   <button type="button" onclick="finishQR()">Selesai</button>
   </div>
  </div>
 </div>
 
-<div id="printArea"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -367,31 +335,6 @@ const $=id=>document.getElementById(id);
 const num=id=>Number(String($(id)?.value||"").replace(/[^\d]/g,""))||0;
 const rupiah=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-
-
-function nomorWaInternasional(value){
- const digits=String(value||"").replace(/\\D/g,"");
- if(!digits)return "";
- if(digits.startsWith("0"))return "62"+digits.slice(1);
- if(digits.startsWith("62"))return digits;
- return digits;
-}
-function bukaWaPelanggan(nomor,pesan=""){
- const wa=nomorWaInternasional(nomor);
- if(!wa)return;
- const url="https://wa.me/"+wa+(pesan?"?text="+encodeURIComponent(pesan):"");
- window.open(url,"_blank","noopener");
-}
-window.bukaWaPelanggan=bukaWaPelanggan;
-
-window.kirimWaNota=()=>{
- const nomor=$("waPelanggan").value.trim();
- if(!nomor){alert("Isi nomor WhatsApp pelanggan terlebih dahulu.");$("waPelanggan").focus();return;}
- const nota=$("nomorNota").value||"-";
- const pesan="Halo "+($("namaPelanggan").value.trim()||"Pelanggan")+
- ", berikut informasi nota servis "+nota+". Kode servis: "+($("barcode").value||"-")+".";
- bukaWaPelanggan(nomor,pesan);
-};
 
 function setNotice(text,type=""){
  let el=$("accessNotice");
@@ -427,40 +370,9 @@ function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
 function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
 
-const TEMPLATES=[
- {id:1,name:"Klasik Hitam",desc:"Hitam putih minimalis",color:"black",cls:"black"},
- {id:2,name:"Modern Biru",desc:"🔥 Populer - Biru profesional",color:"#2563eb",cls:"blue"},
- {id:3,name:"Modern Kuning",desc:"Kuning cerah konter",color:"#facc15",cls:"yellow"},
- {id:4,name:"Modern Hijau",desc:"Hijau sukses",color:"#16a34a",cls:"green"}
-];
-
-function renderTemplateGrid(){
- $("templateGrid").innerHTML=TEMPLATES.map(t=>`
-  <div class="template-card ${selectedTemplate===t.id?"active":""}" onclick="pilihTemplate(${t.id})">
-   <b>${t.id}. ${esc(t.name)}</b>
-   <small>${esc(t.desc)}</small>
-   <div class="template-preview">
-    <div class="bar" style="background:${t.color}"></div>
-    <div class="line w80"></div><div class="line w60"></div><div class="line w40"></div>
-    <div style="margin-top:6px;border:1px dashed #ccc;height:20px;border-radius:4px"></div>
-   </div>
-  </div>`).join("");
-}
-
-window.pilihTemplate=id=>{
- selectedTemplate=id;
- renderTemplateGrid();
-};
-
-window.tutupTemplate=()=>{
- $("templatePopup").classList.remove("show");
- pendingData=null;
-};
-
 function setInfo(){
  $("infoNota").textContent=$("nomorNota").value;
  $("infoTanggal").textContent=$("tanggalNota").value;
- $("infoBarcode").textContent=$("barcode").value;
 }
 
 /*
@@ -798,118 +710,6 @@ async function saveData(d){
  });
 }
 
-function makePrintHTML(d){
- const tpl=TEMPLATES.find(x=>x.id===selectedTemplate)||TEMPLATES[1];
- const paper=$("paperSize").value;
- const paperClass=paper==="58"?"paper-58":paper==="5x8"?"paper-5x8":"paper-80";
- const produk=d.penggunaanProduk||{};
- const e=d.estimasi||{};
-
- return `
- <div class="${paperClass} print-modern ${tpl.cls}">
-  <div class="shop-header">
-   <h2>${esc(d.namaKonter)}</h2>
-   <div>${esc(profile.alamat||"")}</div>
-   <div>WA: ${esc(profile.whatsapp||profile.noWa||"")}</div>
-   <div style="margin-top:6px;font-weight:900;letter-spacing:1px">NOTA SERVIS • ${tpl.name.toUpperCase()}</div>
-  </div>
-
-  <div class="print-meta">
-   <div>No Nota: <b>${esc(d.nomorNota)}</b></div>
-   <div>Tanggal: <b>${esc(d.tanggal)}</b></div>
-   <div>Teknisi: <b>${esc(d.namaTeknisi)}</b></div>
-   <div>Status: <b>${esc(d.status.toUpperCase())}</b></div>
-  </div>
-
-  <div class="print-section">
-   <b class="tt">Pelanggan</b>
-   <div class="print-grid">
-    <span>Nama</span><b>${esc(d.pelanggan.nama)}</b>
-    <span>WA</span><span>${esc(d.pelanggan.wa)}</span>
-    <span>Alamat</span><span>${esc(d.pelanggan.alamat||"-")}</span>
-   </div>
-  </div>
-
-  <div class="print-section">
-   <b class="tt">Perangkat</b>
-   <div class="print-grid">
-    <span>HP</span><b>${esc(d.servisan.brandTipe)}</b>
-    <span>IMEI</span><span>${esc(d.servisan.imei||"-")}</span>
-    <span>Kerusakan</span><span>${esc(d.servisan.jenisKerusakan)}</span>
-    <span>Kelengkapan</span><span>${esc(d.servisan.kelengkapan.join(", ")||"-")}</span>
-    <span>Sandi / PIN</span><span>${esc(d.servisan.sandi||"-")}</span>
-    <span>Pola Sandi</span><span>${esc(d.servisan.pola||"-")}</span>
-   </div>
-  </div>
-
-  <div class="print-section">
-   <b class="tt">Produk & Jasa</b>
-
-   <table class="print-items">
-    <thead>
-     <tr><th>DESK</th><th>QTY</th><th>HARGA</th><th>JUMLAH</th></tr>
-    </thead>
-    <tbody>
-     <tr>
-      <td>Jasa Servis</td>
-      <td>1</td>
-      <td>${rupiah(e.biayaService)}</td>
-      <td>${rupiah(e.biayaService)}</td>
-     </tr>
-     ${produk.nama?`
-     <tr>
-      <td>${esc(produk.nama)}</td>
-      <td>${produk.qty}</td>
-      <td>${rupiah(produk.modalSatuan)}</td>
-      <td>${rupiah(produk.totalModal)}</td>
-     </tr>`:""}
-    </tbody>
-   </table>
-
-   <table class="print-money" style="margin-top:6px">
-    <tr><td>Estimasi / Subtotal</td><td>${rupiah(e.biayaService)}</td></tr>
-    <tr><td>Diskon</td><td>- ${rupiah(e.diskon)}</td></tr>
-    <tr class="print-total"><td>TOTAL BAYAR</td><td>${rupiah(e.total)}</td></tr>
-    <tr><td>DP</td><td>${rupiah(e.dp)}</td></tr>
-    <tr><td>Sisa Bayar</td><td>${rupiah(e.sisa)}</td></tr>
-   </table>
-  </div>
-
-  <div class="print-status">STATUS: ${esc(d.status.toUpperCase())}</div>
-
-  <div class="print-barcode">
-   <svg id="printBarcode"></svg>
-   <div style="font:8px monospace;margin-top:2px">${esc(d.barcode)}</div>
-  </div>
-
-  <div class="print-footer">
-   Terima kasih telah servis di ${esc(d.namaKonter)}<br>
-   Garansi sesuai ketentuan toko • Simpan nota ini<br>
-   Dicetak: ${new Date().toLocaleString("id-ID")} • Template ${tpl.name} • ${paper}
-  </div>
- </div>`;
-}
-
-window.cetakTemplate=()=>{
- if(!pendingData)return;
-
- $("printArea").innerHTML=makePrintHTML(pendingData);
- $("templatePopup").classList.remove("show");
-
- try{
-  JsBarcode("#printBarcode",pendingData.barcode,{
-   format:"CODE128",
-   width:1.5,
-   height:40,
-   displayValue:false,
-   margin:0
-  });
- }catch(e){}
-
- setTimeout(()=>window.print(),300);
- pendingData=null;
-};
-
 function resetForm(){
  [
   "namaPelanggan","waPelanggan","alamatPelanggan","brandTipe","imei",
@@ -937,7 +737,68 @@ function resetForm(){
  hitung();
 }
 
-async function executeSave(printAfter){
+let qrCurrentData=null, qrPublicUrl="", qrPublicSaved=false;
+
+function publicServisData(d){
+ // Hanya proyeksi aman untuk pelanggan. Jangan masukkan WA, alamat, IMEI, sandi atau pola.
+ return {
+  uid:String(d.uid||businessUid||uid||""),
+  ownerUid:String(d.ownerUid||businessUid||d.uid||uid||""),
+  ownerId:String(d.ownerId||businessUid||d.ownerUid||d.uid||uid||""),
+  nomorNota:String(d.nomorNota||""),
+  tanggal:String(d.tanggal||""),
+  namaKonter:String(d.namaKonter||"FIXZY"),
+  brandTipe:String(d.servisan?.brandTipe||"-"),
+  jenisKerusakan:String(d.servisan?.jenisKerusakan||"-"),
+  namaTeknisi:String(d.namaTeknisi||"-"),
+  status:String(d.status||"Dalam proses"),
+  estimasiBiaya:Number(d.estimasiBiaya??d.estimasi?.biayaService??0),
+  dp:Number(d.dp??d.estimasi?.dp??0),
+  sisa:Number(d.sisa??d.estimasi?.sisa??0),
+  updatedAt:serverTimestamp()
+ };
+}
+
+async function savePublicServis(d){
+ const publicData=publicServisData(d);
+ if(!publicData.nomorNota) throw new Error("Nomor nota kosong untuk data publik.");
+ // Satu-satunya penulisan proyeksi publik; ID dokumen harus sama dengan nomorNota.
+ await setDoc(doc(db,"cek_servis_public",publicData.nomorNota),publicData,{merge:true});
+}
+
+function getPublicCheckUrl(nota){
+ const url=new URL("scan-barcode.html",window.location.href);
+ url.searchParams.set("nota",nota);
+ return url.href;
+}
+
+async function showQR(d){
+ qrCurrentData=d;
+ qrPublicUrl=getPublicCheckUrl(d.nomorNota);
+ $("qrNotaNumber").textContent=d.nomorNota||"-";
+ $("qrStatus").textContent="Membuat QR...";
+ $("qrPopup").classList.add("show");
+ try{
+  if(!window.QRCode || typeof QRCode.toCanvas!=="function") throw new Error("Library QR tidak termuat. Periksa koneksi internet.");
+  await QRCode.toCanvas($("qrCanvas"),qrPublicUrl,{width:560,margin:3,errorCorrectionLevel:"H",color:{dark:"#000000",light:"#ffffff"}});
+  $("qrStatus").textContent=qrPublicSaved?"QR siap dipindai. Tautan mengarah ke detail servis online.":"Servisan tersimpan, tetapi data cek publik gagal dibuat. QR mungkin belum menampilkan detail servis.";
+ }catch(e){console.error(e);$("qrStatus").textContent="QR gagal dibuat: "+e.message;}
+}
+window.downloadQR=function(){
+ const canvas=$("qrCanvas");
+ try{const out=document.createElement("canvas");out.width=canvas.width;out.height=canvas.height;const ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(canvas,0,0);const a=document.createElement("a");a.download="QR-CEK-SERVIS-"+(qrCurrentData?.nomorNota||"FIXZY").replace(/[^a-zA-Z0-9_-]/g,"-")+".jpg";a.href=out.toDataURL("image/jpeg",0.96);a.click();}catch(e){alert("QR belum siap diunduh. "+e.message);}
+};
+window.sendQRWhatsApp=function(){
+ if(!qrCurrentData)return;
+ const raw=String(qrCurrentData.pelanggan?.wa||"").replace(/\D/g,"");
+ let phone=raw.startsWith("0")?"62"+raw.slice(1):raw.startsWith("62")?raw:raw.startsWith("8")?"62"+raw:raw;
+ if(!phone){alert("Nomor WhatsApp pelanggan belum tersedia.");return;}
+ const message=`Halo ${qrCurrentData.pelanggan?.nama||"Pelanggan"}, servis HP dengan nomor nota ${qrCurrentData.nomorNota} sudah tercatat. Silakan cek detail/status servis melalui tautan ini: ${qrPublicUrl}`;
+ window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(message),"_blank","noopener");
+};
+window.finishQR=function(){ $("qrPopup").classList.remove("show"); if(qrCurrentData)window.location.href="data-servis.html"; };
+
+async function executeSave(){
  if(!pageReady){
   setNotice("Halaman belum siap atau akun tidak memiliki akses.","error");
   return;
@@ -957,13 +818,26 @@ async function executeSave(printAfter){
   $("saveStatus").textContent="Menyimpan...";
   setNotice("Menyimpan data servisan...");
 
-  // SIMPAN KE FIREBASE
+  // SIMPAN DATA UTAMA KE KOLEKSI ASLI (aturan dan struktur servis tidak diubah).
   await saveData(d);
+
+  // Simpan proyeksi aman untuk halaman cek publik tepat satu kali.
+  // Jika rules menolak proyeksi, data servis utama tetap dianggap tersimpan;
+  // jangan memaksa pengguna menyimpan ulang transaksi yang sudah berhasil.
+  try{
+   await savePublicServis(d);
+   qrPublicSaved=true;
+  }catch(publicError){
+   qrPublicSaved=false;
+   console.error("Gagal menyimpan cek_servis_public:",publicError);
+  }
 
   $("saveStatus").textContent=`Berhasil • ${d.nomorNota}`;
   setNotice(
-   `Servisan ${d.nomorNota} berhasil disimpan pada akun ${businessUid}.`,
-   "ok"
+   qrPublicSaved
+    ? `Servisan ${d.nomorNota} tersimpan dan data cek publik berhasil dibuat.`
+    : `Servisan ${d.nomorNota} tersimpan, tetapi data cek publik ditolak Rules Firebase. Periksa izin create/update cek_servis_public; jangan ubah Rules servis yang sudah ada.`,
+   qrPublicSaved?"ok":"error"
   );
 
   /*
@@ -971,20 +845,8 @@ async function executeSave(printAfter){
    * 💾 Simpan
    * Setelah berhasil langsung ke DATA SERVIS.
    */
-  if(!printAfter){
-   setTimeout(()=>{
-    window.location.href="data-servis.html";
-   },300);
-   return;
-  }
-
-  /*
-   * 🖨️ Simpan & Pilih Template
-   * Tetap membuka pilihan template.
-   */
-  pendingData=d;
-  renderTemplateGrid();
-  $("templatePopup").classList.add("show");
+  // Tampilkan QR setelah penyimpanan; tombol pada popup menentukan langkah berikutnya.
+  await showQR(d);
 
  }catch(e){
   console.error(e);
@@ -992,7 +854,7 @@ async function executeSave(printAfter){
   setNotice("Gagal menyimpan: "+e.message,"error");
  }
 }
-window.simpan=p=>executeSave(p);
+window.simpan=()=>executeSave();
 
 $("darkToggle").addEventListener("click",()=>{
  document.body.classList.toggle("dark");
@@ -1062,7 +924,6 @@ onAuthStateChanged(auth,async user=>{
   );
 
   hitung();
-  renderTemplateGrid();
 
  }catch(e){
   console.error(e);

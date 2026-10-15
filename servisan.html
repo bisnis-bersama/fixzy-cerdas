@@ -316,7 +316,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 
 <div id="printArea"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -616,13 +616,30 @@ window.cetakTemplate=()=>{
  $("printArea").innerHTML=makePrintHTML(pendingData);
  $("templatePopup").classList.remove("show");
 
+ const qrBox=$("printQr");
+ qrBox.innerHTML="";
  try{
-  $("printQr").innerHTML="";
-  new QRCode($("printQr"),{text:makeQrValue(pendingData.nomorNota),width:110,height:110,correctLevel:QRCode.CorrectLevel.M});
- }catch(e){console.error("QR gagal dibuat",e);}
-
- setTimeout(()=>window.print(),300);
- pendingData=null;
+  if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
+  new QRCode(qrBox,{
+   text:makeQrValue(pendingData.nomorNota),
+   width:180,
+   height:180,
+   correctLevel:QRCode.CorrectLevel.H
+  });
+  // Tunggu QR selesai dibuat sebelum membuka dialog cetak.
+  setTimeout(()=>{
+   if(!qrBox.querySelector("img")&&!qrBox.querySelector("canvas")){
+    qrBox.innerHTML='<div style="font-size:8px;color:#b91c1c">QR gagal dibuat. Muat ulang halaman dan coba lagi.</div>';
+   }
+   window.print();
+   pendingData=null;
+  },900);
+ }catch(e){
+  console.error("QR gagal dibuat:",e);
+  qrBox.innerHTML='<div style="font-size:8px;color:#b91c1c">QR tidak dapat dibuat. Periksa koneksi internet.</div>';
+  setTimeout(()=>window.print(),300);
+  pendingData=null;
+ }
 };
 
 function resetForm(){

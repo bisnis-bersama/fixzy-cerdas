@@ -1033,13 +1033,29 @@ window.downloadQR=async function(){
     if(ticket){ticket.style.maxHeight='none';ticket.style.height='auto';ticket.style.overflow='visible';}
    }
   });
+  // Gunakan Blob, bukan data URL besar, agar lebih stabil di Chrome Android.
+  const blob=await new Promise((resolve,reject)=>{
+   canvas.toBlob(b=>b?resolve(b):reject(new Error('Browser gagal membuat berkas JPG. Coba lagi.')),'image/jpeg',0.94);
+  });
+  const blobUrl=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=canvas.toDataURL('image/jpeg',0.95);
+  a.href=blobUrl;
   a.download='NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
-  document.body.appendChild(a);a.click();a.remove();
-  // Arahkan tab yang telah dibuka ke WhatsApp pelanggan setelah unduhan dimulai.
+  a.style.position='fixed';a.style.left='-9999px';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Jika browser tidak menjalankan unduhan, buka JPG agar pengguna bisa menyimpan lewat menu browser.
+  setTimeout(()=>{
+   if(!document.hidden){
+    const fallback=window.open(blobUrl,'_blank');
+    if(!fallback)console.warn('Jika unduhan tidak muncul, buka/simpan gambar melalui tab JPG.');
+   }
+   setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
+  },900);
+  // Buka WhatsApp setelah browser menerima permintaan unduhan.
   if(waWindow){waWindow.location.href=waUrl;}else{window.location.href=waUrl;}
-  $('qrStatus').textContent='Nota JPG dibuat. WhatsApp pelanggan dibuka otomatis.';
+  $('qrStatus').textContent='Permintaan unduhan JPG dikirim. Jika tidak muncul, simpan gambar dari tab JPG yang terbuka. WhatsApp pelanggan dibuka.';
  }catch(e){
   if(waWindow)waWindow.close();
   console.error(e);alert('Gagal membuat nota JPG: '+(e.message||e));

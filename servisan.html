@@ -197,6 +197,43 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  .ticket-table>div{grid-template-columns:36% minmax(0,1fr);font-size:9px}
 }
 
+
+/* MOBILE COMPACT: targetkan nota muat dalam sekitar dua tangkapan layar; fungsi/data tidak diubah */
+@media(max-width:650px){
+ #qrPopup{padding:4px!important;align-items:center!important}
+ #qrPopup .qr-ticket{width:100%!important;max-height:94dvh!important;padding:5px!important;border-width:3px!important;border-radius:16px!important;overflow-y:auto!important}
+ #qrPopup .qr-ticket-head{padding:6px 8px!important;min-height:0!important;gap:5px!important;border-radius:9px!important;border-bottom-width:3px!important}
+ #qrPopup .qr-brand strong{font-size:clamp(18px,4.5vw,24px)!important;letter-spacing:0!important}
+ #qrPopup .qr-brand span{font-size:8px!important;letter-spacing:2px!important}
+ #qrPopup .qr-brand small{font-size:5px!important;margin-top:3px!important;max-width:115px!important}
+ #qrPopup .qr-head-title{gap:2px!important}
+ #qrPopup .qr-head-title strong{font-size:clamp(13px,3.4vw,17px)!important}
+ #qrPopup .qr-head-title span{font-size:5px!important;max-width:140px!important}
+ #qrPopup .qr-main{margin-top:5px!important;padding:5px 4px 4px!important;border-width:2px!important;border-radius:11px!important}
+ #qrPopup .qr-frame{padding:5px 4px 4px!important;border-width:2px!important;border-radius:11px!important}
+ #qrPopup .qr-code-wrap{width:min(178px,100%)!important;padding:4px!important}
+ #qrPopup .qr-frame canvas{display:block!important;width:100%!important;height:auto!important;max-width:100%!important}
+ #qrPopup .qr-code-wrap:before,#qrPopup .qr-code-wrap:after,#qrPopup .qr-corners-bottom:before,#qrPopup .qr-corners-bottom:after{width:14px!important;height:14px!important;border-width:2px!important}
+ #qrPopup .qr-number{max-width:210px!important;min-height:0!important;margin-top:4px!important;padding:4px 6px!important;border-radius:10px!important}
+ #qrPopup .qr-number span{font-size:8px!important}
+ #qrPopup .qr-number strong{font-size:clamp(20px,5.5vw,27px)!important;letter-spacing:2px!important}
+ #qrPopup .qr-caption{font-size:10px!important;line-height:1.15!important;margin:4px 0 0!important}
+ #qrPopup .ticket-section{margin-top:4px!important;border-width:1px!important;border-radius:8px!important}
+ #qrPopup .ticket-section-title{font-size:9px!important;padding:4px 6px!important;border-bottom-width:1px!important}
+ #qrPopup .ticket-table{padding:2px 5px!important}
+ #qrPopup .ticket-table>div{grid-template-columns:36% minmax(0,1fr)!important;gap:4px!important;font-size:9px!important;line-height:1.08!important;padding:3px 1px!important}
+ #qrPopup .ticket-footer{margin-top:4px!important;padding:5px 4px!important;border-top-width:2px!important;border-radius:8px!important;font-size:9px!important}
+ #qrPopup .ticket-footer strong{font-size:17px!important;margin-top:1px!important}
+ #qrPopup .qr-status{font-size:9px!important;line-height:1.15!important;padding:3px!important}
+ #qrPopup .qr-actions{gap:4px!important;margin-top:3px!important}
+ #qrPopup .qr-actions button{padding:6px 4px!important;border-radius:7px!important;font-size:9px!important;border-width:1px!important}
+}
+@media(max-width:380px){
+ #qrPopup .qr-code-wrap{width:min(160px,100%)!important}
+ #qrPopup .ticket-table>div{font-size:8px!important}
+ #qrPopup .qr-brand small{max-width:90px!important}
+}
+
 </style>
 </head>
 

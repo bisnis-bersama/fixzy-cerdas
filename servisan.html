@@ -156,7 +156,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 .ticket-table b{font-weight:700;text-align:left}
 .ticket-footer{text-align:center;background:#080808;color:#fff;border-top:4px solid #ffc107;margin-top:12px;padding:14px 8px;border-radius:12px;font-style:italic;font-size:13px}
 .ticket-footer strong{display:inline-block;color:#ffc107;font-size:25px;font-style:italic;margin-top:5px}
-.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.qr-actions button{border:2px solid #111;background:#ffc107;color:#111;border-radius:12px;padding:13px 9px;font-weight:900;cursor:pointer}.qr-actions .wa-action{background:#111;color:#ffc107;grid-column:1/-1}
+.qr-actions{display:grid;grid-template-columns:1fr;gap:8px}.qr-actions button{border:2px solid #111;background:#ffc107;color:#111;border-radius:12px;padding:13px 9px;font-weight:900;cursor:pointer}.qr-actions .wa-action{background:#111;color:#ffc107;grid-column:1/-1}
 @media(max-width:480px){.qr-ticket{padding:7px;border-width:3px;border-radius:22px}.qr-ticket-head{padding:11px;gap:7px;min-height:92px;border-radius:14px}.qr-brand strong{font-size:27px}.qr-brand span{font-size:11px;letter-spacing:4px}.qr-brand small{font-size:6px;line-height:1.2;max-width:145px}.qr-head-title strong{font-size:18px}.qr-head-title span{font-size:7px}.qr-main{padding:12px 5px 7px;margin-top:12px;border-width:3px;border-radius:18px}.qr-frame{padding:12px 7px 8px;border-width:3px;border-radius:20px}.qr-code-wrap{width:min(390px,100%);padding:7px}.qr-code-wrap:before,.qr-code-wrap:after,.qr-corners-bottom:before,.qr-corners-bottom:after{width:24px;height:24px;border-width:4px}.qr-number{min-height:65px;padding:8px 5px;border-radius:20px}.qr-number span{font-size:11px}.qr-number strong{font-size:clamp(26px,8vw,40px);letter-spacing:3px}.qr-caption{font-size:13px}.qr-actions button{font-size:11px;padding:11px 5px}.ticket-section-title{font-size:12px;padding:8px}.ticket-table{padding:5px 7px}.ticket-table>div{grid-template-columns:39% 1fr;font-size:11px;padding:5px 1px}.ticket-footer strong{font-size:22px}}
 
 
@@ -226,6 +226,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  #qrPopup .ticket-footer strong{font-size:17px!important;margin-top:1px!important}
  #qrPopup .qr-status{font-size:9px!important;line-height:1.15!important;padding:3px!important}
  #qrPopup .qr-actions{gap:4px!important;margin-top:3px!important}
+ #qrPopup .qr-actions.single-action button{width:100%!important;background:#ffc107!important;color:#111!important;font-weight:900!important}
  #qrPopup .qr-actions button{padding:6px 4px!important;border-radius:7px!important;font-size:9px!important;border-width:1px!important}
 }
 @media(max-width:380px){
@@ -431,10 +432,8 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   </div>
   <div class="ticket-footer">Terima kasih telah mempercayakan servis di<br><strong>A Yudi Thea</strong></div>
   <div id="qrStatus" class="qr-status">QR memuat...</div>
-  <div class="qr-actions">
-   <button type="button" onclick="downloadQR()">Simpan QR JPEG</button>
-   <button type="button" class="wa-action" onclick="sendQRWhatsApp()">Kirim Link ke WhatsApp Pelanggan</button>
-   <button type="button" onclick="finishQR()">Selesai</button>
+  <div class="qr-actions single-action">
+   <button type="button" onclick="downloadQR()">SIMPAN NOTA JPG &amp; KIRIM WHATSAPP</button>
   </div>
  </div>
 </div>
@@ -1009,10 +1008,17 @@ window.downloadQR=async function(){
  if(typeof window.html2canvas!=='function'){
   alert('Fitur simpan bukti belum termuat. Periksa koneksi internet lalu coba lagi.');return;
  }
+ const raw=String(qrCurrentData.pelanggan?.wa||'').replace(/\D/g,'');
+ const phone=raw.startsWith('0')?'62'+raw.slice(1):raw.startsWith('62')?raw:raw.startsWith('8')?'62'+raw:raw;
+ if(!phone){alert('Nomor WhatsApp pelanggan belum tersedia. Periksa nomor WA pada data servis.');return;}
+ // Buka jendela WhatsApp saat klik masih berlangsung agar tidak diblokir browser.
+ const waWindow=window.open('about:blank','_blank');
+ const message=`Halo ${qrCurrentData.pelanggan?.nama||'Pelanggan'}, bukti servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} terlampir. Cek detail/status servis: ${qrPublicUrl}`;
+ const waUrl='https://wa.me/'+phone+'?text='+encodeURIComponent(message);
  const oldText=button?button.textContent:'';
  if(button){button.disabled=true;button.textContent='MENYIAPKAN JPG...';}
  try{
-  await new Promise(resolve=>setTimeout(resolve,150));
+  await new Promise(resolve=>setTimeout(resolve,100));
   const canvas=await html2canvas(target,{
    scale:2,
    backgroundColor:'#ffffff',
@@ -1024,15 +1030,22 @@ window.downloadQR=async function(){
     const status=clonedDoc.querySelector('#qrStatus');
     if(status)status.style.display='none';
     const ticket=clonedDoc.querySelector('#qrPopup .qr-ticket');
-    if(ticket){ticket.style.maxHeight='none';ticket.style.overflow='visible';}
+    if(ticket){ticket.style.maxHeight='none';ticket.style.height='auto';ticket.style.overflow='visible';}
    }
   });
   const a=document.createElement('a');
   a.href=canvas.toDataURL('image/jpeg',0.95);
-  a.download='BUKTI-CEK-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
+  a.download='NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
   document.body.appendChild(a);a.click();a.remove();
- }catch(e){console.error(e);alert('Gagal membuat bukti JPEG: '+(e.message||e));}
- finally{if(button){button.disabled=false;button.textContent=oldText||'Simpan QR JPEG';}}
+  // Arahkan tab yang telah dibuka ke WhatsApp pelanggan setelah unduhan dimulai.
+  if(waWindow){waWindow.location.href=waUrl;}else{window.location.href=waUrl;}
+  $('qrStatus').textContent='Nota JPG dibuat. WhatsApp pelanggan dibuka otomatis.';
+ }catch(e){
+  if(waWindow)waWindow.close();
+  console.error(e);alert('Gagal membuat nota JPG: '+(e.message||e));
+ }finally{
+  if(button){button.disabled=false;button.textContent=oldText||'SIMPAN NOTA JPG & KIRIM WHATSAPP';}
+ }
 };
 window.sendQRWhatsApp=function(){
  if(!qrCurrentData)return;

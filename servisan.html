@@ -323,6 +323,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 /* QR generator memakai pola QRCodeJS yang telah dipakai halaman registrasi. */
 window.fixzyLoadQrLibrary = function(){
@@ -344,6 +345,7 @@ window.fixzyLoadQrLibrary = function(){
   next();
  });
 };
+</script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -847,9 +849,37 @@ async function showQR(d){
   $('qrStatus').textContent='QR gagal dibuat: '+e.message;
  }
 }
-window.downloadQR=function(){
- const canvas=$("qrCanvas");
- try{const out=document.createElement("canvas");out.width=canvas.width;out.height=canvas.height;const ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(canvas,0,0);const a=document.createElement("a");a.download="QR-CEK-SERVIS-"+(qrCurrentData?nomorNotaPendek(qrCurrentData.nomorNota):"FIXZY")+".jpg";a.href=out.toDataURL("image/jpeg",0.96);a.click();}catch(e){alert("QR belum siap diunduh. "+e.message);}
+window.downloadQR=async function(){
+ const button=document.querySelector('#qrPopup .qr-actions button');
+ const target=$('qrPopup').querySelector('.qr-ticket');
+ if(!qrCurrentData){alert('Data servis belum tersedia.');return;}
+ if(typeof window.html2canvas!=='function'){
+  alert('Fitur simpan bukti belum termuat. Periksa koneksi internet lalu coba lagi.');return;
+ }
+ const oldText=button?button.textContent:'';
+ if(button){button.disabled=true;button.textContent='MENYIAPKAN JPG...';}
+ try{
+  await new Promise(resolve=>setTimeout(resolve,150));
+  const canvas=await html2canvas(target,{
+   scale:2,
+   backgroundColor:'#ffffff',
+   useCORS:true,
+   logging:false,
+   onclone(clonedDoc){
+    const actions=clonedDoc.querySelector('#qrPopup .qr-actions');
+    if(actions)actions.style.display='none';
+    const status=clonedDoc.querySelector('#qrStatus');
+    if(status)status.style.display='none';
+    const ticket=clonedDoc.querySelector('#qrPopup .qr-ticket');
+    if(ticket){ticket.style.maxHeight='none';ticket.style.overflow='visible';}
+   }
+  });
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/jpeg',0.95);
+  a.download='BUKTI-CEK-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
+  document.body.appendChild(a);a.click();a.remove();
+ }catch(e){console.error(e);alert('Gagal membuat bukti JPEG: '+(e.message||e));}
+ finally{if(button){button.disabled=false;button.textContent=oldText||'Simpan QR JPEG';}}
 };
 window.sendQRWhatsApp=function(){
  if(!qrCurrentData)return;

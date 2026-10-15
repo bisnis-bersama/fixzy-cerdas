@@ -340,7 +340,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   <div class="actions" style="margin-top:12px">
    <button type="button" class="action secondary" onclick="downloadQR()">Simpan QR JPEG</button>
    <button type="button" class="action primary" onclick="finishQR()">Selesai</button>
-   <button type="button" class="action secondary full" onclick="sendQRWhatsApp()">Kirim Link ke WhatsApp</button>
+   <button type="button" class="action secondary full" onclick="sendQRWhatsApp()">Bagikan QR ke WhatsApp</button>
   </div>
  </div>
 </div>
@@ -1023,12 +1023,29 @@ window.downloadQR=function(){
  }catch(e){alert("QR belum siap diunduh. "+e.message)}
 };
 
-window.sendQRWhatsApp=function(){
+window.sendQRWhatsApp=async function(){
  if(!qrCurrentData)return;
  const raw=String(qrCurrentData.pelanggan?.wa||"").replace(/\D/g,"");
- let phone=raw.startsWith("0")?"62"+raw.slice(1):raw.startsWith("62")?raw:raw;
+ const phone=raw.startsWith("0")?"62"+raw.slice(1):raw;
  if(!phone){alert("Nomor WhatsApp pelanggan belum tersedia.");return;}
- const message=`Halo, servis HP dengan nomor nota ${qrCurrentData.nomorNota} sudah tercatat di FIXZY. Cek status servis melalui tautan ini: ${qrPublicUrl}`;
+ const message=`Halo, servis HP dengan nomor nota ${qrCurrentData.nomorNota} sudah tercatat di FIXZY. Silakan scan QR atau buka tautan ini untuk mengecek status servis: ${qrPublicUrl}`;
+ try{
+  const source=$("qrCanvas").querySelector("canvas, img");
+  if(!source) throw new Error("QR belum terbentuk.");
+  const size=source.width||source.naturalWidth||560;
+  const out=document.createElement("canvas");out.width=size;out.height=size;
+  const ctx=out.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,size,size);ctx.drawImage(source,0,0,size,size);
+  const blob=await new Promise((resolve,reject)=>out.toBlob(b=>b?resolve(b):reject(new Error("Gagal menyiapkan gambar QR.")),"image/jpeg",0.96));
+  const file=new File([blob],"QR-CEK-SERVIS-"+String(qrCurrentData.nomorNota).replace(/[^a-zA-Z0-9_-]/g,"-")+".jpg",{type:"image/jpeg"});
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+   await navigator.share({files:[file],title:"QR Cek Servis FIXZY",text:message});
+   return;
+  }
+ }catch(e){
+  if(e && e.name==="AbortError") return;
+  console.warn("Bagikan gambar QR tidak tersedia, gunakan tautan WhatsApp:",e);
+ }
+ // Browser yang tidak mendukung berbagi gambar akan membuka WhatsApp dengan pesan dan tautan cek servis.
  window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(message),"_blank","noopener");
 };
 

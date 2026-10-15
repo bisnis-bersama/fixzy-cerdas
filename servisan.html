@@ -128,13 +128,27 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  main{padding-top:80px}
 }
 
-/* QR NOTA SERVIS FIXZY — desain hitam/kuning, tanpa fitur cetak */
-.qr-ticket{width:min(680px,100%);max-height:94vh;overflow:auto;background:#fff;border:5px solid #ffc107;border-radius:20px;padding:12px;color:#111;box-shadow:0 0 0 4px #111;}
-.qr-ticket-head{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#080808;color:#fff;border-radius:12px;padding:14px;border-bottom:4px solid #ffc107}
-.qr-brand{display:flex;flex-direction:column;line-height:1}.qr-brand strong{font-size:clamp(22px,5vw,38px);font-style:italic;color:#ffc107;letter-spacing:1px}.qr-brand span{font-weight:900;letter-spacing:4px;font-size:12px}.qr-brand small{margin-top:8px;color:#ffc107;font-size:8px;font-weight:800}
-.qr-head-title{text-align:right;display:flex;flex-direction:column;gap:4px}.qr-head-title strong{font-size:clamp(18px,4vw,28px);color:#ffc107}.qr-head-title span{font-size:9px;font-weight:900}
-.qr-main{background:#fff;border:3px solid #ffc107;border-radius:14px;margin-top:12px;padding:18px 10px 8px;text-align:center}.qr-frame{width:min(350px,100%);margin:auto;border:5px solid #ffc107;border-radius:16px;padding:12px;background:#fff}.qr-frame canvas{display:block;width:100%;height:auto;image-rendering:pixelated}.qr-number{display:flex;flex-direction:column;background:#080808;color:#ffc107;border-radius:14px;margin-top:10px;padding:8px}.qr-number span{font-size:12px;color:#fff;font-weight:900}.qr-number strong{font-size:clamp(23px,6vw,38px);letter-spacing:4px;overflow-wrap:anywhere}.qr-caption{font-size:14px;line-height:1.4;margin:8px 0 0}.qr-status{font-size:11px;text-align:center;padding:8px;color:#333}.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.qr-actions button{border:2px solid #111;background:#ffc107;color:#111;border-radius:9px;padding:12px 8px;font-weight:900;cursor:pointer}.qr-actions .wa-action{background:#111;color:#ffc107;grid-column:1/-1}
-@media(max-width:480px){.qr-ticket{padding:7px;border-width:3px}.qr-ticket-head{padding:10px}.qr-brand small{font-size:6px}.qr-head-title span{font-size:7px}.qr-main{padding:10px 5px 5px}.qr-frame{padding:7px;border-width:3px}.qr-caption{font-size:12px}.qr-actions button{font-size:11px;padding:10px 5px}}
+/* QR NOTA SERVIS FIXZY — mendekati desain contoh */
+.qr-ticket{width:min(700px,100%);max-height:94vh;overflow:auto;background:#fff;border:5px solid #ffc107;border-radius:24px;padding:14px;color:#111;box-shadow:0 0 0 5px #111}
+.qr-ticket-head{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#080808;color:#fff;border-radius:16px;padding:16px 18px;border-bottom:6px solid #ffc107;min-height:118px}
+.qr-brand{display:flex;flex-direction:column;line-height:1}.qr-brand strong{font-size:clamp(27px,6vw,42px);font-style:italic;color:#ffc107;letter-spacing:1px}.qr-brand span{font-weight:900;letter-spacing:5px;font-size:15px}.qr-brand small{margin-top:9px;color:#ffc107;font-size:9px;font-weight:900}
+.qr-head-title{text-align:right;display:flex;flex-direction:column;gap:5px}.qr-head-title strong{font-size:clamp(20px,4.6vw,32px);color:#ffc107;white-space:nowrap}.qr-head-title span{font-size:10px;font-weight:900;line-height:1.25}
+.qr-main{background:#fff;border:4px solid #ffc107;border-radius:22px;margin-top:16px;padding:22px 12px 10px;text-align:center}
+.qr-frame{position:relative;width:min(520px,100%);margin:auto;border:4px solid #f4c400;border-radius:24px;padding:22px 22px 12px;background:#fff}
+.qr-code-wrap{position:relative;width:min(390px,100%);margin:0 auto;padding:8px}
+.qr-code-wrap:before,.qr-code-wrap:after{content:"";position:absolute;width:35px;height:35px;border-color:#ffc107;border-style:solid;pointer-events:none}
+.qr-code-wrap:before{left:0;top:0;border-width:6px 0 0 6px;border-radius:9px 0 0 0}
+.qr-code-wrap:after{right:0;top:0;border-width:6px 6px 0 0;border-radius:0 9px 0 0}
+.qr-corners-bottom{position:absolute;inset:0;pointer-events:none}
+.qr-corners-bottom:before,.qr-corners-bottom:after{content:"";position:absolute;bottom:0;width:35px;height:35px;border-color:#ffc107;border-style:solid}
+.qr-corners-bottom:before{left:0;border-width:0 0 6px 6px;border-radius:0 0 0 9px}
+.qr-corners-bottom:after{right:0;border-width:0 6px 6px 0;border-radius:0 0 9px 0}
+.qr-frame canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+.qr-number{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#080808;color:#ffc107;border-radius:24px;margin:8px auto 0;padding:9px 12px;min-height:78px;width:100%;max-width:430px}
+.qr-number span{font-size:14px;color:#fff;font-weight:900;letter-spacing:.5px}.qr-number strong{font-size:clamp(30px,7vw,48px);line-height:1.05;letter-spacing:5px;white-space:nowrap;overflow-wrap:normal}
+.qr-caption{font-size:clamp(14px,3.4vw,18px);line-height:1.35;margin:10px 0 0}.qr-status{font-size:12px;text-align:center;padding:9px;color:#333;line-height:1.4}
+.qr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.qr-actions button{border:2px solid #111;background:#ffc107;color:#111;border-radius:12px;padding:13px 9px;font-weight:900;cursor:pointer}.qr-actions .wa-action{background:#111;color:#ffc107;grid-column:1/-1}
+@media(max-width:480px){.qr-ticket{padding:7px;border-width:3px;border-radius:22px}.qr-ticket-head{padding:11px;gap:7px;min-height:92px;border-radius:14px}.qr-brand strong{font-size:27px}.qr-brand span{font-size:11px;letter-spacing:4px}.qr-brand small{font-size:6px;line-height:1.2;max-width:145px}.qr-head-title strong{font-size:18px}.qr-head-title span{font-size:7px}.qr-main{padding:12px 5px 7px;margin-top:12px;border-width:3px;border-radius:18px}.qr-frame{padding:12px 7px 8px;border-width:3px;border-radius:20px}.qr-code-wrap{width:min(390px,100%);padding:7px}.qr-code-wrap:before,.qr-code-wrap:after,.qr-corners-bottom:before,.qr-corners-bottom:after{width:24px;height:24px;border-width:4px}.qr-number{min-height:65px;padding:8px 5px;border-radius:20px}.qr-number span{font-size:11px}.qr-number strong{font-size:clamp(26px,8vw,40px);letter-spacing:3px}.qr-caption{font-size:13px}.qr-actions button{font-size:11px;padding:11px 5px}}
 
 </style>
 </head>
@@ -291,8 +305,12 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
    <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>SCAN QR UNTUK MELIHAT DETAIL SERVIS</span></div>
   </div>
   <div class="qr-main">
-   <div class="qr-frame"><canvas id="qrCanvas" width="560" height="560"></canvas>
-    <div class="qr-number"><span>NO. NOTA SERVIS</span><strong id="qrNotaNumber">-</strong></div>
+   <div class="qr-frame">
+    <div class="qr-code-wrap">
+     <canvas id="qrCanvas" width="560" height="560"></canvas>
+     <span class="qr-corners-bottom" aria-hidden="true"></span>
+    </div>
+    <div class="qr-number"><span>NO. NOTA SERVIS</span><strong id="qrNotaNumber">----</strong></div>
    </div>
    <p class="qr-caption">Scan QR ini untuk melihat detail servis<br>secara online tanpa perlu login.</p>
   </div>
@@ -380,6 +398,11 @@ function resolveBusinessUid(data){
 function notaBaru(){
  const d=new Date(),p=n=>String(n).padStart(2,"0");
  return "SRV-"+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+String(d.getMilliseconds()).padStart(3,"0");
+}
+
+function nomorNotaPendek(nota){
+ const digits=String(nota||"").replace(/\D/g,"");
+ return digits.slice(-4).padStart(4,"0");
 }
 
 function makeBarcode(nota){
@@ -796,7 +819,7 @@ function getPublicCheckUrl(nota){
 async function showQR(d){
  qrCurrentData=d;
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
- $("qrNotaNumber").textContent=d.nomorNota||"-";
+ $("qrNotaNumber").textContent=nomorNotaPendek(d.nomorNota);
  $("qrStatus").textContent="Membuat QR...";
  $("qrPopup").classList.add("show");
  try{
@@ -817,7 +840,7 @@ window.sendQRWhatsApp=function(){
  const raw=String(qrCurrentData.pelanggan?.wa||"").replace(/\D/g,"");
  let phone=raw.startsWith("0")?"62"+raw.slice(1):raw.startsWith("62")?raw:raw.startsWith("8")?"62"+raw:raw;
  if(!phone){alert("Nomor WhatsApp pelanggan belum tersedia.");return;}
- const message=`Halo ${qrCurrentData.pelanggan?.nama||"Pelanggan"}, servis HP dengan nomor nota ${qrCurrentData.nomorNota} sudah tercatat. Silakan cek detail/status servis melalui tautan ini: ${qrPublicUrl}`;
+ const message=`Halo ${qrCurrentData.pelanggan?.nama||"Pelanggan"}, servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} sudah tercatat. Silakan cek detail/status servis melalui tautan ini: ${qrPublicUrl}`;
  window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(message),"_blank","noopener");
 };
 window.finishQR=function(){ $("qrPopup").classList.remove("show"); if(qrCurrentData)window.location.href="data-servis.html"; };

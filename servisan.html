@@ -305,7 +305,28 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+<script>
+/* Pemuatan QR dengan CDN cadangan agar tidak gagal jika jsDelivr terblokir. */
+window.fixzyLoadQrLibrary = function(){
+ return new Promise((resolve,reject)=>{
+  if(window.QRCode && typeof window.QRCode.toCanvas === 'function'){resolve();return;}
+  const urls=[
+   'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js',
+   'https://unpkg.com/qrcode@1.5.4/build/qrcode.min.js',
+   'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js'
+  ];
+  let i=0;
+  const next=()=>{
+   if(window.QRCode && typeof window.QRCode.toCanvas==='function'){resolve();return;}
+   if(i>=urls.length){reject(new Error('Library QR tidak bisa dimuat dari CDN. Pastikan internet aktif atau CDN tidak diblokir.'));return;}
+   const script=document.createElement('script');script.src=urls[i++];script.async=true;
+   script.onload=()=>window.QRCode&&typeof window.QRCode.toCanvas==='function'?resolve():next();
+   script.onerror=next;document.head.appendChild(script);
+  };
+  next();
+ });
+};
+</script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -779,10 +800,13 @@ async function showQR(d){
  $("qrStatus").textContent="Membuat QR...";
  $("qrPopup").classList.add("show");
  try{
-  if(!window.QRCode || typeof QRCode.toCanvas!=="function") throw new Error("Library QR tidak termuat. Periksa koneksi internet.");
-  await QRCode.toCanvas($("qrCanvas"),qrPublicUrl,{width:560,margin:3,errorCorrectionLevel:"H",color:{dark:"#000000",light:"#ffffff"}});
+  await window.fixzyLoadQrLibrary();
+  const canvas=$("qrCanvas");
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
+  await window.QRCode.toCanvas(canvas,qrPublicUrl,{width:560,margin:4,errorCorrectionLevel:"H",color:{dark:"#000000",light:"#ffffff"}});
   $("qrStatus").textContent=qrPublicSaved?"QR siap dipindai. Tautan mengarah ke detail servis online.":"Servisan tersimpan, tetapi data cek publik gagal dibuat. QR mungkin belum menampilkan detail servis.";
- }catch(e){console.error(e);$("qrStatus").textContent="QR gagal dibuat: "+e.message;}
+ }catch(e){console.error(e);$("qrStatus").textContent="QR gagal dibuat. "+e.message;}
 }
 window.downloadQR=function(){
  const canvas=$("qrCanvas");

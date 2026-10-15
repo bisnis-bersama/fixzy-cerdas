@@ -149,7 +149,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  .print-total td{border-top:2px solid #111;padding-top:5px!important;font-size:10px;font-weight:900}
  .print-status{text-align:center;padding:6px;border:2px solid #111;border-radius:6px;margin-top:6px;font-weight:900;font-size:9px;text-transform:uppercase}
  .print-barcode{text-align:center;padding:8px 0}
- .print-barcode img,.print-barcode canvas{width:24mm!important;height:24mm!important}
+ .print-barcode img,.print-barcode canvas{width:32mm!important;height:32mm!important;image-rendering:pixelated}
  .print-footer{text-align:center;border-top:1px dashed #999;padding-top:6px;margin-top:6px;font-size:7px;color:#555;line-height:1.4}
 }
 
@@ -325,7 +325,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <div class="popup" id="qrPopup">
  <div class="popup-box">
   <h3>✅ Servisan Berhasil Disimpan</h3>
-  <p style="font-size:12px;color:#667085;margin:0">QR Code nota sudah dibuat. Unduh QR, lalu kirim informasi servis ke WhatsApp pelanggan.</p>
+  <p style="font-size:12px;color:#667085;margin:0">QR Code berisi nama konter, nomor nota, data pelanggan, detail HP, kerusakan, teknisi, status, dan estimasi pembayaran. Unduh QR, lalu kirim informasi servis ke WhatsApp pelanggan.</p>
   <div class="qr-content">
    <div id="savedQr" class="qr-display"><span>Membuat QR Code...</span></div>
    <div id="savedQrNota" class="qr-nota">-</div>
@@ -400,8 +400,36 @@ function notaBaru(){
 
 function dateOnly(){return new Date().toISOString().slice(0,10)}
 function makeQrValue(nota){
-  const path=location.pathname.replace(/[^/]*$/, "data-servis.html");
+  // Tautan publik untuk pesan WhatsApp; QR nota sendiri memakai payload rincian servis.
+  const path=location.pathname.replace(/[^/]*$/, "cek-servis.html");
   return location.origin+path+"?nota="+encodeURIComponent(nota);
+}
+function makeQrPayload(d){
+  const e=d.estimasi||{};
+  const pelanggan=d.pelanggan||{};
+  const servis=d.servisan||{};
+  const kelengkapan=Array.isArray(servis.kelengkapan)?servis.kelengkapan.join(", "):"-";
+  // QR berisi teks biasa supaya scanner QR standar tetap dapat membaca detail nota secara langsung.
+  return [
+    "FIXZY - DATA NOTA SERVIS",
+    "Nama Konter: "+(d.namaKonter||"FIXZY"),
+    "Nomor Nota: "+(d.nomorNota||"-"),
+    "Tanggal: "+(d.tanggal||"-"),
+    "Pelanggan: "+(pelanggan.nama||"-"),
+    "WhatsApp: "+(pelanggan.wa||"-"),
+    "Handphone: "+(servis.brandTipe||"-"),
+    "IMEI: "+(servis.imei||"-"),
+    "Kerusakan: "+(servis.jenisKerusakan||"-"),
+    "Kelengkapan: "+(kelengkapan||"-"),
+    "Teknisi: "+(d.namaTeknisi||"-"),
+    "Status: "+String(d.status||"masuk").toUpperCase(),
+    "Estimasi Awal: "+rupiah(e.biayaService??d.biayaService),
+    "Diskon: "+rupiah(e.diskon??d.diskon),
+    "Total Estimasi: "+rupiah(e.total??d.total),
+    "DP: "+rupiah(e.dp??d.dp),
+    "Sisa: "+rupiah(e.sisa??d.sisa),
+    "Catatan: QR ini adalah salinan data saat nota dibuat. Periksa status terbaru melalui halaman cek servis."
+  ].join("\n");
 }
 
 const TEMPLATES=[
@@ -646,7 +674,7 @@ function tampilkanQrTersimpan(d){
  try{
   if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
   new QRCode($("savedQr"),{
-   text:makeQrValue(d.nomorNota),width:200,height:200,
+   text:makeQrPayload(d),width:320,height:320,
    correctLevel:QRCode.CorrectLevel.H
   });
   setTimeout(()=>{
@@ -754,9 +782,9 @@ window.cetakTemplate=()=>{
  try{
   if(typeof QRCode==="undefined") throw new Error("Library QR Code belum termuat. Periksa koneksi internet.");
   new QRCode(qrBox,{
-   text:makeQrValue(pendingData.nomorNota),
-   width:180,
-   height:180,
+   text:makeQrPayload(pendingData),
+   width:320,
+   height:320,
    correctLevel:QRCode.CorrectLevel.H
   });
   // Tunggu QR selesai dibuat sebelum membuka dialog cetak.

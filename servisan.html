@@ -299,6 +299,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
    <button class="action primary" type="button" onclick="simpan(true)">🖨️ Simpan & Pilih Template</button>
   </div>
   <div id="saveStatus" class="status-msg">Menunggu akun...</div>
+  <div id="accessNotice" class="notice">Menyiapkan halaman...</div>
  </div>
 </main>
 
@@ -325,15 +326,15 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <div class="popup" id="qrPopup">
  <div class="popup-box">
   <h3>✅ Servisan Berhasil Disimpan</h3>
-  <p style="font-size:12px;color:#667085;margin:0">QR Code berisi nama konter, nomor nota, data pelanggan, detail HP, kerusakan, teknisi, status, dan estimasi pembayaran. Unduh QR, lalu kirim informasi servis ke WhatsApp pelanggan.</p>
+  <p style="font-size:12px;color:#667085;margin:0">QR Code mengarah ke halaman scan publik FIXZY. Simpan gambar JPEG ke galeri, lalu tekan Selesai & Buka WA untuk menyiapkan pesan pemeriksaan servis.</p>
   <div class="qr-content">
    <div id="savedQr" class="qr-display"><span>Membuat QR Code...</span></div>
    <div id="savedQrNota" class="qr-nota">-</div>
    <div id="savedQrStatus" class="status-msg">Menyiapkan QR Code...</div>
   </div>
   <div class="qr-actions">
-   <button class="action secondary" type="button" onclick="downloadSavedQr()">⬇ Download QR</button>
-   <button class="action primary whatsapp-btn" type="button" onclick="downloadAndOpenWhatsApp()">📲 Download & Buka WA</button>
+   <button class="action secondary" type="button" onclick="downloadSavedQr()">⬇ Simpan QR JPEG</button>
+   <button class="action primary whatsapp-btn" type="button" onclick="selesaiNota()">✅ Selesai & Buka WA</button>
    <button class="action secondary" type="button" onclick="printSavedNota()">🖨️ Cetak Nota</button>
    <button class="action secondary" type="button" onclick="selesaiNota()">Selesai</button>
   </div>
@@ -400,36 +401,12 @@ function notaBaru(){
 
 function dateOnly(){return new Date().toISOString().slice(0,10)}
 function makeQrValue(nota){
-  // Tautan publik untuk pesan WhatsApp; QR nota sendiri memakai payload rincian servis.
-  const path=location.pathname.replace(/[^/]*$/, "cek-servis.html");
+  const path=location.pathname.replace(/[^/]*$/, "scan-barcode.html");
   return location.origin+path+"?nota="+encodeURIComponent(nota);
 }
 function makeQrPayload(d){
-  const e=d.estimasi||{};
-  const pelanggan=d.pelanggan||{};
-  const servis=d.servisan||{};
-  const kelengkapan=Array.isArray(servis.kelengkapan)?servis.kelengkapan.join(", "):"-";
-  // QR berisi teks biasa supaya scanner QR standar tetap dapat membaca detail nota secara langsung.
-  return [
-    "FIXZY - DATA NOTA SERVIS",
-    "Nama Konter: "+(d.namaKonter||"FIXZY"),
-    "Nomor Nota: "+(d.nomorNota||"-"),
-    "Tanggal: "+(d.tanggal||"-"),
-    "Pelanggan: "+(pelanggan.nama||"-"),
-    "WhatsApp: "+(pelanggan.wa||"-"),
-    "Handphone: "+(servis.brandTipe||"-"),
-    "IMEI: "+(servis.imei||"-"),
-    "Kerusakan: "+(servis.jenisKerusakan||"-"),
-    "Kelengkapan: "+(kelengkapan||"-"),
-    "Teknisi: "+(d.namaTeknisi||"-"),
-    "Status: "+String(d.status||"masuk").toUpperCase(),
-    "Estimasi Awal: "+rupiah(e.biayaService??d.biayaService),
-    "Diskon: "+rupiah(e.diskon??d.diskon),
-    "Total Estimasi: "+rupiah(e.total??d.total),
-    "DP: "+rupiah(e.dp??d.dp),
-    "Sisa: "+rupiah(e.sisa??d.sisa),
-    "Catatan: QR ini adalah salinan data saat nota dibuat. Periksa status terbaru melalui halaman cek servis."
-  ].join("\n");
+  // QR hanya memuat tautan pemeriksaan, tidak memuat data pelanggan atau data rahasia.
+  return makeQrValue(d.nomorNota);
 }
 
 const TEMPLATES=[
@@ -576,6 +553,21 @@ function buildData(){
 async function saveData(d){
  const notaRef=doc(db,"servis",d.nomorNota);
  await setDoc(notaRef,d);
+ // Dokumen publik terpisah: hanya kolom yang boleh dilihat pelanggan.
+ // Jangan menambahkan nama pelanggan, WA, alamat, IMEI, PIN, atau pola.
+ await setDoc(doc(db,"cek_servis_public",d.nomorNota),{
+  nomorNota:d.nomorNota,
+  tanggal:d.tanggal,
+  namaKonter:d.namaKonter||"FIXZY",
+  brandTipe:d.servisan?.brandTipe||"",
+  jenisKerusakan:d.servisan?.jenisKerusakan||"",
+  namaTeknisi:d.namaTeknisi||"",
+  status:d.status||"masuk",
+  estimasiBiaya:d.estimasi?.biayaService??0,
+  dp:d.estimasi?.dp??0,
+  sisa:d.estimasi?.sisa??0,
+  updatedAt:serverTimestamp()
+ });
 }
 
 function makePrintHTML(d){
@@ -681,7 +673,7 @@ function tampilkanQrTersimpan(d){
    const box=$("savedQr");
    savedQrReady=!!(box.querySelector("canvas")||box.querySelector("img"));
    $("savedQrStatus").textContent=savedQrReady?
-    "QR siap. Tekan Download QR & Buka WA untuk mengunduh dan menghubungi pelanggan.":
+    "QR siap. Simpan gambar JPEG, lalu tekan Selesai & Buka WA.":
     "QR belum berhasil dibuat. Periksa koneksi internet lalu muat ulang halaman.";
   },500);
  }catch(e){
@@ -693,13 +685,13 @@ function tampilkanQrTersimpan(d){
 function getSavedQrDataUrl(){
  const box=$("savedQr");
  const canvas=box.querySelector("canvas");
- if(canvas)return canvas.toDataURL("image/png");
+ if(canvas)return canvas.toDataURL("image/jpeg",0.96);
  const img=box.querySelector("img");
  if(img&&img.complete&&img.naturalWidth){
   const c=document.createElement("canvas");
   c.width=img.naturalWidth;c.height=img.naturalHeight;
   c.getContext("2d").drawImage(img,0,0);
-  return c.toDataURL("image/png");
+  return c.toDataURL("image/jpeg",0.96);
  }
  throw new Error("QR belum siap. Tunggu sebentar, lalu coba lagi.");
 }
@@ -708,9 +700,9 @@ window.downloadSavedQr=()=>{
  try{
   const url=getSavedQrDataUrl();
   const a=document.createElement("a");
-  a.href=url;a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.png`;
+  a.href=url;a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.jpg`;
   document.body.appendChild(a);a.click();a.remove();
-  $("savedQrStatus").textContent="QR berhasil diunduh. Selanjutnya tekan Buka WhatsApp untuk mengirim pesan ke pelanggan.";
+  $("savedQrStatus").textContent="QR JPEG berhasil diunduh. Tekan Selesai & Buka WA untuk menyiapkan pesan pelanggan.";
  }catch(e){alert(e.message)}
 };
 
@@ -746,15 +738,8 @@ function bukaWhatsAppPelanggan(){
 }
 
 window.downloadAndOpenWhatsApp=()=>{
- try{
-  // Download QR dan buka WhatsApp dari klik pengguna yang sama agar tidak diblokir browser.
-  const url=getSavedQrDataUrl();
-  const a=document.createElement("a");
-  a.href=url;a.download=`QR-${pendingData?.nomorNota||"NOTA-SERVIS"}.png`;
-  document.body.appendChild(a);a.click();a.remove();
-  bukaWhatsAppPelanggan();
-  $("savedQrStatus").textContent="QR diunduh. WhatsApp pelanggan dibuka di tab baru.";
- }catch(e){alert(e.message)}
+ try{downloadSavedQr();bukaWhatsAppPelanggan();}
+ catch(e){alert(e.message)}
 };
 
 window.printSavedNota=()=>{
@@ -766,6 +751,9 @@ window.printSavedNota=()=>{
 };
 
 window.selesaiNota=()=>{
+ try{
+  if(pendingData)bukaWhatsAppPelanggan();
+ }catch(e){alert("QR sudah tersimpan, tetapi WhatsApp tidak bisa dibuka: "+e.message)}
  $("qrPopup").classList.remove("show");
  pendingData=null;
  resetForm();

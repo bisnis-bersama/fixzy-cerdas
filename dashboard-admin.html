@@ -525,9 +525,33 @@ function renderStats(){
     `<tr><td><b>${esc(r.nomorNota||r.nota||r.id)}</b><br><small>${esc(date(r))}</small></td><td>${esc(pname(r))}</td><td>${esc(r.servisan?.brandTipe||r.brandTipe||"-")}</td><td><span class="badge ${norm(r.status)}">${esc(r.status)}</span></td></tr>`
   ).join("")||'<tr><td colspan="4">Belum ada</td></tr>';
 
+  // Ambil nama produk dari struktur transaksi penjualan yang benar.
+  // Prioritaskan items[] karena r.produk pada sebagian data lama dapat berupa
+  // array/object kosong sehingga sebelumnya menutupi nama dari items[].
+  function getSaleProductNames(r){
+    const nameOf = item => {
+      if (typeof item === "string") return item.trim();
+      if (!item || typeof item !== "object") return "";
+      return String(item.nama ?? item.namaProduk ?? item.nama_produk ?? item.productName ?? item.produkNama ?? item.produk ?? item.name ?? item.kode ?? "").trim();
+    };
+    const candidates = [r.items, r.detailProduk, r.daftarProduk, r.produk];
+    for (const value of candidates) {
+      if (Array.isArray(value)) {
+        const names = value.map(nameOf).filter(Boolean);
+        if (names.length) return [...new Set(names)].join(", ");
+      } else if (value && typeof value === "object") {
+        const one = nameOf(value);
+        if (one) return one;
+      } else if (typeof value === "string" && value.trim() && value.trim() !== "[object Object]") {
+        return value.trim();
+      }
+    }
+    return String(r.namaProduk ?? r.nama_produk ?? r.productName ?? r.produkNama ?? "Nama produk tidak tersedia").trim();
+  }
+
   $("recentJual").innerHTML=allJual.slice(0,5).map(r=>{
-    const prod=r.produk||r.namaProduk||(Array.isArray(r.items)?r.items.map(i=>i.nama||i.produk).join(", "):"-");
-    return `<tr><td><b>${esc(r.nomorNota||r.nota||r.id)}</b><br><small>${esc(date(r))}</small></td><td>${esc(pname(r))}</td><td>${esc(String(prod).slice(0,30))}</td><td><span class="badge ${norm(r.status)}">${esc(r.status)}</span></td></tr>`;
+    const prod=getSaleProductNames(r);
+    return `<tr><td><b>${esc(r.nomorNota||r.nota||r.id)}</b><br><small>${esc(date(r))}</small></td><td>${esc(pname(r))}</td><td title="${esc(prod)}">${esc(prod.length>45?prod.slice(0,42)+"…":prod)}</td><td><span class="badge ${norm(r.status)}">${esc(r.status)}</span></td></tr>`;
   }).join("")||'<tr><td colspan="4">Belum ada</td></tr>';
 
   $("recentKeluar").innerHTML=allKeluar.slice(0,5).map(r=>

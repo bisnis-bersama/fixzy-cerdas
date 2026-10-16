@@ -27,7 +27,7 @@
 </main>
 <script type="module">
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, limit } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
 const cfg = {
   apiKey: 'AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI',
@@ -61,58 +61,13 @@ function lastFourNota(value) {
   // Jika input berupa nomor/ID nota, empat digit paling akhir adalah nomor pendek yang dicetak.
   return digits.join('').slice(-4);
 }
-function clean(v) { return String(v ?? '').trim(); }
-function recordShortNumber(data, docId) {
-  // Prioritaskan field nomorNota; jika field berisi ID panjang, tetap ambil 4 digit terakhir.
-  const values = [data?.nomorNota, data?.nota, data?.noNota, docId];
-  for (const value of values) {
-    const short = lastFourNota(value);
-    if (short) return short;
-  }
-  return '';
-}
-
 async function findPublicServis(rawInput) {
-  const short = lastFourNota(rawInput);
-  if (!short) return null;
-  const col = collection(db, 'cek_servis_public');
-
-  // 1) Coba ID dokumen: nomor pendek, input mentah, dan 4 digit hasil ekstraksi.
-  const directIds = [...new Set([short, clean(rawInput), clean(decodeURIComponentSafe(rawInput))].filter(Boolean))];
-  for (const id of directIds) {
-    try {
-      const snap = await getDoc(doc(db, 'cek_servis_public', id));
-      if (snap.exists() && recordShortNumber(snap.data() || {}, snap.id) === short) return snap;
-    } catch (e) { console.debug('Lewati pencarian ID dokumen:', e.code || e.message); }
-  }
-
-  // 2) Cari dengan field nomorNota dalam format string dan angka.
-  for (const candidate of [...new Set([short, String(Number(short))])]) {
-    try {
-      const result = await getDocs(query(col, where('nomorNota', '==', candidate), limit(10)));
-      const found = result.docs.find(s => recordShortNumber(s.data() || {}, s.id) === short);
-      if (found) return found;
-    } catch (e) { console.debug('Pencarian nomorNota teks gagal:', e.code || e.message); }
-    try {
-      const resultNum = await getDocs(query(col, where('nomorNota', '==', Number(candidate)), limit(10)));
-      const foundNum = resultNum.docs.find(s => recordShortNumber(s.data() || {}, s.id) === short);
-      if (foundNum) return foundNum;
-    } catch (e) { console.debug('Pencarian nomorNota angka gagal:', e.code || e.message); }
-  }
-
-  // 3) Fallback: cocokkan akhiran 4 digit dari data publik yang tersedia.
-  // Hanya membaca koleksi publik, tidak membaca koleksi servis internal.
-  try {
-    const allPublic = await getDocs(col);
-    const found = allPublic.docs.find(s => recordShortNumber(s.data() || {}, s.id) === short);
-    if (found) return found;
-  } catch (e) {
-    console.warn('Fallback koleksi publik gagal:', e.code || e.message);
-    throw e;
-  }
-  return null;
+  const short=lastFourNota(rawInput);
+  if(!/^\d{4}$/.test(short)) return null;
+  // Hanya baca satu dokumen yang diminta. Tidak melakukan list/query seluruh koleksi.
+  const snap=await getDoc(doc(db,'cek_servis_public',short));
+  return snap.exists() ? snap : null;
 }
-function decodeURIComponentSafe(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
 
 async function load() {
   const params = new URLSearchParams(location.search);
@@ -138,8 +93,8 @@ async function load() {
       ${row('Tanggal', d.tanggal || d.tanggalMasuk || '-')}
       ${row('Konter', d.namaKonter || 'A YUDI THEA')}
       ${row('Alamat Konter', d.alamatKonter || "Depan Pasar Hewan, Blok Jum'at, Maja Utara, Maja, Majalengka")}
-      ${row('Perangkat', d.brandTipe || d.merekTipe || '-')}
-      ${row('Keluhan', d.jenisKerusakan || d.keluhan || '-')}
+      ${row('Perangkat', d.brandTipe || d.servisan?.brandTipe || d.merekTipe || '-')}
+      ${row('Keluhan', d.jenisKerusakan || d.servisan?.jenisKerusakan || d.keluhan || '-')}
       ${row('Teknisi', d.namaTeknisi || d.teknisi || '-')}
       <div class="row"><span class="label">Status</span><b><span class="status">${safe(d.status || 'Dalam proses')}</span></b></div>
       ${row('Estimasi Biaya', money(d.estimasiBiaya))}

@@ -291,7 +291,7 @@ window.simpanStatus=async()=>{
    ? Math.min(dp,total)
    : 0;
 
- const sisa=Math.max(0,total-dp);
+ const sisa=newSt==="diambil"?0:Math.max(0,total-dp);
 
  try{
   // Simpan status terbaru pada data servis utama.
@@ -301,6 +301,8 @@ window.simpanStatus=async()=>{
    pendapatan,
    sisa,
    sisaBayar:sisa,
+   'estimasi.sisa':sisa,
+   'estimasi.sisaBayar':sisa,
    updatedAt:serverTimestamp(),
    ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
   });
@@ -323,8 +325,11 @@ window.simpanStatus=async()=>{
       console.warn("Nomor nota publik berbeda; status publik tidak diubah.",{notaLengkap,notaPublikLengkap});
       alert("Status utama tersimpan, tetapi nomor nota lengkap pada data publik berbeda. Data publik tidak diubah demi mencegah salah nota.");
      } else {
+      const sisaPublik=newSt==="diambil"?0:Math.max(0,total-dp);
       await updateDoc(publicRef,{
        status:newSt,
+       sisa:sisaPublik,
+       sisaPembayaran:sisaPublik,
        updatedAt:serverTimestamp(),
        ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
       });

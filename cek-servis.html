@@ -83,6 +83,8 @@ async function load() {
       return;
     }
     const d = snap.data() || {};
+    const statusNorm = String(d.status || '').trim().toLowerCase();
+    const sisaTampil = statusNorm === 'diambil' ? 0 : (d.sisa ?? d.sisaPembayaran ?? d.estimasi?.sisa ?? 0);
     $('err').textContent = '';
     $('detail').hidden = false;
     $('detail').innerHTML = `
@@ -98,7 +100,7 @@ async function load() {
       <div class="row"><span class="label">Status</span><b><span class="status">${safe(d.status || 'Dalam proses')}</span></b></div>
       ${row('Estimasi Biaya', money(d.estimasiBiaya ?? d.estimasi?.biayaService ?? 0))}
       ${row('DP', money(d.dp ?? d.estimasi?.dp ?? 0))}
-      ${row('Sisa Pembayaran', money(d.sisa ?? d.sisaPembayaran ?? d.estimasi?.sisa ?? 0))}
+      ${row('Sisa Pembayaran', money(sisaTampil))}
     `;
   } catch (e) {
     console.error('Gagal memuat status servis:', e);

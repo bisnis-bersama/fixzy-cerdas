@@ -935,10 +935,24 @@ function publicServisData(d){
 }
 
 async function savePublicServis(d){
- const publicData=publicServisData(d);
- if(!publicData.nomorNota) throw new Error("Nomor nota kosong untuk data publik.");
- // Satu-satunya penulisan proyeksi publik; ID dokumen harus sama dengan nomorNota.
- await setDoc(doc(db,"cek_servis_public",publicData.nomorNota),publicData,{merge:true});
+ const publicData = publicServisData(d);
+
+ // Ambil 4 digit terakhir nomor nota lengkap.
+ const nomorPendek = nomorNotaPendek(d.nomorNota);
+
+ if(!/^\d{4}$/.test(nomorPendek)){
+  throw new Error("Nomor nota pendek harus terdiri dari 4 digit.");
+ }
+
+ // Koleksi cek servis hanya menggunakan 4 digit.
+ publicData.nomorNota = nomorPendek;
+ publicData.nomorNotaPendek = nomorPendek;
+
+ await setDoc(
+  doc(db,"cek_servis_public",nomorPendek),
+  publicData,
+  {merge:true}
+ );
 }
 
 function getPublicCheckUrl(nota){

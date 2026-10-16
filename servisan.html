@@ -1040,12 +1040,24 @@ window.downloadQR=async function(){
   const canvas=await html2canvas(target,{
    scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,
    onclone(clonedDoc){
+    // Pastikan gambar dimulai dari bagian PALING ATAS nota, bukan posisi scroll popup.
+    const popup=clonedDoc.querySelector('#qrPopup');
+    const ticket=clonedDoc.querySelector('#qrPopup .qr-ticket');
+    if(popup){
+     popup.scrollTop=0;
+     popup.style.cssText='display:block!important;position:static!important;inset:auto!important;width:100%!important;height:auto!important;max-height:none!important;overflow:visible!important;padding:0!important;background:#fff!important;';
+    }
+    if(ticket){
+     ticket.scrollTop=0;
+     ticket.style.cssText+=';position:static!important;display:block!important;width:100%!important;max-width:700px!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0 auto!important;transform:none!important;';
+    }
+    clonedDoc.documentElement.style.overflow='visible';
+    clonedDoc.body.style.cssText+=';margin:0!important;padding:0!important;overflow:visible!important;height:auto!important;';
+    // Jangan ikutkan tombol/status, hanya gambar nota lengkap.
     const actions=clonedDoc.querySelector('#qrPopup .qr-actions');
     if(actions)actions.style.display='none';
     const status=clonedDoc.querySelector('#qrStatus');
     if(status)status.style.display='none';
-    const ticket=clonedDoc.querySelector('#qrPopup .qr-ticket');
-    if(ticket){ticket.style.maxHeight='none';ticket.style.height='auto';ticket.style.overflow='visible';}
    }
   });
   notaJpgBlob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Browser gagal membuat berkas JPG.')),'image/jpeg',0.94));

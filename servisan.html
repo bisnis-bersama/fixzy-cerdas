@@ -1084,7 +1084,7 @@ window.sendQRWhatsApp=function(){
  let phone=raw.startsWith("0")?"62"+raw.slice(1):raw.startsWith("62")?raw:raw.startsWith("8")?"62"+raw:raw;
  if(!phone){alert("Nomor WhatsApp pelanggan belum tersedia.");return;}
  const message=`Halo ${qrCurrentData.pelanggan?.nama||"Pelanggan"}, servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} sudah tercatat. Silakan cek detail/status servis melalui tautan ini: ${qrPublicUrl}`;
- window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(message),"_blank","noopener");
+ window.location.assign("https://wa.me/"+phone+"?text="+encodeURIComponent(message));
 };
 window.finishQR=function(){ $("qrPopup").classList.remove("show"); if(qrCurrentData)window.location.href="data-servis.html"; };
 

@@ -128,17 +128,18 @@ function renderStats(){
   const dp=r=>Math.max(0,Number(r.dp??0)||0);
   const tagihanDariData=r=>{const nilai=nilaiTransaksi(r);if(r.sisaTagihan!==undefined&&r.sisaTagihan!==null&&r.sisaTagihan!=="")return Math.max(0,Number(r.sisaTagihan)||0);if(r.sisa!==undefined&&r.sisa!==null&&r.sisa!=="")return Math.max(0,Number(r.sisa)||0);return Math.max(0,nilai-dp(r));};
   const totalServis=allServis.length,totalJual=allJual.length;
-  // OMSET servis hanya dihitung saat status DIAMBIL. SELESAI tidak dihitung.
+  // OMSET/PENDAPATAN hanya dihitung untuk servis DIAMBIL dan penjualan LUNAS.
   const omsetServis=allServis.filter(r=>norm(r.status)==="diambil").reduce((a,r)=>a+nilaiTransaksi(r),0);
-  const omsetJual=allJual.filter(r=>["masuk","tagihan","tunai","lunas"].includes(norm(r.status))).reduce((a,r)=>a+nilaiTransaksi(r),0);
+  const omsetJual=allJual.filter(r=>norm(r.status)==="lunas").reduce((a,r)=>a+nilaiTransaksi(r),0);
   const omset=omsetServis+omsetJual;
   // Tagihan servis hanya untuk status SELESAI; status DIAMBIL bukan tagihan.
   const tagihanServis=allServis.filter(r=>norm(r.status)==="selesai").reduce((a,r)=>a+tagihanDariData(r),0);
   const tagihanJual=allJual.filter(r=>["masuk","tagihan"].includes(norm(r.status))).reduce((a,r)=>a+tagihanDariData(r),0);
   const totalTagihan=tagihanServis+tagihanJual;
-  // PENDAPATAN servis hanya ketika DIAMBIL. SELESAI tidak menghasilkan pendapatan.
+  // PENDAPATAN hanya: servis DIAMBIL + penjualan LUNAS.
+  // Status lain tidak dihitung sebagai pendapatan, termasuk DP, TUNAI, MASUK, TAGIHAN, dan SELESAI.
   const pendServis=allServis.filter(r=>norm(r.status)==="diambil").reduce((a,r)=>a+nilaiTransaksi(r),0);
-  const pendJual=allJual.reduce((a,r)=>{const st=norm(r.status);if(st==="tunai"||st==="lunas")return a+nilaiTransaksi(r);if(st==="masuk"||st==="tagihan")return a+dp(r);return a;},0);
+  const pendJual=allJual.filter(r=>norm(r.status)==="lunas").reduce((a,r)=>a+nilaiTransaksi(r),0);
   const pendapatan=pendServis+pendJual;
   const isBelanjaStock=r=>{const jenis=norm(r.jenis),ket=norm(r.keterangan),gabung=`${jenis} ${ket}`;return gabung.includes("belanja")||gabung.includes("stock")||gabung.includes("stok")||gabung.includes("modal")||gabung.includes("pembelian barang");};
   const belanjaStock=allKeluar.filter(isBelanjaStock).reduce((a,r)=>a+(Number(r.nominal)||0),0);
@@ -147,7 +148,7 @@ function renderStats(){
   const upahDibayarDariPengeluaran=allKeluar.filter(r=>!isBelanjaStock(r)&&(norm(r.jenis).includes("upah")||norm(r.jenis).includes("gaji"))).reduce((a,r)=>a+(Number(r.nominal)||0),0);
   const sisaSementara=pendapatan-pengeluaran;
   $("summary").innerHTML=`💰 <b>${totalServis} servis • ${totalJual} penjualan</b> • Omset <b class="green">${rupiah(omset)}</b> • Pendapatan <b class="green">${rupiah(pendapatan)}</b> • Tagihan <b class="yellow">${rupiah(totalTagihan)}</b> • Pengeluaran <b class="red">${rupiah(pengeluaran)}</b> • Sisa sementara <b class="${sisaSementara>=0?'green':'red'}">${rupiah(sisaSementara)}</b>`;
-  $("stats").innerHTML=`<div class="stat blue"><small>Omset</small><b>${rupiah(omset)}</b><i>Servis diambil + penjualan aktif/lunas</i></div><div class="stat yellow"><small>Tagihan</small><b>${rupiah(totalTagihan)}</b><i>Belum lunas</i></div><div class="stat green"><small>Pendapatan</small><b>${rupiah(pendapatan)}</b><i>Pembayaran diterima: DP + tunai/lunas</i></div><div class="stat ${sisaSementara>=0?'green':'red'}"><small>Sisa Sementara</small><b>${rupiah(sisaSementara)}</b><i>Pendapatan diterima - pengeluaran operasional; belum dikurangi HPP</i></div>`;
+  $("stats").innerHTML=`<div class="stat blue"><small>Omset</small><b>${rupiah(omset)}</b><i>Hanya servis diambil + penjualan lunas</i></div><div class="stat yellow"><small>Tagihan</small><b>${rupiah(totalTagihan)}</b><i>Belum lunas</i></div><div class="stat green"><small>Pendapatan</small><b>${rupiah(pendapatan)}</b><i>Hanya servis diambil + penjualan lunas</i></div><div class="stat ${sisaSementara>=0?'green':'red'}"><small>Sisa Sementara</small><b>${rupiah(sisaSementara)}</b><i>Pendapatan diterima - pengeluaran operasional; belum dikurangi HPP</i></div>`;
   $("statsKeluar").innerHTML=`<div class="stat red"><small>Pengeluaran Operasional</small><b>${rupiah(pengeluaran)}</b><i>${allKeluar.filter(r=>!isBelanjaStock(r)).length} transaksi</i></div><div class="stat dark"><small>Upah Karyawan</small><b>${rupiah(upahKaryawan)}</b><i>Termasuk kasbon/upah</i></div><div class="stat yellow"><small>Belanja / Stock</small><b>${rupiah(belanjaStock)}</b><i>Dipisahkan dari pengeluaran/laba</i></div>`;
   const statusServis=["masuk","nunggu_sparepart","proses","selesai","diambil","batal"],countServis=statusServis.map(s=>allServis.filter(r=>norm(r.status)===s).length),maxS=Math.max(1,...countServis),warnaServis=["#2563eb","#f59e0b","#7c3aed","#16a34a","#059669","#dc2626"];
   $("chartServis").innerHTML=countServis.map((c,i)=>`<div class="bar" style="height:${Math.min(100,(c/maxS*100)+10)}%;background:${warnaServis[i]}"><span>${c}</span></div>`).join("");
@@ -160,9 +161,9 @@ function renderStats(){
   $("recentKeluar").innerHTML=allKeluar.slice(0,5).map(r=>`<tr><td>${esc(r.tanggal||"-")}</td><td><span class="badge">${esc(r.jenis||"-")}</span></td><td>${esc(r.namaKaryawan||"-")}</td><td>${esc((r.keterangan||"").slice(0,40))}</td><td style="color:#dc2626;font-weight:900">${rupiah(r.nominal)}</td></tr>`).join("")||'<tr><td colspan="5">Belum ada</td></tr>';
   const today=localToday();
   const hariOmsetServis=allServis.filter(r=>date(r)===today&&norm(r.status)==="diambil").reduce((a,r)=>a+nilaiTransaksi(r),0);
-  const hariOmsetJual=allJual.filter(r=>date(r)===today&&["masuk","tagihan","tunai","lunas"].includes(norm(r.status))).reduce((a,r)=>a+nilaiTransaksi(r),0);
+  const hariOmsetJual=allJual.filter(r=>date(r)===today&&norm(r.status)==="lunas").reduce((a,r)=>a+nilaiTransaksi(r),0);
   const hariPendServis=allServis.filter(r=>date(r)===today&&norm(r.status)==="diambil").reduce((a,r)=>a+nilaiTransaksi(r),0);
-  const hariPendJual=allJual.filter(r=>date(r)===today).reduce((a,r)=>{const st=norm(r.status);if(st==="tunai"||st==="lunas")return a+nilaiTransaksi(r);if(st==="masuk"||st==="tagihan")return a+dp(r);return a;},0);
+  const hariPendJual=allJual.filter(r=>date(r)===today&&norm(r.status)==="lunas").reduce((a,r)=>a+nilaiTransaksi(r),0);
   const hariPengeluaran=allKeluar.filter(r=>String(r.tanggal||"").startsWith(today)&&!isBelanjaStock(r)).reduce((a,r)=>a+(Number(r.nominal)||0),0);
   const hariBelanja=allKeluar.filter(r=>String(r.tanggal||"").startsWith(today)&&isBelanjaStock(r)).reduce((a,r)=>a+(Number(r.nominal)||0),0);
   const hariOmset=hariOmsetServis+hariOmsetJual,hariPendapatan=hariPendServis+hariPendJual,hariSisa=hariPendapatan-hariPengeluaran;

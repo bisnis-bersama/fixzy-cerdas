@@ -68,23 +68,39 @@ $("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="bad
 window.render=render;window.loadAll=loadAll;
 window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Stok Spreadsheet","Terjual Firestore","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
 async function initFixzySession(user){
- if(sessionStarted && user?.uid===uid) return;
- sessionStarted=true;
- uid=user?.uid||"";currentUser=user||null;currentProfile=null;ownerUid="";
- if(!user){$("accountInfo").textContent="Sesi login belum aktif";$("status").textContent="⚠️ Sesi Firebase belum tersedia. Buka halaman ini dari FIXZY setelah login.";products=[];sales=[];render();return;}
+ const parentSession=(()=>{try{return window.parent!==window ? (window.parent.fixzySession||null) : null}catch(e){return null}})();
+ const session=parentSession && parentSession.uid ? parentSession : null;
+ const activeUser=user||((session&&session.uid)?{uid:session.uid,email:session.email||""}:null);
+ if(sessionStarted && activeUser?.uid===uid) return;
+ sessionStarted=true; uid=activeUser?.uid||""; currentUser=activeUser; currentProfile=null; ownerUid="";
+ if(!activeUser){
+  $("accountInfo").textContent="Sesi login belum aktif";
+  $("status").textContent="⚠️ Sesi belum tersedia. Buka halaman dari menu FIXZY setelah login.";
+  products=[];sales=[];render();return;
+ }
  try{
-  const snap=await getDoc(doc(db,"users",user.uid));
-  if(!snap.exists())throw Error("Profil akun tidak ditemukan pada users/"+user.uid);
-  currentProfile=snap.data()||{};
-  const role=clean(currentProfile.role);
-  if(["blocked","rejected"].includes(clean(currentProfile.status)))throw Error("Akun diblokir / ditolak.");
-  ownerUid=(role==="owner"||role==="superadmin"||currentProfile.isOwner===true)?user.uid:String(currentProfile.ownerUid||currentProfile.ownerId||user.uid).trim();
-  const displayName=currentProfile.namaKonter||currentProfile.namaPemilik||currentProfile.nama||user.email||"Akun FIXZY";
+  // Prioritas: sesi autentikasi yang sudah divalidasi oleh index.html FIXZY.
+  // Jika halaman dibuka mandiri, gunakan fallback Firebase Auth + users/{uid}.
+  if(session && session.profile){ currentProfile=session.profile; }
+  else {
+   const snap=await getDoc(doc(db,"users",activeUser.uid));
+   if(!snap.exists()) throw Error("Profil akun tidak ditemukan pada users/"+activeUser.uid);
+   currentProfile=snap.data()||{};
+  }
+  const role=clean(session?.role||currentProfile.role||currentProfile.jabatan);
+  const status=clean(currentProfile.status||"aktif");
+  if(["blocked","rejected"].includes(status)) throw Error("Akun diblokir / ditolak.");
+  const allowed=["owner","employee","karyawan","kasir","kurir","reseller","superadmin","admin"];
+  if(role && !allowed.includes(role)) throw Error("Role akun tidak diizinkan: "+role);
+  ownerUid=String(session?.ownerUid || (role==="owner"?activeUser.uid:(currentProfile.ownerUid||currentProfile.ownerId||activeUser.uid))).trim();
+  if(!ownerUid) throw Error("UID Owner tidak ditemukan pada sesi FIXZY.");
+  const displayName=currentProfile.namaKonter||currentProfile.namaPemilik||currentProfile.nama||activeUser.email||"Akun FIXZY";
   const exp=currentProfile.exp||currentProfile.expAt||currentProfile.expiredAt||currentProfile.tanggalBerakhir;
-  let expText="-";if(exp){const d=typeof exp.toDate==="function"?exp.toDate():exp.seconds!==undefined?new Date(exp.seconds*1000):new Date(exp);if(!isNaN(d.getTime()))expText=d.toLocaleDateString("id-ID");}
-  $("accountInfo").textContent=`Akun: ${displayName} • ${role.toUpperCase()||"TANPA ROLE"} • Exp: ${expText}`;
+  let expText="-";
+  if(exp){const d=typeof exp.toDate==="function"?exp.toDate():exp.seconds!==undefined?new Date(exp.seconds*1000):new Date(exp);if(!isNaN(d.getTime()))expText=d.toLocaleDateString("id-ID");}
+  $("accountInfo").textContent=`Akun: ${displayName} • ${role.toUpperCase()||"AKUN FIXZY"} • Exp: ${expText}`;
   await loadAll();
- }catch(e){console.error("FIXZY LOGIN/ACCESS:",e);$("accountInfo").textContent="Akses akun gagal diverifikasi";$("status").textContent="🔒 "+(e.message||"Akses ditolak.");products=[];sales=[];render();}
+ }catch(e){console.error("FIXZY LOGIN/ACCESS:",e);$("accountInfo").textContent="Profil sesi FIXZY gagal dibaca";$("status").textContent="🔒 "+(e.message||"Akses ditolak.");products=[];sales=[];render();}
 }
 // Pola sesi mengikuti tampil-stock.html: tunggu status autentikasi Firebase,
 // lalu baca users/{uid}. Jika callback tidak berjalan, tampilkan pesan jelas.
@@ -95,6 +111,8 @@ const authTimeout=setTimeout(()=>{
   $("status").textContent="⚠️ Pemeriksaan sesi Firebase belum merespons. Pastikan halaman dibuka pada domain FIXZY yang sama setelah login, lalu tekan Muat ulang.";
  }
 },10000);
+// Gunakan sesi index.html jika halaman dibuka di dalam FIXZY; ini pola proyek ZIP.
+try{ if(window.parent!==window && window.parent.fixzySession?.uid){ authCallbackArrived=true;clearTimeout(authTimeout); initFixzySession(null); } }catch(e){}
 onAuthStateChanged(auth,async user=>{
  authCallbackArrived=true;clearTimeout(authTimeout);
  await initFixzySession(user);

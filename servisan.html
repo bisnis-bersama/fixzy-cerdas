@@ -1012,8 +1012,14 @@ window.downloadQR=async function(){
  if(!phone){alert('Nomor WhatsApp pelanggan belum tersedia. Periksa nomor WA pada data servis.');return;}
  // Tahap kedua: setelah pengguna mengonfirmasi unduhan di Chrome, tekan tombol yang sama lagi untuk membuka WhatsApp.
  if(notaJpgSiap){
-  const message=`Halo ${qrCurrentData.pelanggan?.nama||'Pelanggan'}, bukti servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} sudah disimpan. Cek detail/status servis: ${qrPublicUrl}`;
-  window.location.href='https://wa.me/'+phone+'?text='+encodeURIComponent(message);
+  const message=`Halo ${qrCurrentData.pelanggan?.nama||'Pelanggan'}, bukti servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} sudah dibuat. Cek detail/status servis: ${qrPublicUrl}`;
+  const waUrl='https://api.whatsapp.com/send?phone='+phone+'&text='+encodeURIComponent(message);
+  // Dipanggil langsung dari sentuhan kedua pengguna agar tidak diblokir popup blocker.
+  const waWindow=window.open(waUrl,'_blank');
+  if(!waWindow){
+   // Fallback bila browser menolak tab baru.
+   window.location.assign(waUrl);
+  }
   return;
  }
  if(typeof window.html2canvas!=='function'){
@@ -1040,11 +1046,17 @@ window.downloadQR=async function(){
   const a=document.createElement('a');
   a.href=notaBlobUrl;
   a.download='NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
-  a.style.position='fixed';a.style.left='-9999px';
-  document.body.appendChild(a);a.click();a.remove();
+  a.target='_blank';
+  a.rel='noopener';
+  a.style.position='fixed';a.style.left='-9999px';a.style.top='0';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Biarkan URL blob tetap hidup agar Chrome Android sempat membaca berkas.
+  setTimeout(()=>{if(notaBlobUrl){URL.revokeObjectURL(notaBlobUrl);notaBlobUrl=null;}},120000);
   notaJpgSiap=true;
   if(button)button.textContent='LANJUT KE WHATSAPP';
-  $('qrStatus').textContent='Unduhan JPG sudah diminta. Selesaikan/konfirmasi unduhan di Chrome terlebih dahulu, lalu tekan tombol LANJUT KE WHATSAPP.';
+  $('qrStatus').textContent='JPG dibuat dan unduhan dimulai. Jika Chrome meminta konfirmasi, pilih Download. Setelah file tersimpan, tekan LANJUT KE WHATSAPP.';
  }catch(e){
   console.error(e);alert('Gagal membuat nota JPG: '+(e.message||e));
  }finally{

@@ -901,10 +901,15 @@ function resetForm(){
 let qrCurrentData=null, qrPublicUrl="", qrPublicSaved=false;
 
 function publicServisData(d){
+ // Simpan data yang dibutuhkan pelanggan untuk cek nota.
+ // IMEI, sandi, dan pola tidak dimasukkan ke koleksi publik.
  const nomorPendek=nomorNotaPendek(d.nomorNota);
+ const brandTipe=String(d.servisan?.brandTipe||"-");
+ const jenisKerusakan=String(d.servisan?.jenisKerusakan||"-");
  const pelanggan=d.pelanggan||{};
- const servisan=d.servisan||{};
- const estimasi=d.estimasi||{};
+ const namaPelanggan=String(pelanggan.nama||d.namaPelanggan||"-");
+ const nomorWa=String(getCustomerWa(d)||"");
+ const alamatPelanggan=String(pelanggan.alamat||d.alamatPelanggan||"-");
  return {
   uid:String(d.uid||businessUid||uid||""),
   ownerUid:String(d.ownerUid||businessUid||d.uid||uid||""),
@@ -914,40 +919,32 @@ function publicServisData(d){
   nomorNotaLengkap:String(d.nomorNota||""),
   tanggal:String(d.tanggal||""),
   namaKonter:String(d.namaKonter||"A YUDI THEA"),
-  pelanggan:{
-   nama:String(pelanggan.nama||""),
-   wa:String(pelanggan.wa||""),
-   alamat:String(pelanggan.alamat||"")
-  },
-  brandTipe:String(servisan.brandTipe||"-"),
-  jenisKerusakan:String(servisan.jenisKerusakan||"-"),
+  // Data pelanggan yang diminta untuk halaman cek servis publik.
+  pelanggan:{nama:namaPelanggan,wa:nomorWa,alamat:alamatPelanggan},
+  // Alias agar tetap kompatibel dengan halaman cek yang membaca field datar.
+  namaPelanggan,
+  nomorWa,
+  alamatPelanggan,
+  // Field tingkat atas diperlukan oleh Firebase Rules.
+  brandTipe,
+  jenisKerusakan,
   namaTeknisi:String(d.namaTeknisi||"-"),
   status:String(d.status||"Dalam proses"),
-  estimasiBiaya:Number(d.estimasiBiaya??estimasi.biayaService??0),
-  dp:Number(d.dp??estimasi.dp??0),
-  sisa:Number(d.sisa??estimasi.sisa??0),
+  estimasiBiaya:Number(d.estimasiBiaya??d.estimasi?.biayaService??0),
+  dp:Number(d.dp??d.estimasi?.dp??0),
+  sisa:Number(d.sisa??d.estimasi?.sisa??0),
   updatedAt:serverTimestamp()
  };
 }
 
 async function savePublicServis(d){
  const nomorPendek=nomorNotaPendek(d.nomorNota);
- if(!/^\\d{4}$/.test(nomorPendek)){
+ if(!/^\d{4}$/.test(nomorPendek)){
   throw new Error("Nomor nota pendek harus terdiri dari 4 digit.");
  }
- const ref=doc(db,"cek_servis_public",nomorPendek);
- const existing=await getDoc(ref);
- if(existing.exists()){
-  const existingData=existing.data()||{};
-  const existingFull=String(existingData.nomorNotaLengkap||"");
-  if(existingFull && existingFull!==String(d.nomorNota||"")){
-   throw new Error("Nomor nota 4 digit bentrok dengan transaksi lain. Data cek publik tidak ditimpa agar pelanggan tidak tertukar.");
-  }
-  if(!existingFull){
-   throw new Error("Nomor nota 4 digit sudah digunakan data lama. Data cek publik tidak ditimpa demi keamanan.");
-  }
- }
- await setDoc(ref,publicServisData(d),{merge:false});
+ const publicData=publicServisData(d);
+ // ID dokumen dan field nomorNota sama-sama 4 digit.
+ await setDoc(doc(db,"cek_servis_public",nomorPendek),publicData,{merge:true});
 }
 
 function getPublicCheckUrl(nota){

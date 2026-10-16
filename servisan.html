@@ -1001,29 +1001,30 @@ async function showQR(d){
   $('qrStatus').textContent='QR gagal dibuat: '+e.message;
  }
 }
+let notaJpgSiap=false;
+let notaBlobUrl=null;
 window.downloadQR=async function(){
  const button=document.querySelector('#qrPopup .qr-actions button');
  const target=$('qrPopup').querySelector('.qr-ticket');
  if(!qrCurrentData){alert('Data servis belum tersedia.');return;}
- if(typeof window.html2canvas!=='function'){
-  alert('Fitur simpan bukti belum termuat. Periksa koneksi internet lalu coba lagi.');return;
- }
  const raw=String(qrCurrentData.pelanggan?.wa||'').replace(/\D/g,'');
  const phone=raw.startsWith('0')?'62'+raw.slice(1):raw.startsWith('62')?raw:raw.startsWith('8')?'62'+raw:raw;
  if(!phone){alert('Nomor WhatsApp pelanggan belum tersedia. Periksa nomor WA pada data servis.');return;}
- // Buka jendela WhatsApp saat klik masih berlangsung agar tidak diblokir browser.
- const waWindow=window.open('about:blank','_blank');
- const message=`Halo ${qrCurrentData.pelanggan?.nama||'Pelanggan'}, bukti servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} terlampir. Cek detail/status servis: ${qrPublicUrl}`;
- const waUrl='https://wa.me/'+phone+'?text='+encodeURIComponent(message);
+ // Tahap kedua: setelah pengguna mengonfirmasi unduhan di Chrome, tekan tombol yang sama lagi untuk membuka WhatsApp.
+ if(notaJpgSiap){
+  const message=`Halo ${qrCurrentData.pelanggan?.nama||'Pelanggan'}, bukti servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} sudah disimpan. Cek detail/status servis: ${qrPublicUrl}`;
+  window.location.href='https://wa.me/'+phone+'?text='+encodeURIComponent(message);
+  return;
+ }
+ if(typeof window.html2canvas!=='function'){
+  alert('Fitur gambar belum termuat. Periksa koneksi internet lalu coba lagi.');return;
+ }
  const oldText=button?button.textContent:'';
- if(button){button.disabled=true;button.textContent='MENYIAPKAN JPG...';}
+ if(button){button.disabled=true;button.textContent='MEMBUAT JPG...';}
  try{
-  await new Promise(resolve=>setTimeout(resolve,100));
+  await new Promise(resolve=>setTimeout(resolve,120));
   const canvas=await html2canvas(target,{
-   scale:2,
-   backgroundColor:'#ffffff',
-   useCORS:true,
-   logging:false,
+   scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,
    onclone(clonedDoc){
     const actions=clonedDoc.querySelector('#qrPopup .qr-actions');
     if(actions)actions.style.display='none';
@@ -1033,34 +1034,21 @@ window.downloadQR=async function(){
     if(ticket){ticket.style.maxHeight='none';ticket.style.height='auto';ticket.style.overflow='visible';}
    }
   });
-  // Gunakan Blob, bukan data URL besar, agar lebih stabil di Chrome Android.
-  const blob=await new Promise((resolve,reject)=>{
-   canvas.toBlob(b=>b?resolve(b):reject(new Error('Browser gagal membuat berkas JPG. Coba lagi.')),'image/jpeg',0.94);
-  });
-  const blobUrl=URL.createObjectURL(blob);
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Browser gagal membuat berkas JPG.')),'image/jpeg',0.94));
+  if(notaBlobUrl)URL.revokeObjectURL(notaBlobUrl);
+  notaBlobUrl=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=blobUrl;
+  a.href=notaBlobUrl;
   a.download='NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
   a.style.position='fixed';a.style.left='-9999px';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  // Jika browser tidak menjalankan unduhan, buka JPG agar pengguna bisa menyimpan lewat menu browser.
-  setTimeout(()=>{
-   if(!document.hidden){
-    const fallback=window.open(blobUrl,'_blank');
-    if(!fallback)console.warn('Jika unduhan tidak muncul, buka/simpan gambar melalui tab JPG.');
-   }
-   setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
-  },900);
-  // Buka WhatsApp setelah browser menerima permintaan unduhan.
-  if(waWindow){waWindow.location.href=waUrl;}else{window.location.href=waUrl;}
-  $('qrStatus').textContent='Permintaan unduhan JPG dikirim. Jika tidak muncul, simpan gambar dari tab JPG yang terbuka. WhatsApp pelanggan dibuka.';
+  document.body.appendChild(a);a.click();a.remove();
+  notaJpgSiap=true;
+  if(button)button.textContent='LANJUT KE WHATSAPP';
+  $('qrStatus').textContent='Unduhan JPG sudah diminta. Selesaikan/konfirmasi unduhan di Chrome terlebih dahulu, lalu tekan tombol LANJUT KE WHATSAPP.';
  }catch(e){
-  if(waWindow)waWindow.close();
   console.error(e);alert('Gagal membuat nota JPG: '+(e.message||e));
  }finally{
-  if(button){button.disabled=false;button.textContent=oldText||'SIMPAN NOTA JPG & KIRIM WHATSAPP';}
+  if(button){button.disabled=false;if(!notaJpgSiap)button.textContent=oldText||'SIMPAN NOTA JPG & KIRIM WHATSAPP';}
  }
 };
 window.sendQRWhatsApp=function(){

@@ -1,31 +1,145 @@
 <!DOCTYPE html>
-<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0f14"><title>FIXZY | Scan QR Servis</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#111827;font-family:Arial,sans-serif}.head{background:#0b0f14;color:#fff;border-bottom:4px solid #ffc107;padding:18px 14px;text-align:center}.head b{color:#ffc107}.wrap{max-width:520px;margin:20px auto;padding:0 12px}.card{background:#fff;border:2px solid #111827;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:4px 4px 0 #111827}.title{font-weight:900;font-size:18px;margin:0 0 8px}.sub{font-size:13px;line-height:1.5;color:#4b5563}input,button{width:100%;padding:13px;border-radius:9px;font:inherit}input{border:2px solid #111827;margin:10px 0}button{border:2px solid #111827;background:#ffc107;font-weight:900;cursor:pointer;box-shadow:3px 3px 0 #111827}.secondary{background:#fff;margin-top:10px}#reader{width:100%;overflow:hidden;border-radius:10px}#msg{font-size:13px;font-weight:700;margin-top:10px;color:#b91c1c}</style>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script></head><body>
-<header class="head"><div style="font-size:22px;font-weight:900">FIXZY <b>CEK SERVIS</b></div><div style="font-size:12px;margin-top:5px">Pindai QR pada nota servis</div></header>
-<main class="wrap"><section class="card"><h1 class="title">Scan QR Servis</h1><p class="sub">Arahkan kamera ke QR dari nota FIXZY. Jika kamera tidak tersedia, masukkan nomor nota secara manual.</p><div id="reader"></div><div id="msg"></div></section>
-<section class="card"><label for="nota" style="font-weight:900">Nomor nota</label><input id="nota" placeholder="Contoh: SRV-20261015-001" autocomplete="off"><button onclick="cekManual()">CEK STATUS SERVIS</button><button class="secondary" onclick="mulaiScan()">AKTIFKAN KAMERA</button></section></main>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0f14">
+<title>FIXZY | Scan QR Servis</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef2f6;color:#111827;font-family:Arial,sans-serif}
+.head{background:#0b0f14;color:#fff;border-bottom:4px solid #ffc107;padding:18px 14px;text-align:center}
+.head b{color:#ffc107}
+.wrap{max-width:520px;margin:20px auto;padding:0 12px}
+.card{background:#fff;border:2px solid #111827;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:4px 4px 0 #111827}
+.title{font-weight:900;font-size:20px;margin:0 0 8px}
+.sub{font-size:14px;line-height:1.6;color:#4b5563}
+input,button{width:100%;padding:14px;border-radius:10px;font:inherit}
+input{border:2px solid #111827;margin:10px 0;min-height:48px}
+button{border:2px solid #111827;background:#ffc107;font-weight:900;cursor:pointer;box-shadow:3px 3px 0 #111827;min-height:48px}
+.secondary{background:#fff;margin-top:10px}
+#reader{width:100%;overflow:hidden;border-radius:10px}
+#msg{font-size:14px;font-weight:700;margin-top:10px;line-height:1.5;color:#b91c1c;overflow-wrap:anywhere}
+.hint{font-size:12px;color:#64748b;line-height:1.5;margin:8px 0 0}
+</style>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+<header class="head">
+  <div style="font-size:22px;font-weight:900">FIXZY <b>CEK SERVIS</b></div>
+  <div style="font-size:13px;margin-top:6px">Pindai QR pada nota servis</div>
+</header>
+<main class="wrap">
+  <section class="card">
+    <h1 class="title">Scan QR Servis</h1>
+    <p class="sub">Arahkan kamera ke QR pada nota FIXZY. Jika kamera tidak tersedia, masukkan nomor nota secara manual. Sistem akan mengambil 4 digit terakhir nomor nota.</p>
+    <div id="reader"></div>
+    <div id="msg" role="status" aria-live="polite"></div>
+  </section>
+  <section class="card">
+    <label for="nota" style="font-weight:900">Nomor nota</label>
+    <input id="nota" placeholder="Contoh: 2174 atau SRV-20261016-062102174" autocomplete="off" inputmode="text">
+    <button id="cekBtn" type="button">CEK STATUS SERVIS</button>
+    <button id="scanBtn" class="secondary" type="button">AKTIFKAN KAMERA</button>
+    <p class="hint">Contoh: SRV-20261016-062102174 akan diteruskan sebagai nomor nota 2174.</p>
+  </section>
+</main>
 <script>
-const $=id=>document.getElementById(id);let scanner=null,locked=false;
-function setMsg(t){$('msg').textContent=t}
-function noteFromValue(value){
- try{const u=new URL(value,location.href);const n=u.searchParams.get('nota');if(n)return n;}catch(e){}
- return String(value||'').trim();
+const $ = id => document.getElementById(id);
+let scanner = null;
+let locked = false;
+let starting = false;
+
+function setMsg(text, isError = true) {
+  $('msg').textContent = text;
+  $('msg').style.color = isError ? '#b91c1c' : '#166534';
 }
-function goNota(value){const n=noteFromValue(value);if(!n){setMsg('Nomor nota tidak terbaca.');return}location.href='cek-servis.html?nota='+encodeURIComponent(n)}
-window.cekManual=()=>goNota($('nota').value);
-async function mulaiScan(){
- if(!window.Html5Qrcode){setMsg('Library kamera gagal dimuat. Gunakan input nomor nota.');return}
- try{
-  if(!scanner)scanner=new Html5Qrcode('reader');
-  if(scanner.isScanning)return;
-  setMsg('Meminta izin kamera...');
-  await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},async decoded=>{
-   if(locked)return;locked=true;try{await scanner.stop()}catch(e){}goNota(decoded);
-  },()=>{});
-  setMsg('Kamera aktif. Arahkan ke QR servis.');
- }catch(e){setMsg('Kamera tidak dapat dibuka. Izinkan akses kamera atau masukkan nomor nota manual.')}
+
+// Ambil nilai nota dari URL QR jika ada. Mendukung parameter nota, nomorNota, atau no.
+function getNotaCandidate(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw, location.href);
+    const fromParam = url.searchParams.get('nota') ||
+      url.searchParams.get('nomorNota') ||
+      url.searchParams.get('no');
+    if (fromParam) return fromParam.trim();
+  } catch (_) {}
+  return raw;
 }
-const params=new URLSearchParams(location.search);if(params.get('nota'))$('nota').value=params.get('nota');
-if(params.get('nota'))setTimeout(()=>goNota(params.get('nota')),250);
-</script></body></html>
+
+// Nomor nota publik yang dicetak adalah 4 digit terakhir dari nomor nota lengkap.
+function normalizeNota4(value) {
+  const candidate = getNotaCandidate(value);
+  const digits = candidate.replace(/\D/g, '');
+  return digits.length >= 4 ? digits.slice(-4) : '';
+}
+
+function goNota(value) {
+  const shortNota = normalizeNota4(value);
+  if (!shortNota) {
+    setMsg('Nomor nota tidak valid. Masukkan nomor lengkap atau minimal 4 digit terakhir.');
+    locked = false;
+    return;
+  }
+  $('nota').value = shortNota;
+  setMsg('Membuka status servis untuk nota ' + shortNota + '...', false);
+  location.href = 'cek-servis.html?nota=' + encodeURIComponent(shortNota);
+}
+
+$('cekBtn').addEventListener('click', () => goNota($('nota').value));
+$('nota').addEventListener('keydown', event => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    goNota($('nota').value);
+  }
+});
+$('scanBtn').addEventListener('click', mulaiScan);
+
+async function mulaiScan() {
+  if (starting) return;
+  if (!window.Html5Qrcode) {
+    setMsg('Library pemindai gagal dimuat. Periksa internet atau masukkan nomor nota secara manual.');
+    return;
+  }
+  try {
+    if (!scanner) scanner = new Html5Qrcode('reader');
+    if (scanner.isScanning) {
+      setMsg('Kamera sudah aktif. Arahkan ke QR nota.', false);
+      return;
+    }
+    starting = true;
+    locked = false;
+    setMsg('Meminta izin kamera...');
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+      async decodedText => {
+        if (locked) return;
+        locked = true;
+        setMsg('QR terbaca. Memproses nomor nota...', false);
+        try { if (scanner && scanner.isScanning) await scanner.stop(); } catch (_) {}
+        goNota(decodedText);
+      },
+      () => {}
+    );
+    setMsg('Kamera aktif. Arahkan ke QR servis.', false);
+  } catch (error) {
+    console.error('Gagal membuka kamera:', error);
+    setMsg('Kamera tidak dapat dibuka. Izinkan akses kamera atau masukkan nomor nota secara manual.');
+  } finally {
+    starting = false;
+  }
+}
+
+// Jika halaman scan dibuka dengan parameter nota, isi lalu lanjutkan otomatis.
+const params = new URLSearchParams(location.search);
+const incoming = params.get('nota') || params.get('nomorNota') || params.get('no');
+if (incoming) {
+  $('nota').value = normalizeNota4(incoming) || incoming;
+  setTimeout(() => goNota(incoming), 250);
+}
+</script>
+</body>
+</html>

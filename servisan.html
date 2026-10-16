@@ -1068,9 +1068,15 @@ window.downloadQR=async function(){
   // Beri waktu Chrome memulai unduhan terlebih dahulu, baru arahkan ke WA nomor pada nota.
   setTimeout(()=>{
    const waMessage=message+'\n\nFile JPG nota sudah diunduh. Lampirkan NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg dari folder Download, lalu kirim bersama tautan scan ini.';
-   const waUrl='https://wa.me/'+phone+'?text='+encodeURIComponent(waMessage);
-   // Pakai wa.me agar diarahkan ke aplikasi WhatsApp, bukan api.whatsapp.com.
-   window.location.assign(waUrl);
+   const encodedText=encodeURIComponent(waMessage);
+   // Android intent membuka aplikasi WhatsApp langsung, bukan memuat wa.me di dalam frame halaman.
+   const intentUrl='intent://send?phone='+phone+'&text='+encodedText+'#Intent;scheme=whatsapp;package=com.whatsapp;end';
+   const waUrl='https://wa.me/'+phone+'?text='+encodedText;
+   let fallbackTimer=setTimeout(()=>{ window.location.href=waUrl; },2200);
+   document.addEventListener('visibilitychange',function onVisible(){
+    if(document.hidden){clearTimeout(fallbackTimer);document.removeEventListener('visibilitychange',onVisible);}
+   });
+   window.location.href=intentUrl;
   },1800);
  }catch(e){
   console.error(e);alert('Gagal membuat atau mengunduh nota JPG: '+(e.message||e));
@@ -1084,7 +1090,10 @@ window.sendQRWhatsApp=function(){
  let phone=raw.startsWith("0")?"62"+raw.slice(1):raw.startsWith("62")?raw:raw.startsWith("8")?"62"+raw:raw;
  if(!phone){alert("Nomor WhatsApp pelanggan belum tersedia.");return;}
  const message=`Halo ${qrCurrentData.pelanggan?.nama||"Pelanggan"}, servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} sudah tercatat. Silakan cek detail/status servis melalui tautan ini: ${qrPublicUrl}`;
- window.location.assign("https://wa.me/"+phone+"?text="+encodeURIComponent(message));
+ const text=encodeURIComponent(message);
+ const fallback="https://wa.me/"+phone+"?text="+text;
+ window.location.href="intent://send?phone="+phone+"&text="+text+"#Intent;scheme=whatsapp;package=com.whatsapp;end";
+ setTimeout(()=>{if(!document.hidden)window.location.href=fallback;},2200);
 };
 window.finishQR=function(){ $("qrPopup").classList.remove("show"); if(qrCurrentData)window.location.href="data-servis.html"; };
 

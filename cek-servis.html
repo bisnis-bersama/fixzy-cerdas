@@ -44,7 +44,6 @@ const safe = v => String(v ?? '-').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 const money = v => 'Rp ' + (Number(v) || 0).toLocaleString('id-ID');
 function row(label, value) { return `<div class="row"><span class="label">${safe(label)}</span><b>${safe(value)}</b></div>`; }
 
-// Ambil 4 digit terakhir dari nomor nota, termasuk jika QR berisi URL atau ID SRV panjang.
 function lastFourNota(value) {
   let s = String(value ?? '').trim();
   if (!s) return '';
@@ -58,13 +57,11 @@ function lastFourNota(value) {
   } catch (_) {}
   const digits = s.match(/\d+/g);
   if (!digits || !digits.length) return '';
-  // Jika input berupa nomor/ID nota, empat digit paling akhir adalah nomor pendek yang dicetak.
   return digits.join('').slice(-4);
 }
 async function findPublicServis(rawInput) {
   const short=lastFourNota(rawInput);
   if(!/^\d{4}$/.test(short)) return null;
-  // Hanya baca satu dokumen yang diminta. Tidak melakukan list/query seluruh koleksi.
   const snap=await getDoc(doc(db,'cek_servis_public',short));
   return snap.exists() ? snap : null;
 }
@@ -90,19 +87,18 @@ async function load() {
     $('detail').hidden = false;
     $('detail').innerHTML = `
       ${row('Nomor Nota', lastFourNota(d.nomorNota || d.nota || snap.id) || short)}
-      ${row('Tanggal', d.tanggal || d.tanggalMasuk || '-')}
-      ${row('Nama Pelanggan', d.pelanggan?.nama || d.namaPelanggan || d.nama || '-')}
-      ${row('Nomor WhatsApp', d.pelanggan?.wa || d.pelanggan?.noWa || d.noWa || d.wa || d.nomorWa || '-')}
-      ${row('Alamat Pelanggan', d.pelanggan?.alamat || d.alamatPelanggan || d.alamat || '-')}
       ${row('Tanggal Servis', d.tanggal || d.tanggalMasuk || '-')}
+      ${row('Nama Pelanggan', d.pelanggan?.nama || d.namaPelanggan || d.nama || '-')}
+      ${row('Nomor WhatsApp', d.pelanggan?.wa || d.pelanggan?.noWa || d.pelanggan?.nomorWa || d.nomorWa || d.nomorWA || d.noWa || d.noWA || d.wa || '-')}
+      ${row('Alamat Pelanggan', d.pelanggan?.alamat || d.alamatPelanggan || d.alamat || '-')}
       ${row('Nama Konter', d.namaKonter || 'A YUDI THEA')}
       ${row('Merek dan Tipe HP', d.brandTipe || d.servisan?.brandTipe || d.merekTipe || '-')}
       ${row('Keluhan', d.jenisKerusakan || d.servisan?.jenisKerusakan || d.keluhan || '-')}
       ${row('Teknisi', d.namaTeknisi || d.teknisi || '-')}
       <div class="row"><span class="label">Status</span><b><span class="status">${safe(d.status || 'Dalam proses')}</span></b></div>
-      ${row('Estimasi Biaya', money(d.estimasiBiaya))}
-      ${row('DP', money(d.dp))}
-      ${row('Sisa Pembayaran', money(d.sisa ?? d.sisaPembayaran))}
+      ${row('Estimasi Biaya', money(d.estimasiBiaya ?? d.estimasi?.biayaService ?? 0))}
+      ${row('DP', money(d.dp ?? d.estimasi?.dp ?? 0))}
+      ${row('Sisa Pembayaran', money(d.sisa ?? d.sisaPembayaran ?? d.estimasi?.sisa ?? 0))}
     `;
   } catch (e) {
     console.error('Gagal memuat status servis:', e);

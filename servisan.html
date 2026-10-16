@@ -273,7 +273,14 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   <div class="title">Data Pelanggan</div>
   <div class="grid">
    <div><label>NAMA PELANGGAN *</label><input id="namaPelanggan"></div>
-   <div><label>NO. WA *</label><input id="waPelanggan"></div>
+   <div>
+     <label>NO. WA *</label>
+     <div style="display:flex;gap:7px;align-items:stretch">
+      <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx" style="min-width:0;flex:1">
+      <button type="button" id="pilihKontakBtn" class="secondary" style="flex:0 0 auto;padding:8px 10px;border:2px solid #111827;border-radius:8px;font-weight:900;cursor:pointer;box-shadow:2px 2px 0 #111827" onclick="pilihDariKontak()">📇 Kontak</button>
+     </div>
+     <div class="status-msg" style="margin-top:5px">Pilih nomor dari kontak HP jika browser mendukung.</div>
+    </div>
    <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan"></textarea></div>
   </div>
  </div>
@@ -386,7 +393,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <div class="popup" id="qrPopup" style="z-index:10050">
  <div class="qr-ticket">
   <div class="qr-ticket-head">
-   <div class="qr-brand"><strong>A YUDI THEA</strong><span>SOFTWARE HARDWARE SOLUTION</span><small>DEPAN PASAR HEWAN, BLOK JUM'AT<br>MAJA UTARA, MAJA, MAJALENGKA</small></div>
+   <div class="qr-brand"><strong id="qrNamaKonter">FIXZY</strong><span>SOFTWARE HARDWARE SOLUTION</span><small id="qrAlamatKonter">NOTA SERVIS DIGITAL</small></div>
    <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>SCAN QR UNTUK MELIHAT DETAIL SERVIS</span></div>
   </div>
   <div class="qr-main">
@@ -430,7 +437,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
     <div><span>Sisa Pembayaran</span><b id="ticketSisa">-</b></div>
    </div>
   </div>
-  <div class="ticket-footer">Terima kasih telah mempercayakan servis di<br><strong>A YUDI THEA</strong><br><span style="font-size:10px;font-style:normal">Software Hardware Solution · Depan Pasar Hewan, Blok Jum'at<br>Maja Utara, Maja, Majalengka</span></div>
+  <div class="ticket-footer">Terima kasih telah mempercayakan servis di<br><strong id="qrNamaKonterFooter">FIXZY</strong><br><span style="font-size:10px;font-style:normal">Software Hardware Solution · <span id="qrAlamatFooter">Nota Servis Digital</span></span></div>
   <div id="qrStatus" class="qr-status">QR memuat...</div>
   <div class="qr-actions single-action">
    <button type="button" onclick="downloadQR()">SIMPAN NOTA JPG</button>
@@ -481,7 +488,7 @@ const app=initializeApp(cfg);
 const auth=getAuth(app);
 const db=getFirestore(app);
 
-let uid=null,businessUid=null,profile={},role="";
+let uid=null,businessUid=null,profile={},businessProfile={},role="";
 let products=[],employees=[],selectedProduct=null,pendingData=null;
 let selectedTemplate=2,pageReady=false;
 let polaUrutan=[];
@@ -509,6 +516,22 @@ function resolveBusinessUid(data){
  if(v)return v;
  if(r==="superadmin"||r==="admin")return uid;
  throw new Error("Akun karyawan belum memiliki ownerUid/ownerId.");
+}
+
+function getNamaKonter(){
+ const p=businessProfile||profile||{};
+ return String(p.namaKonter||p.namaToko||p.namaUsaha||p.namaUsahaToko||p.namaBisnis||"").trim()||"FIXZY";
+}
+function getAlamatKonter(){
+ const p=businessProfile||profile||{};
+ return String(p.alamatKonter||p.alamatToko||p.alamatUsaha||p.alamat||"").trim();
+}
+function updateQrBrand(nama=getNamaKonter()){
+ const brand=String(nama||getNamaKonter()).trim()||"FIXZY";
+ ["qrNamaKonter","qrNamaKonterFooter"].forEach(id=>{const el=$(id);if(el)el.textContent=brand;});
+ const alamat=getAlamatKonter();
+ const a=$("qrAlamatKonter");if(a)a.textContent=alamat||"NOTA SERVIS DIGITAL";
+ const f=$("qrAlamatFooter");if(f)f.textContent=alamat||"Nota Servis Digital";
 }
 
 function notaBaru(){
@@ -749,7 +772,7 @@ function buildData(){
   barcode:$("barcode").value,
   tanggal:$("tanggalNota").value,
 
-  namaKonter:profile.namaKonter||"FIXZY",
+  namaKonter:getNamaKonter(),
 
   teknisiId:$("teknisi").value,
   namaTeknisi:$("teknisi").selectedOptions[0]?.textContent||"",
@@ -871,6 +894,30 @@ async function saveData(d){
  });
 }
 
+// Ambil nama dan nomor telepon dari daftar kontak perangkat (didukung browser tertentu, terutama Chrome Android).
+window.pilihDariKontak=async function(){
+ const btn=$("pilihKontakBtn");
+ if(!("contacts" in navigator) || typeof navigator.contacts.select!=="function"){
+  alert("Fitur pilih kontak belum didukung browser ini. Buka halaman melalui Chrome di HP Android, lalu coba lagi. Jika tetap tidak tersedia, salin nomor dari Kontak dan tempel ke kolom No. WA.");
+  return;
+ }
+ try{
+  if(btn){btn.disabled=true;btn.textContent="Memuat...";}
+  const kontak=await navigator.contacts.select(["name","tel"],{multiple:false});
+  if(!kontak||!kontak.length)return;
+  const item=kontak[0];
+  const nama=Array.isArray(item.name)?item.name.find(Boolean):item.name;
+  const nomor=Array.isArray(item.tel)?item.tel.find(Boolean):item.tel;
+  if(nama&&!$("namaPelanggan").value.trim())$("namaPelanggan").value=nama;
+  if(nomor)$("waPelanggan").value=String(nomor).trim();
+  if(!nomor)alert("Kontak yang dipilih tidak memiliki nomor telepon.");
+ }catch(err){
+  if(err?.name!=="AbortError")alert("Kontak tidak dapat dibaca. Pastikan izin kontak tersedia dan gunakan Chrome Android melalui HTTPS.");
+ }finally{
+  if(btn){btn.disabled=false;btn.textContent="📇 Kontak";}
+ }
+};
+
 function resetForm(){
  [
   "namaPelanggan","waPelanggan","alamatPelanggan","brandTipe","imei",
@@ -918,7 +965,7 @@ function publicServisData(d){
   nomorNotaPendek:nomorPendek,
   nomorNotaLengkap:String(d.nomorNota||""),
   tanggal:String(d.tanggal||""),
-  namaKonter:String(d.namaKonter||"A YUDI THEA"),
+  namaKonter:String(d.namaKonter||getNamaKonter()),
   // Data pelanggan yang diminta untuk halaman cek servis publik.
   pelanggan:{nama:namaPelanggan,wa:nomorWa,alamat:alamatPelanggan},
   // Alias agar tetap kompatibel dengan halaman cek yang membaca field datar.
@@ -980,6 +1027,7 @@ function isiKartuServis(d){
 
 async function showQR(d){
  qrCurrentData=d;
+ updateQrBrand(d.namaKonter||getNamaKonter());
  isiKartuServis(d);
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
  $('qrNotaNumber').textContent=nomorNotaPendek(d.nomorNota);
@@ -1193,6 +1241,15 @@ onAuthStateChanged(auth,async user=>{
   }
 
   businessUid=resolveBusinessUid(data);
+
+  // Gunakan profil pemilik usaha, termasuk jika yang login adalah karyawan.
+  if(businessUid===uid){
+   businessProfile=data;
+  }else{
+   const ownerSnap=await getDoc(doc(db,"users",businessUid));
+   businessProfile=ownerSnap.exists()?(ownerSnap.data()||{}):{};
+  }
+  updateQrBrand();
 
   $("headerEmail").textContent=user.email||"-";
 

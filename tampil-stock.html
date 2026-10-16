@@ -51,7 +51,7 @@ function normalize(rows,source){if(!rows.length)return[];const headers=rows[0].m
 async function ownedDocs(col){const map=new Map();for(const field of ["ownerUid","ownerId","uid","userId","createdBy","businessUid"]){for(const val of [...new Set([ownerUid,uid].filter(Boolean))]){try{const s=await getDocs(query(collection(db,col),where(field,"==",val)));s.forEach(d=>map.set(d.id,{id:d.id,...d.data()}))}catch(e){console.warn(col,field,e.message)}}}return [...map.values()]}
 function itemKey(item){const code=clean(item?.kode||item?.code||item?.sku||item?.productCode||"");if(code)return "c:"+code;return "n:"+clean(item?.nama||item?.namaProduk||item?.name||item?.produk||item?.productName||"")}
 function saleIsCancelled(s){const st=clean(s?.status||s?.paymentStatus);return ["batal","dibatalkan","cancel","canceled"].includes(st)}
-let currentUser=null,currentProfile=null;
+let currentUser=null,currentProfile=null,sessionStarted=false;
 async function loadAll(){if(!uid||!currentUser){$("status").textContent="⚠️ Sesi Firebase belum tersedia. Buka halaman ini dari FIXZY setelah login.";return} $("status").textContent="⏳ Membaca pengaturan Spreadsheet dan transaksi Firestore...";try{const p=currentProfile||{};const role=clean(p.role);ownerUid=(role==="owner"||role==="superadmin"||p.isOwner===true)?uid:String(p.ownerUid||p.ownerId||uid).trim();
 const settings=await getDoc(doc(db,"pengaturan_spreadsheet",ownerUid));if(!settings.exists())throw Error("Link Spreadsheet belum disimpan di halaman Produk.");const d=settings.data(),links=Array.isArray(d.spreadsheetLinks)?d.spreadsheetLinks:[];if(!links.length&&d.spreadsheetUrl)links.push(d.spreadsheetUrl);if(!links.length)throw Error("Tidak ada link Spreadsheet tersimpan.");
 let all=[],errors=[];for(let i=0;i<links.length;i++){try{const res=await fetch(csvUrl(links[i]),{cache:"no-store"});if(!res.ok)throw Error("HTTP "+res.status);const txt=await res.text();if(/<html|<!doctype/i.test(txt.slice(0,400)))throw Error("Spreadsheet belum dipublikasikan sebagai CSV");all.push(...normalize(parseCSV(txt),"Spreadsheet "+(i+1)))}catch(e){errors.push("Spreadsheet "+(i+1)+": "+e.message)}}
@@ -68,6 +68,8 @@ $("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="bad
 window.render=render;window.loadAll=loadAll;
 window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Stok Spreadsheet","Terjual Firestore","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
 async function initFixzySession(user){
+ if(sessionStarted && user?.uid===uid) return;
+ sessionStarted=true;
  uid=user?.uid||"";currentUser=user||null;currentProfile=null;ownerUid="";
  if(!user){$("accountInfo").textContent="Sesi login belum aktif";$("status").textContent="⚠️ Sesi Firebase belum tersedia. Buka halaman ini dari FIXZY setelah login.";products=[];sales=[];render();return;}
  try{
@@ -84,7 +86,24 @@ async function initFixzySession(user){
   await loadAll();
  }catch(e){console.error("FIXZY LOGIN/ACCESS:",e);$("accountInfo").textContent="Akses akun gagal diverifikasi";$("status").textContent="🔒 "+(e.message||"Akses ditolak.");products=[];sales=[];render();}
 }
-onAuthStateChanged(auth,initFixzySession);
+// Pola sesi mengikuti tampil-stock.html: tunggu status autentikasi Firebase,
+// lalu baca users/{uid}. Jika callback tidak berjalan, tampilkan pesan jelas.
+let authCallbackArrived=false;
+const authTimeout=setTimeout(()=>{
+ if(!authCallbackArrived){
+  $("accountInfo").textContent="Sesi Firebase belum terdeteksi";
+  $("status").textContent="⚠️ Pemeriksaan sesi Firebase belum merespons. Pastikan halaman dibuka pada domain FIXZY yang sama setelah login, lalu tekan Muat ulang.";
+ }
+},10000);
+onAuthStateChanged(auth,async user=>{
+ authCallbackArrived=true;clearTimeout(authTimeout);
+ await initFixzySession(user);
+},error=>{
+ authCallbackArrived=true;clearTimeout(authTimeout);
+ console.error("Firebase Auth listener:",error);
+ $("accountInfo").textContent="Gagal memeriksa sesi Firebase";
+ $("status").textContent="❌ Gagal memeriksa sesi login: "+(error?.message||error);
+});
 </script>
 </body>
 </html>

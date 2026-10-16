@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FIXZY | Input Servisan</title>
+<title>A YUDI THEA | Input Servisan</title>
 <style>
 *{box-sizing:border-box}
 :root{--black:#0b0f14;--black2:#111827;--yellow:#ffc107;--bg:#eef2f6}
@@ -241,7 +241,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <body>
 <header>
  <div class="head">
-  <img class="head-logo" src="logo.png" alt="FIXZY">
+  <img class="head-logo" src="logo.png" alt="A YUDI THEA">
   <div class="head-info">
    <div class="head-title-row">
     <h1>Input Servisan</h1>
@@ -386,7 +386,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <div class="popup" id="qrPopup" style="z-index:10050">
  <div class="qr-ticket">
   <div class="qr-ticket-head">
-   <div class="qr-brand"><strong>FIXZY</strong><span>BUSINESS</span><small>SISTEM KASIR &amp; MANAJEMEN KONTER</small></div>
+   <div class="qr-brand"><strong>A YUDI THEA</strong><span>SOFTWARE HARDWARE SOLUTION</span><small>DEPAN PASAR HEWAN, BLOK JUM'AT<br>MAJA UTARA, MAJA, MAJALENGKA</small></div>
    <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>SCAN QR UNTUK MELIHAT DETAIL SERVIS</span></div>
   </div>
   <div class="qr-main">
@@ -430,7 +430,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
     <div><span>Sisa Pembayaran</span><b id="ticketSisa">-</b></div>
    </div>
   </div>
-  <div class="ticket-footer">Terima kasih telah mempercayakan servis di<br><strong>A Yudi Thea</strong></div>
+  <div class="ticket-footer">Terima kasih telah mempercayakan servis di<br><strong>A YUDI THEA</strong><br><span style="font-size:10px;font-style:normal">Software Hardware Solution · Depan Pasar Hewan, Blok Jum'at<br>Maja Utara, Maja, Majalengka</span></div>
   <div id="qrStatus" class="qr-status">QR memuat...</div>
   <div class="qr-actions single-action">
    <button type="button" onclick="downloadQR()">SIMPAN NOTA JPG</button>
@@ -1018,7 +1018,7 @@ window.downloadQR=async function(){
  if(notaJpgSiap && notaJpgFile){
   try{
    if(navigator.canShare && navigator.canShare({files:[notaJpgFile]}) && navigator.share){
-    await navigator.share({files:[notaJpgFile],title:'Nota Servis FIXZY',text:message});
+    await navigator.share({files:[notaJpgFile],title:'Nota Servis A YUDI THEA',text:message});
    }else{
     // Fallback: WhatsApp terbuka dengan link dan teks; lampirkan JPG yang sudah diunduh secara manual.
     window.location.href='https://wa.me/'+phone+'?text='+encodeURIComponent(message+'\n\nFile JPG sudah diunduh. Silakan lampirkan NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg dari folder Download.');
@@ -1076,8 +1076,13 @@ window.downloadQR=async function(){
   setTimeout(()=>URL.revokeObjectURL(objectUrl),180000);
 
   notaJpgSiap=true;
-  if(button)button.textContent='KIRIM JPG + LINK KE WHATSAPP';
-  $('qrStatus').textContent='File JPG dibuat dan unduhan dimulai. Setelah Chrome menyimpan file, tekan KIRIM JPG + LINK KE WHATSAPP untuk membagikan gambar beserta tautan scan.';
+  if(button)button.textContent='JPG TERSIMPAN · BUKA WHATSAPP';
+  $('qrStatus').textContent='Unduhan JPG dimulai. WhatsApp pelanggan akan dibuka sebentar lagi dengan tautan scan; lampirkan file NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg dari folder Download sebelum mengirim.';
+  // Beri waktu Chrome memulai unduhan terlebih dahulu, baru arahkan ke WA nomor pada nota.
+  setTimeout(()=>{
+   const waMessage=message+'\n\nFile JPG nota sudah diunduh. Lampirkan NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg dari folder Download, lalu kirim bersama tautan scan ini.';
+   window.location.href='https://wa.me/'+phone+'?text='+encodeURIComponent(waMessage);
+  },2200);
  }catch(e){
   console.error(e);alert('Gagal membuat atau mengunduh nota JPG: '+(e.message||e));
  }finally{

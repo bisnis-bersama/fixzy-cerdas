@@ -18,7 +18,7 @@ main{max-width:1250px;margin:auto;padding:14px}.notice,.card{background:white;bo
 </style>
 </head>
 <body>
-<header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="brand"><b>📦 STOK TERKINI FIXZY</b><small>Stok Spreadsheet dikurangi penjualan Firestore • Tampilan saja</small></div><button class="yellow" onclick="loadAll()">↻ Muat ulang</button></div></header>
+<header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="brand"><b>📦 STOK TERKINI FIXZY</b><small>Stok Spreadsheet dikurangi penjualan Firestore • Tampilan saja</small><small id="accountInfo">Memeriksa sesi login...</small></div><button class="yellow" onclick="loadAll()">↻ Muat ulang</button></div></header>
 <main>
 <div class="notice" id="status">⏳ Menghubungkan ke FIXZY...</div>
 <div class="notice"><b>Catatan:</b> Halaman ini hanya menghitung dan menampilkan stok tersisa. Tidak mengubah Google Spreadsheet atau transaksi Firestore. Penjualan berstatus Batal tidak mengurangi stok. Produk dicocokkan berdasarkan kode produk, lalu nama produk jika kode tidak tersedia.</div>
@@ -51,8 +51,9 @@ function normalize(rows,source){if(!rows.length)return[];const headers=rows[0].m
 async function ownedDocs(col){const map=new Map();for(const field of ["ownerUid","ownerId","uid","userId","createdBy","businessUid"]){for(const val of [...new Set([ownerUid,uid].filter(Boolean))]){try{const s=await getDocs(query(collection(db,col),where(field,"==",val)));s.forEach(d=>map.set(d.id,{id:d.id,...d.data()}))}catch(e){console.warn(col,field,e.message)}}}return [...map.values()]}
 function itemKey(item){const code=clean(item?.kode||item?.code||item?.sku||item?.productCode||"");if(code)return "c:"+code;return "n:"+clean(item?.nama||item?.namaProduk||item?.name||item?.produk||item?.productName||"")}
 function saleIsCancelled(s){const st=clean(s?.status||s?.paymentStatus);return ["batal","dibatalkan","cancel","canceled"].includes(st)}
-async function loadAll(){if(!uid){$("status").textContent="⚠️ Silakan login ke FIXZY.";return} $("status").textContent="⏳ Membaca pengaturan Spreadsheet dan transaksi Firestore...";try{const prof=await getDoc(doc(db,"users",uid));const p=prof.exists()?prof.data():{};const role=clean(p.role);ownerUid=(role==="owner"||role==="superadmin"||p.isOwner===true)?uid:(p.ownerUid||p.ownerId||uid);
-const settings=await getDoc(doc(db,"pengaturan_spreadsheet",uid));if(!settings.exists())throw Error("Link Spreadsheet belum disimpan di halaman Produk.");const d=settings.data(),links=Array.isArray(d.spreadsheetLinks)?d.spreadsheetLinks:[];if(!links.length&&d.spreadsheetUrl)links.push(d.spreadsheetUrl);if(!links.length)throw Error("Tidak ada link Spreadsheet tersimpan.");
+let currentUser=null,currentProfile=null;
+async function loadAll(){if(!uid||!currentUser){$("status").textContent="⚠️ Sesi Firebase belum tersedia. Buka halaman ini dari FIXZY setelah login.";return} $("status").textContent="⏳ Membaca pengaturan Spreadsheet dan transaksi Firestore...";try{const p=currentProfile||{};const role=clean(p.role);ownerUid=(role==="owner"||role==="superadmin"||p.isOwner===true)?uid:String(p.ownerUid||p.ownerId||uid).trim();
+const settings=await getDoc(doc(db,"pengaturan_spreadsheet",ownerUid));if(!settings.exists())throw Error("Link Spreadsheet belum disimpan di halaman Produk.");const d=settings.data(),links=Array.isArray(d.spreadsheetLinks)?d.spreadsheetLinks:[];if(!links.length&&d.spreadsheetUrl)links.push(d.spreadsheetUrl);if(!links.length)throw Error("Tidak ada link Spreadsheet tersimpan.");
 let all=[],errors=[];for(let i=0;i<links.length;i++){try{const res=await fetch(csvUrl(links[i]),{cache:"no-store"});if(!res.ok)throw Error("HTTP "+res.status);const txt=await res.text();if(/<html|<!doctype/i.test(txt.slice(0,400)))throw Error("Spreadsheet belum dipublikasikan sebagai CSV");all.push(...normalize(parseCSV(txt),"Spreadsheet "+(i+1)))}catch(e){errors.push("Spreadsheet "+(i+1)+": "+e.message)}}
 if(!all.length)throw Error(errors.join(" • ")||"Produk tidak ditemukan di Spreadsheet");
 // Jangan gabungkan produk bernama sama dari sheet berbeda secara otomatis.
@@ -61,12 +62,29 @@ sales=await ownedDocs("penjualan");
 const qty=sales.filter(s=>!saleIsCancelled(s)).reduce((sum,s)=>sum+(Array.isArray(s.items)?s.items.reduce((n,it)=>n+Math.max(0,num(it.qty??it.jumlah??it.quantity??1)),0):0),0);
 $("status").textContent=`✅ ${products.length} baris produk • ${sales.length} transaksi penjualan dibaca`+(errors.length?` • Peringatan: ${errors.join(" | ")}`:"");
 render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];render()}}
-function calculate(){const map=new Map();for(const s of sales){if(saleIsCancelled(s))continue;for(const it of (Array.isArray(s.items)?s.items:[])){const key=itemKey(it);if(key==="n:"||key==="c:")continue;map.set(key,(map.get(key)||0)+Math.max(0,num(it.qty??it.jumlah??it.quantity??1)))}}return products.map(p=>{const code=clean(p.kode);const key=code?"c:"+code:"n:"+clean(p.nama);let sold=map.get(key)||0;if(!code)sold=map.get("n:"+clean(p.nama))||0;return {...p,terjual:sold,sisa:p.stok-sold}})}
+function calculate(){const byCode=new Map(),byName=new Map();for(const s of sales){if(saleIsCancelled(s))continue;for(const it of (Array.isArray(s.items)?s.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));const code=clean(it.kode||it.code||it.sku||it.productCode||"");const name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");if(code)byCode.set(code,(byCode.get(code)||0)+qty);else if(name)byName.set(name,(byName.get(name)||0)+qty)}}return products.map(p=>{const code=clean(p.kode),name=clean(p.nama);const sold=code&&byCode.has(code)?byCode.get(code):(name?byName.get(name)||0:0);return {...p,terjual:sold,sisa:p.stok-sold}})}
 function render(){const q=clean($("search").value),data=calculate(),filtered=data.filter(p=>!q||clean(p.nama).includes(q)||clean(p.kode).includes(q)||clean(p.supplier).includes(q));$("countProducts").textContent=data.length.toLocaleString("id-ID");$("stockStart").textContent=data.reduce((a,p)=>a+p.stok,0).toLocaleString("id-ID");$("soldTotal").textContent=data.reduce((a,p)=>a+p.terjual,0).toLocaleString("id-ID");$("stockRemain").textContent=data.reduce((a,p)=>a+p.sisa,0).toLocaleString("id-ID");$("resultCount").textContent=`Menampilkan ${filtered.length} dari ${data.length} produk`;
 $("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="badge zero">Stok minus / perlu cek</span>':p.sisa===0?'<span class="badge zero">Habis</span>':p.sisa<=3?'<span class="badge low">Stok menipis</span>':'<span class="badge ok">Tersedia</span>';return `<tr><td>${i+1}</td><td>${esc(p.kode||"-")}</td><td><b>${esc(p.nama)}</b></td><td>${esc(p.supplier||"-")}</td><td class="num">${p.stok.toLocaleString("id-ID")}</td><td class="num">${p.terjual.toLocaleString("id-ID")}</td><td class="num"><b>${p.sisa.toLocaleString("id-ID")}</b></td><td>${status}</td></tr>`}).join("")||'<tr><td colspan="8" class="empty">Tidak ada produk yang cocok.</td></tr>'}
 window.render=render;window.loadAll=loadAll;
 window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Stok Spreadsheet","Terjual Firestore","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
-onAuthStateChanged(auth,u=>{uid=u?.uid||"";if(uid)loadAll();else $("status").textContent="⚠️ Login FIXZY belum aktif. Silakan login lalu buka halaman ini kembali."});
+async function initFixzySession(user){
+ uid=user?.uid||"";currentUser=user||null;currentProfile=null;ownerUid="";
+ if(!user){$("accountInfo").textContent="Sesi login belum aktif";$("status").textContent="⚠️ Sesi Firebase belum tersedia. Buka halaman ini dari FIXZY setelah login.";products=[];sales=[];render();return;}
+ try{
+  const snap=await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists())throw Error("Profil akun tidak ditemukan pada users/"+user.uid);
+  currentProfile=snap.data()||{};
+  const role=clean(currentProfile.role);
+  if(["blocked","rejected"].includes(clean(currentProfile.status)))throw Error("Akun diblokir / ditolak.");
+  ownerUid=(role==="owner"||role==="superadmin"||currentProfile.isOwner===true)?user.uid:String(currentProfile.ownerUid||currentProfile.ownerId||user.uid).trim();
+  const displayName=currentProfile.namaKonter||currentProfile.namaPemilik||currentProfile.nama||user.email||"Akun FIXZY";
+  const exp=currentProfile.exp||currentProfile.expAt||currentProfile.expiredAt||currentProfile.tanggalBerakhir;
+  let expText="-";if(exp){const d=typeof exp.toDate==="function"?exp.toDate():exp.seconds!==undefined?new Date(exp.seconds*1000):new Date(exp);if(!isNaN(d.getTime()))expText=d.toLocaleDateString("id-ID");}
+  $("accountInfo").textContent=`Akun: ${displayName} • ${role.toUpperCase()||"TANPA ROLE"} • Exp: ${expText}`;
+  await loadAll();
+ }catch(e){console.error("FIXZY LOGIN/ACCESS:",e);$("accountInfo").textContent="Akses akun gagal diverifikasi";$("status").textContent="🔒 "+(e.message||"Akses ditolak.");products=[];sales=[];render();}
+}
+onAuthStateChanged(auth,initFixzySession);
 </script>
 </body>
 </html>

@@ -1068,9 +1068,9 @@ window.downloadQR=async function(){
   // Beri waktu Chrome memulai unduhan terlebih dahulu, baru arahkan ke WA nomor pada nota.
   setTimeout(()=>{
    const waMessage=message+'\n\nFile JPG nota sudah diunduh. Lampirkan NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg dari folder Download, lalu kirim bersama tautan scan ini.';
-   const waUrl='https://api.whatsapp.com/send?phone='+phone+'&text='+encodeURIComponent(waMessage);
-   // Navigasi langsung ke endpoint resmi WhatsApp agar tidak berhenti di halaman kosong wa.me.
-   window.location.href=waUrl;
+   const waUrl='https://wa.me/'+phone+'?text='+encodeURIComponent(waMessage);
+   // Pakai wa.me agar diarahkan ke aplikasi WhatsApp, bukan api.whatsapp.com.
+   window.location.assign(waUrl);
   },1800);
  }catch(e){
   console.error(e);alert('Gagal membuat atau mengunduh nota JPG: '+(e.message||e));

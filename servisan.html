@@ -433,7 +433,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   <div class="ticket-footer">Terima kasih telah mempercayakan servis di<br><strong>A Yudi Thea</strong></div>
   <div id="qrStatus" class="qr-status">QR memuat...</div>
   <div class="qr-actions single-action">
-   <button type="button" onclick="downloadQR()">SIMPAN NOTA JPG &amp; KIRIM WHATSAPP</button>
+   <button type="button" onclick="downloadQR()">SIMPAN NOTA JPG</button>
   </div>
  </div>
 </div>
@@ -1002,7 +1002,8 @@ async function showQR(d){
  }
 }
 let notaJpgSiap=false;
-let notaBlobUrl=null;
+let notaJpgBlob=null;
+let notaJpgFile=null;
 window.downloadQR=async function(){
  const button=document.querySelector('#qrPopup .qr-actions button');
  const target=$('qrPopup').querySelector('.qr-ticket');
@@ -1010,15 +1011,23 @@ window.downloadQR=async function(){
  const raw=String(qrCurrentData.pelanggan?.wa||'').replace(/\D/g,'');
  const phone=raw.startsWith('0')?'62'+raw.slice(1):raw.startsWith('62')?raw:raw.startsWith('8')?'62'+raw:raw;
  if(!phone){alert('Nomor WhatsApp pelanggan belum tersedia. Periksa nomor WA pada data servis.');return;}
- // Tahap kedua: setelah pengguna mengonfirmasi unduhan di Chrome, tekan tombol yang sama lagi untuk membuka WhatsApp.
- if(notaJpgSiap){
-  const message=`Halo ${qrCurrentData.pelanggan?.nama||'Pelanggan'}, bukti servis HP dengan nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)} sudah dibuat. Cek detail/status servis: ${qrPublicUrl}`;
-  const waUrl='https://api.whatsapp.com/send?phone='+phone+'&text='+encodeURIComponent(message);
-  // Dipanggil langsung dari sentuhan kedua pengguna agar tidak diblokir popup blocker.
-  const waWindow=window.open(waUrl,'_blank');
-  if(!waWindow){
-   // Fallback bila browser menolak tab baru.
-   window.location.assign(waUrl);
+ const filename='NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
+ const message=`Halo ${qrCurrentData.pelanggan?.nama||'Pelanggan'}, berikut bukti servis HP nomor nota ${nomorNotaPendek(qrCurrentData.nomorNota)}. Untuk melihat detail/status servis, buka tautan scan ini: ${qrPublicUrl}`;
+
+ // Tahap kedua: bagikan FILE JPG asli beserta teks/link melalui menu berbagi Android.
+ if(notaJpgSiap && notaJpgFile){
+  try{
+   if(navigator.canShare && navigator.canShare({files:[notaJpgFile]}) && navigator.share){
+    await navigator.share({files:[notaJpgFile],title:'Nota Servis FIXZY',text:message});
+   }else{
+    // Fallback: WhatsApp terbuka dengan link dan teks; lampirkan JPG yang sudah diunduh secara manual.
+    window.location.href='https://wa.me/'+phone+'?text='+encodeURIComponent(message+'\n\nFile JPG sudah diunduh. Silakan lampirkan NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg dari folder Download.');
+   }
+  }catch(e){
+   if(e && e.name!=='AbortError'){
+    console.error('Bagikan JPG gagal:',e);
+    alert('Menu berbagi gagal dibuka. JPG sudah diunduh; buka WhatsApp pelanggan lalu lampirkan file dari folder Download.');
+   }
   }
   return;
  }
@@ -1026,9 +1035,8 @@ window.downloadQR=async function(){
   alert('Fitur gambar belum termuat. Periksa koneksi internet lalu coba lagi.');return;
  }
  const oldText=button?button.textContent:'';
- if(button){button.disabled=true;button.textContent='MEMBUAT JPG...';}
+ if(button){button.disabled=true;button.textContent='MEMBUAT FILE JPG...';}
  try{
-  await new Promise(resolve=>setTimeout(resolve,120));
   const canvas=await html2canvas(target,{
    scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,
    onclone(clonedDoc){
@@ -1040,27 +1048,28 @@ window.downloadQR=async function(){
     if(ticket){ticket.style.maxHeight='none';ticket.style.height='auto';ticket.style.overflow='visible';}
    }
   });
-  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Browser gagal membuat berkas JPG.')),'image/jpeg',0.94));
-  if(notaBlobUrl)URL.revokeObjectURL(notaBlobUrl);
-  notaBlobUrl=URL.createObjectURL(blob);
+  notaJpgBlob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Browser gagal membuat berkas JPG.')),'image/jpeg',0.94));
+  notaJpgFile=new File([notaJpgBlob],filename,{type:'image/jpeg',lastModified:Date.now()});
+
+  // Unduhan nyata: tautan download tanpa target=_blank agar gambar tidak sekadar dibuka sebagai pratinjau.
+  const objectUrl=URL.createObjectURL(notaJpgBlob);
   const a=document.createElement('a');
-  a.href=notaBlobUrl;
-  a.download='NOTA-SERVIS-'+nomorNotaPendek(qrCurrentData.nomorNota)+'.jpg';
-  a.target='_blank';
-  a.rel='noopener';
-  a.style.position='fixed';a.style.left='-9999px';a.style.top='0';
+  a.href=objectUrl;
+  a.download=filename;
+  a.style.display='none';
   document.body.appendChild(a);
   a.click();
   a.remove();
-  // Biarkan URL blob tetap hidup agar Chrome Android sempat membaca berkas.
-  setTimeout(()=>{if(notaBlobUrl){URL.revokeObjectURL(notaBlobUrl);notaBlobUrl=null;}},120000);
+  // Jangan cabut URL terlalu cepat pada Chrome Android.
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),180000);
+
   notaJpgSiap=true;
-  if(button)button.textContent='LANJUT KE WHATSAPP';
-  $('qrStatus').textContent='JPG dibuat dan unduhan dimulai. Jika Chrome meminta konfirmasi, pilih Download. Setelah file tersimpan, tekan LANJUT KE WHATSAPP.';
+  if(button)button.textContent='KIRIM JPG + LINK KE WHATSAPP';
+  $('qrStatus').textContent='File JPG dibuat dan unduhan dimulai. Setelah Chrome menyimpan file, tekan KIRIM JPG + LINK KE WHATSAPP untuk membagikan gambar beserta tautan scan.';
  }catch(e){
-  console.error(e);alert('Gagal membuat nota JPG: '+(e.message||e));
+  console.error(e);alert('Gagal membuat atau mengunduh nota JPG: '+(e.message||e));
  }finally{
-  if(button){button.disabled=false;if(!notaJpgSiap)button.textContent=oldText||'SIMPAN NOTA JPG & KIRIM WHATSAPP';}
+  if(button){button.disabled=false;if(!notaJpgSiap)button.textContent=oldText||'SIMPAN NOTA JPG';}
  }
 };
 window.sendQRWhatsApp=function(){

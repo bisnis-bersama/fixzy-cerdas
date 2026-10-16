@@ -8,7 +8,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:#eef2f6;color:#111827;font-family:Arial,sans-serif;transition:background .2s,color .2s}
 header{position:fixed;top:0;left:0;right:0;width:100%;z-index:9999;background:#0b0f14;color:#fff;border-bottom:3px solid #ffc107;height:74px;display:flex;align-items:center;padding:0}
-header .in{width:100%;max-width:920px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 12px;min-height:52px}
+header .in{width:100%;max-width:1200px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 12px;min-height:52px}
 header .brand{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
 header .logo{width:52px;height:52px;object-fit:contain;border-radius:14px;background:#000;border:1px solid #ffffff20;padding:4px;flex:0 0 52px}
 header .brand-text{min-width:0;overflow:hidden}
@@ -16,7 +16,7 @@ header h1{font-size:18px;margin:0 0 3px;line-height:1.2}
 header small{display:block;color:#cbd5e1;line-height:1.3;overflow-wrap:anywhere;font-size:11px}
 header .head-actions{display:flex;align-items:center;gap:7px;flex:0 0 auto}
 header .head-actions .btn{white-space:nowrap;padding:10px 12px;font-size:12px}
-.wrap{max-width:920px;margin:0 auto;padding:88px 12px 12px}
+.wrap{max-width:1200px;margin:0 auto;padding:88px 12px 24px}
 .card{background:#fff;border:2px solid var(--black2);border-radius:20px;padding:16px;margin-bottom:16px;box-shadow:5px 5px 0 var(--black2)}
 .grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px}
 label{display:block;font-size:12px;font-weight:900;color:#475569;margin:0 0 6px}
@@ -70,6 +70,27 @@ textarea{min-height:105px;resize:vertical}
  .money-grid{gap:5px}.money-cell{padding:8px 6px}.money-cell b{font-size:12px}
  .sale-actions .btn{min-width:0;font-size:12px;padding:11px 8px}.summary{font-size:15px}.person{padding:11px}
 }
+
+/* FIXZY responsive layout inspired by Data Servis */
+:root{--yellow:#ffc107;--black2:#111827}
+.card{border:2px solid #111827;border-radius:20px;box-shadow:5px 5px 0 #111827;padding:18px}
+.summary{border-radius:20px;background:#111827;padding:18px 20px;box-shadow:4px 4px 0 #ffc107;margin:12px 0 18px;line-height:1.8}
+.search-card h2{font-size:22px;border-bottom:3px solid #111827;padding-bottom:12px}
+.search-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.search-actions .btn{min-height:46px}
+.person{border:2px solid #111827;border-radius:20px;box-shadow:4px 4px 0 #111827;padding:16px;margin:0 0 18px;background:#fff}
+.personhead{padding-bottom:12px;border-bottom:1px solid #dbe2ea}
+.sale-row{border:1px solid #dbe2ea;border-radius:14px;margin:12px 0;padding:14px;background:#fff}
+.sale-nota{font-size:16px;color:#111827}.sale-top{align-items:center}
+.money-cell{border:1px solid #e2e8f0}.sale-actions .btn{min-height:42px}
+@media(min-width:900px){.grid{grid-template-columns:1.5fr 1fr 1fr}.wrap{padding-top:94px}.results-card{overflow-x:auto}.person{padding:18px}.sale-row{padding:16px}}
+@media(max-width:650px){
+ header{height:72px}header .in{padding:0 9px;gap:7px}header .brand{gap:8px}header .logo{width:45px;height:45px;flex:0 0 45px}header h1{font-size:14px;white-space:normal}header small{font-size:10px;white-space:normal;line-height:1.2}header .head-actions .btn{padding:9px 8px;font-size:11px}
+ .wrap{padding:84px 12px 22px}.summary{font-size:15px;padding:17px;border-radius:20px;line-height:1.9}.card{padding:14px;border-radius:20px}.search-card h2{font-size:20px}
+ .grid{grid-template-columns:1fr;gap:12px}.grid input{min-height:48px;font-size:16px}.search-actions{grid-template-columns:1fr 1fr;gap:9px}.search-actions .btn{min-height:49px;font-size:13px;padding:12px 8px}.search-actions #backupBtn{grid-column:1/-1}
+ .person{padding:13px;border-radius:20px;margin-bottom:17px}.person h3{font-size:20px}.personhead{align-items:stretch;flex-direction:column}.personhead .btn{width:100%;min-height:46px}.sale-row{padding:12px;border-radius:15px;margin:12px 0}.sale-nota{font-size:15px;overflow-wrap:anywhere}.sale-top{align-items:flex-start}.detail-label{font-size:13px}.product-lines{padding:9px}.product-line{font-size:14px}.money-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.money-cell{padding:9px 6px}.money-cell span{font-size:11px}.money-cell b{font-size:12px;line-height:1.4}.sale-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sale-actions .btn{min-width:0;font-size:12px;padding:11px 6px;min-height:44px}.sale-actions .btn:last-child{grid-column:auto}.total{font-size:16px;line-height:1.5}
+}
+
 body.dark-mode{background:#0b0f14;color:#e5e7eb}
 body.dark-mode .card,body.dark-mode .person{background:#111827;color:#e5e7eb;border-color:#ffc107;box-shadow:4px 4px 0 #ffc107}
 body.dark-mode input,body.dark-mode textarea,body.dark-mode select{background:#0b0f14;color:#f8fafc;border-color:#64748b}
@@ -79,14 +100,18 @@ body.dark-mode .replacement-item{background:#111827;color:#f8fafc;border-color:#
 body.dark-mode .detail-label,body.dark-mode label{color:#cbd5e1}
 body.dark-mode .muted,body.dark-mode .sale-date,body.dark-mode .money-cell span{color:#aab7c8}
 body.dark-mode .modal-box{background:#111827;color:#f8fafc;border-color:#ffc107}
-body.dark-mode .summary{background:#000;border:1px solid #ffc107}
+body.dark-mode .summary{background:#000;border:1px solid #ffc107;box-shadow:4px 4px 0 #ffc107}
+body.dark-mode .search-card h2{border-color:#ffc107}
+body.dark-mode .personhead{border-color:#475569}
+body.dark-mode .sale-nota{color:#f8fafc}
+body.dark-mode .money-cell{border-color:#475569}
 </style>
 </head>
 <body>
-<header><div class="in"><div class="brand"><img class="logo" src="logo.png" alt="Logo FIXZY" onerror="this.onerror=null;this.style.background='#000';this.alt='FIXZY'"><div class="brand-text"><h1>FIXZY — TAGIHAN PELANGGAN</h1><small id="accountLine">Memuat nama owner...</small></div></div><div class="head-actions"><button class="btn green" id="backupBtn" type="button">📥 Backup Excel</button><button class="btn yellow" id="headerRefreshBtn" type="button">↻ Refresh</button><button class="btn dark" id="darkModeBtn" type="button">🌙</button></div></div></header>
+<header><div class="in"><div class="brand"><img class="logo" src="logo.png" alt="Logo FIXZY" onerror="this.onerror=null;this.style.background='#000';this.alt='FIXZY'"><div class="brand-text"><h1>FIXZY — TAGIHAN PELANGGAN</h1><small id="accountLine">Memuat nama owner...</small></div></div><div class="head-actions"><button class="btn yellow" id="headerRefreshBtn" type="button">↻ Refresh</button><button class="btn dark" id="darkModeBtn" type="button">🌙</button></div></div></header>
 <main class="wrap">
-<section class="card"><h2 style="margin:0 0 14px">Pencarian Tagihan</h2><div class="grid"><div><label>NAMA / NOMOR WHATSAPP</label><input id="search" placeholder="Cari nama atau nomor WA"></div><div><label>TANGGAL DARI</label><input id="from" type="date"></div><div><label>TANGGAL SAMPAI</label><input id="to" type="date"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn yellow" id="filterBtn">🔎 Tampilkan Tagihan</button><button class="btn dark" id="reloadBtn">↻ Muat Ulang</button></div><p id="msg" class="muted">Tagihan diambil dari transaksi penjualan berstatus Tagihan dan sisa pembayaran lebih dari Rp0.</p></section>
-<div id="summary" class="summary">Memuat ringkasan...</div><section class="card"><div id="results"><div class="empty">Memuat data...</div></div></section></main>
+<div id="summary" class="summary">Memuat ringkasan...</div><section class="card search-card"><h2 style="margin:0 0 14px">Pencarian Tagihan</h2><div class="grid"><div><label>NAMA / NOMOR WHATSAPP</label><input id="search" placeholder="Cari nama atau nomor WA"></div><div><label>TANGGAL DARI</label><input id="from" type="date"></div><div><label>TANGGAL SAMPAI</label><input id="to" type="date"></div></div><div class="search-actions"><button class="btn yellow" id="filterBtn">🔎 Tampilkan Tagihan</button><button class="btn dark" id="reloadBtn">↻ Muat Ulang</button><button class="btn green" id="backupBtn" type="button">📊 Backup ke Excel</button></div><p id="msg" class="muted">Tagihan diambil dari transaksi penjualan berstatus Tagihan dan sisa pembayaran lebih dari Rp0.</p></section>
+<section class="card results-card"><div id="results"><div class="empty">Memuat data...</div></div></section></main>
 <div class="modal" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editTitle"><div class="modal-box"><h2 id="editTitle">✏️ Edit Transaksi</h2><div class="form-grid">
 <div><label>TANGGAL TRANSAKSI</label><input id="edTanggal" type="date"></div><div><label>NOMOR NOTA</label><input id="edNota"></div>
 <div><label>NAMA PELANGGAN</label><input id="edNama"></div><div><label>NOMOR WHATSAPP</label><input id="edWa" inputmode="tel"></div>

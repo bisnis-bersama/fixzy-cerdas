@@ -39,43 +39,10 @@
 @media(max-width:330px){.ticket-qr{flex-direction:column;align-items:center;text-align:center}.ticket-qr-frame{flex-basis:auto;width:150px;height:150px}}
 @media print{body *{visibility:hidden!important}#saleTicket,#saleTicket *{visibility:visible!important}#saleTicket{position:absolute;left:0;top:0;width:100%;max-width:none;box-shadow:none;border:0}}
 
-
-/* HEADER disalin dari servisan.html agar ukuran dan susunan benar-benar sama */
-header{position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;z-index:9999!important;background:#0b0f14!important;color:#fff;border-bottom:3px solid #ffc107;height:74px;display:flex;align-items:center}
-.head{width:100%;max-width:920px;margin:auto;display:flex;align-items:center;gap:12px;min-height:52px;padding:0 12px}
-.head-logo{width:52px;height:52px;border-radius:14px;object-fit:contain;background:#000;padding:4px;border:1px solid #ffffff20;flex:0 0 52px}
-.head-info{min-width:0;flex:1;line-height:1.2;overflow:hidden}
-.head-title-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.head h1{font-size:18px;margin:0;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.head-email{display:block;margin-top:2px;font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.role-badge{display:none;align-items:center;padding:5px 9px;border-radius:999px;background:#2563eb;color:#fff;font-size:11px;font-weight:900}
-.head-actions{display:flex;align-items:center;gap:8px;flex:none}
-.head button{border-radius:12px;font-weight:800;cursor:pointer}
-.refresh{background:transparent;color:#fff;border:2px solid #334155;height:42px;padding:0 14px;font-size:12px;white-space:nowrap}
-.dark-toggle{background:#1f2937;color:#facc15;border:2px solid #334155;width:44px;height:42px;padding:0;font-size:18px}
-
-@media(max-width:480px){}
-/* Header Servisan fixed; sediakan ruang agar isi halaman tidak tertutup */
-.wrap{padding-top:88px!important}
-
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-<header>
- <div class="head">
-  <img class="head-logo" src="logo.png" alt="FIXZY">
-  <div class="head-info">
-   <div class="head-title-row">
-    <h1>Input Penjualan</h1>
-    <span id="roleBadge" class="role-badge">OWNER</span>
-   </div>
-   <span id="accountEmail" class="head-email">Memeriksa akun...</span>
-  </div>
-  <div class="head-actions">
-   <button class="refresh" type="button" onclick="loadProducts()">↻ Refresh</button>
-   <button id="modeBtn" class="dark-toggle" type="button" onclick="toggleMode()" aria-label="Ganti mode tampilan">🌙</button>
-  </div>
-</header>
+<header class="header"><div class="headin"><img class="logo" src="logo.png" alt="FIXZY"><div class="brand">FIXZY <small>INPUT PENJUALAN</small></div><div style="margin-left:auto"><button class="btn yellow" onclick="loadProducts()">↻ Muat Produk</button></div></div></header>
 <main class="wrap">
 <section class="card"><div class="title">👤 Data Pelanggan & Transaksi</div><div class="grid">
 <div class="field"><label>Nama pelanggan *</label><input id="customer" placeholder="Nama pelanggan"></div>

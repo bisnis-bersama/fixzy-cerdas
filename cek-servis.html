@@ -42,69 +42,77 @@ const db = getFirestore(app);
 const $ = id => document.getElementById(id);
 const safe = v => String(v ?? '-').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = v => 'Rp ' + (Number(v) || 0).toLocaleString('id-ID');
-function row(label, value) {
-  return `<div class="row"><span class="label">${safe(label)}</span><b>${safe(value)}</b></div>`;
-}
+function row(label, value) { return `<div class="row"><span class="label">${safe(label)}</span><b>${safe(value)}</b></div>`; }
 
-// Nomor nota yang dicetak hanya 4 digit. ID dokumen Firebase bisa berupa SRV-...,
-// jadi pencarian tidak boleh hanya mengandalkan ID dokumen.
-function normalizeNota(value) {
-  const s = String(value ?? '').trim();
+// Ambil 4 digit terakhir dari nomor nota, termasuk jika QR berisi URL atau ID SRV panjang.
+function lastFourNota(value) {
+  let s = String(value ?? '').trim();
   if (!s) return '';
-  // Jika QR membawa URL atau ID panjang, ambil parameter nota bila ada.
   try {
     if (/^https?:\/\//i.test(s)) {
       const u = new URL(s);
-      const fromParam = u.searchParams.get('nota') || u.searchParams.get('nomorNota') || u.searchParams.get('no');
-      if (fromParam) return normalizeNota(fromParam);
+      const param = u.searchParams.get('nota') || u.searchParams.get('nomorNota') || u.searchParams.get('no');
+      if (param) s = param;
+      else s = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || s);
     }
   } catch (_) {}
-  // Nota 4 digit bisa berada dalam parameter atau teks QR yang mengandung ID panjang.
-  if (/^\d{4}$/.test(s)) return s;
-  const match = s.match(/(?:nota|no)[=:_\-/ ]*(\d{4})\b/i);
-  if (match) return match[1];
-  return s;
+  const digits = s.match(/\d+/g);
+  if (!digits || !digits.length) return '';
+  // Jika input berupa nomor/ID nota, empat digit paling akhir adalah nomor pendek yang dicetak.
+  return digits.join('').slice(-4);
+}
+function clean(v) { return String(v ?? '').trim(); }
+function recordShortNumber(data, docId) {
+  // Prioritaskan field nomorNota; jika field berisi ID panjang, tetap ambil 4 digit terakhir.
+  const values = [data?.nomorNota, data?.nota, data?.noNota, docId];
+  for (const value of values) {
+    const short = lastFourNota(value);
+    if (short) return short;
+  }
+  return '';
 }
 
-async function findPublicServis(notaInput) {
-  const nota = normalizeNota(notaInput);
-  const publicCol = collection(db, 'cek_servis_public');
+async function findPublicServis(rawInput) {
+  const short = lastFourNota(rawInput);
+  if (!short) return null;
+  const col = collection(db, 'cek_servis_public');
 
-  // 1. Coba ID dokumen langsung, baik nomor 4 digit maupun ID panjang dari QR.
-  const directIds = [...new Set([notaInput.trim(), nota].filter(Boolean))];
+  // 1) Coba ID dokumen: nomor pendek, input mentah, dan 4 digit hasil ekstraksi.
+  const directIds = [...new Set([short, clean(rawInput), clean(decodeURIComponentSafe(rawInput))].filter(Boolean))];
   for (const id of directIds) {
     try {
       const snap = await getDoc(doc(db, 'cek_servis_public', id));
-      if (snap.exists()) return snap;
-    } catch (e) {
-      // Lanjutkan ke pencarian field; hasil akhirnya akan menampilkan pesan yang sesuai.
-      console.debug('Pencarian ID dokumen dilewati:', e.code || e.message);
-    }
+      if (snap.exists() && recordShortNumber(snap.data() || {}, snap.id) === short) return snap;
+    } catch (e) { console.debug('Lewati pencarian ID dokumen:', e.code || e.message); }
   }
 
-  // 2. Cari berdasarkan FIELD nomorNota, bukan ID dokumen.
-  // Mendukung data yang menyimpan nomor nota sebagai string atau angka.
-  const candidates = [...new Set([nota, String(notaInput).trim()].filter(Boolean))];
-  for (const candidate of candidates) {
+  // 2) Cari dengan field nomorNota dalam format string dan angka.
+  for (const candidate of [...new Set([short, String(Number(short))])]) {
     try {
-      const q = query(publicCol, where('nomorNota', '==', candidate), limit(1));
-      const result = await getDocs(q);
-      if (!result.empty) return result.docs[0];
-    } catch (e) {
-      console.debug('Pencarian nomorNota string gagal:', e.code || e.message);
-    }
-    if (/^\d+$/.test(candidate)) {
-      try {
-        const qNum = query(publicCol, where('nomorNota', '==', Number(candidate)), limit(1));
-        const resultNum = await getDocs(qNum);
-        if (!resultNum.empty) return resultNum.docs[0];
-      } catch (e) {
-        console.debug('Pencarian nomorNota angka gagal:', e.code || e.message);
-      }
-    }
+      const result = await getDocs(query(col, where('nomorNota', '==', candidate), limit(10)));
+      const found = result.docs.find(s => recordShortNumber(s.data() || {}, s.id) === short);
+      if (found) return found;
+    } catch (e) { console.debug('Pencarian nomorNota teks gagal:', e.code || e.message); }
+    try {
+      const resultNum = await getDocs(query(col, where('nomorNota', '==', Number(candidate)), limit(10)));
+      const foundNum = resultNum.docs.find(s => recordShortNumber(s.data() || {}, s.id) === short);
+      if (foundNum) return foundNum;
+    } catch (e) { console.debug('Pencarian nomorNota angka gagal:', e.code || e.message); }
+  }
+
+  // 3) Fallback: cocokkan akhiran 4 digit dari data publik yang tersedia.
+  // Hanya membaca koleksi publik, tidak membaca koleksi servis internal.
+  try {
+    const allPublic = await getDocs(col);
+    const found = allPublic.docs.find(s => recordShortNumber(s.data() || {}, s.id) === short);
+    if (found) return found;
+  } catch (e) {
+    console.warn('Fallback koleksi publik gagal:', e.code || e.message);
+    throw e;
   }
   return null;
 }
+function decodeURIComponentSafe(value) { try { return decodeURIComponent(value); } catch (_) { return value; } }
 
 async function load() {
   const params = new URLSearchParams(location.search);
@@ -114,18 +122,19 @@ async function load() {
     $('err').textContent = 'Silakan scan QR nota yang benar atau masukkan nomor nota.';
     return;
   }
+  const short = lastFourNota(rawNota);
   try {
     const snap = await findPublicServis(rawNota);
     $('loading').hidden = true;
     if (!snap) {
-      $('err').textContent = `Nota ${normalizeNota(rawNota)} belum ditemukan di data publik. Pastikan dokumen tersedia di koleksi cek_servis_public dan field nomorNota berisi nomor nota 4 digit yang sama.`;
+      $('err').textContent = `Nota ${short || rawNota} belum ditemukan di koleksi cek_servis_public. Pastikan ringkasan nota sudah disimpan ke koleksi publik dan nomorNota berisi nomor yang sesuai.`;
       return;
     }
     const d = snap.data() || {};
     $('err').textContent = '';
     $('detail').hidden = false;
     $('detail').innerHTML = `
-      ${row('Nomor Nota', d.nomorNota || normalizeNota(rawNota))}
+      ${row('Nomor Nota', lastFourNota(d.nomorNota || d.nota || snap.id) || short)}
       ${row('Tanggal', d.tanggal || d.tanggalMasuk || '-')}
       ${row('Konter', d.namaKonter || 'A YUDI THEA')}
       ${row('Alamat Konter', d.alamatKonter || "Depan Pasar Hewan, Blok Jum'at, Maja Utara, Maja, Majalengka")}
@@ -140,7 +149,7 @@ async function load() {
   } catch (e) {
     console.error('Gagal memuat status servis:', e);
     $('loading').hidden = true;
-    $('err').textContent = 'Status servis gagal dimuat. Periksa koneksi internet dan aturan akses baca Firebase untuk koleksi cek_servis_public.';
+    $('err').textContent = 'Status servis gagal dimuat. Periksa koneksi internet dan aturan baca Firebase untuk koleksi cek_servis_public.';
   }
 }
 load();

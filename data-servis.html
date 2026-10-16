@@ -306,29 +306,41 @@ window.simpanStatus=async()=>{
   });
 
   // Sinkronkan status ke halaman cek servis publik.
-  // Dokumen publik saat ini memakai ID 4 digit terakhir nota.
+  // Koleksi publik memakai ID dokumen berupa 4 digit terakhir nota.
   const notaLengkap=String(getNota(r)||editId).trim();
-  const nomorPendek=notaLengkap.replace(/\\D/g,"").slice(-4);
-  if(/^\\d{4}$/.test(nomorPendek)){
+  const nomorPendek=notaLengkap.replace(/\D/g,"").slice(-4);
+  if(/^\d{4}$/.test(nomorPendek)){
    const publicRef=doc(db,"cek_servis_public",nomorPendek);
-   const publicSnap=await getDoc(publicRef);
-   if(publicSnap.exists()){
-    const publicData=publicSnap.data()||{};
-    // Jika data publik menyimpan nota lengkap, pastikan cocok agar tidak
-    // mengubah status nota lain yang kebetulan punya 4 digit sama.
-    const notaPublikLengkap=String(publicData.nomorNotaLengkap||publicData.notaLengkap||"").trim();
-    if(!notaPublikLengkap || notaPublikLengkap===notaLengkap){
-     await updateDoc(publicRef,{
-      status:newSt,
-      updatedAt:serverTimestamp(),
-      ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
-     });
+   try{
+    const publicSnap=await getDoc(publicRef);
+    if(!publicSnap.exists()){
+     console.warn("Dokumen cek_servis_public tidak ditemukan:",nomorPendek);
+     alert("Status utama tersimpan, tetapi dokumen cek_servis_public untuk nota "+nomorPendek+" tidak ditemukan. Periksa penyimpanan data publik saat nota dibuat.");
     } else {
-     console.warn("Status publik tidak disinkronkan: nomor nota lengkap berbeda.");
+     const publicData=publicSnap.data()||{};
+     const notaPublikLengkap=String(publicData.nomorNotaLengkap||publicData.notaLengkap||"").trim();
+     if(notaPublikLengkap && notaPublikLengkap!==notaLengkap){
+      console.warn("Nomor nota publik berbeda; status publik tidak diubah.",{notaLengkap,notaPublikLengkap});
+      alert("Status utama tersimpan, tetapi nomor nota lengkap pada data publik berbeda. Data publik tidak diubah demi mencegah salah nota.");
+     } else {
+      await updateDoc(publicRef,{
+       status:newSt,
+       updatedAt:serverTimestamp(),
+       ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
+      });
+      const cekUlang=await getDoc(publicRef);
+      const statusTersimpan=String(cekUlang.data()?.status||"");
+      if(statusTersimpan!==newSt){
+       throw new Error("Verifikasi status publik tidak cocok: "+statusTersimpan);
+      }
+     }
     }
-   } else {
-    console.warn("Dokumen cek_servis_public tidak ditemukan untuk nota",nomorPendek);
+   }catch(syncErr){
+    console.error("Gagal sinkron status cek_servis_public:",syncErr);
+    alert("Status di Data Servis tersimpan, tetapi status Cek Servis gagal diperbarui. Firebase: "+(syncErr?.message||syncErr)+". Periksa Firestore Rules untuk cek_servis_public.");
    }
+  } else {
+   console.warn("Nomor nota tidak menghasilkan 4 digit:",notaLengkap);
   }
 
   closeEdit();

@@ -211,6 +211,48 @@ function makeNota(){let d=new Date(),pad=n=>String(n).padStart(2,'0');return'J-'
 window.saveSale=async()=>{if(!uid)return msg('Akun belum login.');let customer=$('customer').value.trim(),wa=$('wa').value.trim();if(!customer||!wa)return msg('Nama pelanggan dan nomor WhatsApp wajib diisi.');if(!cart.length)return msg('Pilih minimal satu produk.');let status=$('status').value,total=cart.reduce((s,p)=>s+($('priceType').value==='tempo'?(p.jual||p.modal):(p.modal||p.jual))*p.qty,0),dp=Math.min(total,Math.max(0,num($('dp').value)));if(status==='Tunai'&&dp<total){if(!confirm('Status Tunai tetapi pembayaran belum lunas. Simpan tetap sebagai Tunai?'))return}if(status==='Tagihan'&&dp>=total&&total>0){if(!confirm('DP sudah melunasi total. Tetap simpan dengan status Tagihan?'))return}let nota=makeNota(),items=cart.map(p=>({productId:p.id,nama:p.nama,kode:p.kode||'',supplier:p.supplier||'',qty:p.qty,harga:$('priceType').value==='tempo'?(p.jual||p.modal):(p.modal||p.jual),subtotal:p.qty*($('priceType').value==='tempo'?(p.jual||p.modal):(p.modal||p.jual)),sourceSpreadsheet:p.sourceSpreadsheet||''}));let sale={nota,namaKonter:getNamaKonter(),alamatKonter:getAlamatKonter(),ownerUid:uid,uid,createdBy:uid,tanggal:$('date').value||new Date().toISOString().slice(0,10),createdAt:serverTimestamp(),updatedAt:serverTimestamp(),pelanggan:{nama:customer,wa,alamat:$('address').value.trim()},namaPelanggan:customer,nomorWa:wa,alamat:$('address').value.trim(),items,total,dp,sisa:Math.max(0,total-dp),status,jenisHarga:$('priceType').value==='tempo'?'Tempo':'Tunai',catatan:$('note').value.trim(),jumlahItem:items.reduce((s,x)=>s+x.qty,0)};$('loading').classList.add('show');try{let ref=await addDoc(collection(db,'penjualan'),sale);lastSale={...sale,id:ref.id};$('receipt').classList.remove('hidden');updateQrBrand(sale.namaKonter||getNamaKonter());$('receiptNo').textContent=nota;
 $('receiptText').innerHTML=`<div class="ticket-section">DATA PELANGGAN</div><div class="ticket-row"><span>Nama</span><b>${esc(customer)}</b></div><div class="ticket-row"><span>WhatsApp</span><b>${esc(wa)}</b></div>${$('address').value.trim()?`<div class="ticket-row"><span>Alamat</span><b>${esc($('address').value.trim())}</b></div>`:''}<div class="ticket-row"><span>Tanggal</span><b>${esc(sale.tanggal)}</b></div><div class="ticket-section">RINCIAN PRODUK</div><div class="ticket-items">${items.map(x=>`<div class="ticket-item"><span>${esc(x.nama)} × ${x.qty}</span><b>${money(x.subtotal)}</b></div>`).join('')}</div><div class="ticket-row ticket-total"><span>TOTAL</span><b>${money(total)}</b></div><div class="ticket-row"><span>DP / Dibayar</span><b>${money(dp)}</b></div><div class="ticket-row"><span>Sisa tagihan</span><b>${money(Math.max(0,total-dp))}</b></div><div class="ticket-row"><span>Status</span><b>${esc(status)}</b></div><div class="ticket-row"><span>Jenis harga</span><b>${esc(sale.jenisHarga)}</b></div>${sale.catatan?`<div class="ticket-section">CATATAN</div><div>${esc(sale.catatan)}</div>`:''}`;
 setQrForSale(nota);msg('Penjualan berhasil disimpan ke Firebase. Nota: '+nota);window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});cart=[];renderCart()}catch(e){msg('Gagal menyimpan penjualan: '+e.message)}finally{$('loading').classList.remove('show')}};
-window.sendWA=()=>{if(!lastSale)return;let s=lastSale,phone=String(s.pelanggan.wa).replace(/\D/g,'');if(phone.startsWith('0'))phone='62'+phone.slice(1);let text=`${s.namaKonter||getNamaKonter()}\n${s.alamatKonter||getAlamatKonter()}\nNOTA PENJUALAN\nNota: ${s.nota}\nTanggal: ${s.tanggal}\nPelanggan: ${s.pelanggan.nama}\n${s.items.map(x=>`${x.nama} x${x.qty} = ${money(x.subtotal)}`).join('\n')}\nTOTAL: ${money(s.total)}\nDP: ${money(s.dp)}\nSISA: ${money(s.sisa)}\nSTATUS: ${s.status}`;window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(text),'_blank')};
+window.sendWA=()=>{
+ if(!lastSale)return;
+
+ const s=lastSale;
+ let phone=String(s.pelanggan.wa||'').replace(/\D/g,'');
+
+ if(phone.startsWith('0'))phone='62'+phone.slice(1);
+
+ const items=s.items.map((x,i)=>
+   `${i+1}. ${x.nama}\n   Qty: ${x.qty}\n   Harga: ${money(x.subtotal)}`
+ ).join('\n\n');
+
+ const text=
+`A Yudi Thea
+Depan Pasar Hewan, Blok Jum'at
+Maja Utara, Majalengka
+
+🧾 NOTA PENJUALAN
+━━━━━━━━━━━━━━━━━━
+No. Nota: ${s.nota}
+Tanggal: ${s.tanggal}
+Pelanggan: ${s.pelanggan.nama}
+
+📦 RINCIAN PRODUK
+━━━━━━━━━━━━━━━━━━
+${items}
+
+━━━━━━━━━━━━━━━━━━
+TOTAL: ${money(s.total)}
+DP / Dibayar: ${money(s.dp)}
+SISA TAGIHAN: ${money(s.sisa)}
+
+Status: ${s.status}
+Jenis Harga: ${s.jenisHarga}
+
+Terima kasih telah berbelanja di A Yudi Thea.
+Semoga puas dengan pelayanan kami 🙏`;
+
+ window.open(
+   'https://wa.me/'+phone+'?text='+encodeURIComponent(text),
+   '_blank'
+ );
+};
 onAuthStateChanged(auth,user=>{uid=user?.uid||null;if(user){$('productInfo').textContent='Login aktif. Memuat link Spreadsheet...';loadProducts()}else{$('productInfo').textContent='Belum login. Buka halaman ini dari FIXZY yang sudah login.'}});
 </script></body></html>

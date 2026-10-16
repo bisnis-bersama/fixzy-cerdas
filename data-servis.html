@@ -294,18 +294,42 @@ window.simpanStatus=async()=>{
  const sisa=Math.max(0,total-dp);
 
  try{
+  // Simpan status terbaru pada data servis utama.
   await updateDoc(doc(db,"servis",editId),{
    status:newSt,
    statusTerakhir:newSt,
    pendapatan,
    sisa,
    sisaBayar:sisa,
-   ownerUid:ownerUid,
-   ownerId:ownerUid,
-   uid:uid,
    updatedAt:serverTimestamp(),
    ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
   });
+
+  // Sinkronkan status ke halaman cek servis publik.
+  // Dokumen publik saat ini memakai ID 4 digit terakhir nota.
+  const notaLengkap=String(getNota(r)||editId).trim();
+  const nomorPendek=notaLengkap.replace(/\\D/g,"").slice(-4);
+  if(/^\\d{4}$/.test(nomorPendek)){
+   const publicRef=doc(db,"cek_servis_public",nomorPendek);
+   const publicSnap=await getDoc(publicRef);
+   if(publicSnap.exists()){
+    const publicData=publicSnap.data()||{};
+    // Jika data publik menyimpan nota lengkap, pastikan cocok agar tidak
+    // mengubah status nota lain yang kebetulan punya 4 digit sama.
+    const notaPublikLengkap=String(publicData.nomorNotaLengkap||publicData.notaLengkap||"").trim();
+    if(!notaPublikLengkap || notaPublikLengkap===notaLengkap){
+     await updateDoc(publicRef,{
+      status:newSt,
+      updatedAt:serverTimestamp(),
+      ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
+     });
+    } else {
+     console.warn("Status publik tidak disinkronkan: nomor nota lengkap berbeda.");
+    }
+   } else {
+    console.warn("Dokumen cek_servis_public tidak ditemukan untuk nota",nomorPendek);
+   }
+  }
 
   closeEdit();
   await muatSemua();

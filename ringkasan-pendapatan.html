@@ -69,23 +69,37 @@ function periodStats(k){const tx=allTx().filter(r=>belongs(r,k)),out=pengeluaran
 function renderList(){
  const ks=keys();
  if(!ks.length){$("menu").innerHTML='<div class="empty">Belum ada data Firebase yang bisa ditampilkan.</div>';return}
- if(mode==="harian"){
+ const fmtMonth=m=>m.slice(5,7)+'-'+m.slice(0,4);
+ const sumPeriod=key=>periodStats(key).rev;
+ const row=(id,title,total,children,kind)=>`<section class="month-group"><button class="item month-row" type="button" aria-expanded="false" aria-controls="${id}" onclick="toggleMonth('${id}','${kind}','${title}')"><span class="month-toggle"><span class="month-arrow">▶</span><span class="item-title">${title}</span></span><span class="month-total">${rp(total)}</span></button><div class="day-list" id="${id}">${children}</div></section>`;
+ if(mode==='harian'){
   const months=[...new Set(ks.map(k=>k.slice(0,7)))].sort().reverse();
   $("menu").innerHTML=months.map(m=>{
    const days=ks.filter(k=>k.startsWith(m)).sort().reverse();
-   const monthTx=allTx().filter(r=>dateOf(r).startsWith(m));
-   const monthOut=pengeluaran.filter(r=>dateOf(r).startsWith(m));
-   const rev=monthTx.filter(r=>active(r,r._jenis)).reduce((a,r)=>a+money(r),0);
-   const exp=monthOut.reduce((a,r)=>a+expenseOf(r),0);
-   const id='month-'+m.replace(/[^0-9]/g,'');
-   const monthLabel=m.slice(5,7)+'-'+m.slice(0,4);
-   return `<section class="month-group"><div class="month-heading">📅 Harian - Klik bulan untuk lihat tanggal (sudah termasuk luar)</div><button class="item month-row" type="button" aria-expanded="false" aria-controls="${id}" onclick="toggleMonth('${id}','${m}')"><span class="month-toggle"><span class="month-arrow">▶</span><span class="item-title">${monthLabel}</span></span><span class="month-total">${rp(rev)}</span></button><div class="day-list" id="${id}">${days.map(k=>{const st=periodStats(k);return `<button class="item day-row" type="button" onclick="lihat('${k}')"><span class="item-left"><span class="item-title">📅 ${esc(label(k))}</span><span class="item-sub">${st.tx.length} transaksi • Pengeluaran ${rp(st.exp)}</span></span><span class="month-total">${rp(st.rev)}</span></button>`}).join('')}</div></section>`;
-  }).join('');
-  return;
+   const rev=allTx().filter(r=>dateOf(r).startsWith(m)&&active(r,r._jenis)).reduce((a,r)=>a+money(r),0);
+   const children=days.map(k=>{const st=periodStats(k);return `<button class="item day-row" type="button" onclick="lihat('${k}')"><span class="item-left"><span class="item-title">📅 ${esc(label(k))}</span><span class="item-sub">${st.tx.length} transaksi • Pengeluaran ${rp(st.exp)}</span></span><span class="month-total">${rp(st.rev)}</span></button>`}).join('');
+   return row('period-'+m.replace(/[^0-9]/g,''),fmtMonth(m),rev,children,m);
+  }).join(''); return;
  }
- $("menu").innerHTML=ks.map(k=>{const st=periodStats(k);return `<button class="item" type="button" onclick="lihat('${k}')"><span class="item-left"><span class="item-title">${esc(label(k))}<span class="badge">${st.tx.length} trx</span></span><span class="item-sub">Penjualan + servis: ${rp(st.rev)} • Pengeluaran: ${rp(st.exp)}</span></span><b>${rp(st.rev)}</b></button>`}).join('');
+ if(mode==='bulanan'){
+  const years=[...new Set(ks.map(k=>k.slice(0,4)))].sort().reverse();
+  $("menu").innerHTML=years.map(y=>{
+   const months=[...new Set(ks.filter(k=>k.startsWith(y)).map(k=>k.slice(0,7)))].sort().reverse();
+   const rev=allTx().filter(r=>dateOf(r).startsWith(y)&&active(r,r._jenis)).reduce((a,r)=>a+money(r),0);
+   const children=months.map(m=>{const st=periodStats(m);return `<button class="item day-row" type="button" onclick="lihat('${m}')"><span class="item-left"><span class="item-title">📆 ${fmtMonth(m)}</span><span class="item-sub">${st.tx.length} transaksi • Pengeluaran ${rp(st.exp)}</span></span><span class="month-total">${rp(st.rev)}</span></button>`}).join('');
+   return row('year-months-'+y,'Tahun '+y,rev,children,y);
+  }).join(''); return;
+ }
+ // Tahunan: setiap tahun dapat dibuka untuk melihat rincian per bulan.
+ const years=[...new Set(ks.map(k=>k.slice(0,4)))].sort().reverse();
+ $("menu").innerHTML=years.map(y=>{
+  const months=[...new Set(ks.filter(k=>k.startsWith(y)).map(k=>k.slice(0,7)))].sort().reverse();
+  const rev=allTx().filter(r=>dateOf(r).startsWith(y)&&active(r,r._jenis)).reduce((a,r)=>a+money(r),0);
+  const children=months.map(m=>{const st=periodStats(m);return `<button class="item day-row" type="button" onclick="lihat('${m}')"><span class="item-left"><span class="item-title">📆 ${fmtMonth(m)}</span><span class="item-sub">${st.tx.length} transaksi • Pengeluaran ${rp(st.exp)}</span></span><span class="month-total">${rp(st.rev)}</span></button>`}).join('');
+  return row('year-detail-'+y,'Tahun '+y,rev,children,y);
+ }).join('');
 }
-function toggleMonth(id,month){const box=$(id),btn=document.querySelector(`[aria-controls="${id}"]`);const open=!box.classList.contains('open');box.classList.toggle('open',open);if(btn)btn.setAttribute('aria-expanded',String(open));if(open){const first=keys().filter(k=>k.startsWith(month)).sort().reverse()[0];if(first)lihat(first)}}window.toggleMonth=toggleMonth;
+function toggleMonth(id,kind,title){const box=$(id),btn=document.querySelector(`[aria-controls="${id}"]`);const open=!box.classList.contains('open');box.classList.toggle('open',open);if(btn)btn.setAttribute('aria-expanded',String(open));if(open){if(mode==='harian'){const first=keys().filter(k=>k.startsWith(kind)).sort().reverse()[0];if(first)lihat(first)}else{const first=keys().filter(k=>k.startsWith(kind)).sort().reverse()[0];if(first)lihat(first.slice(0,mode==='bulanan'?7:7))}}}window.toggleMonth=toggleMonth;
 function setMode(m){mode=m;document.querySelectorAll("[id^=tab-]").forEach(x=>x.classList.remove("active"));$("tab-"+m).classList.add("active");renderList();chooseDefault()}window.setMode=setMode;
 function chooseDefault(){const ks=keys();if(ks.length)lihat(ks[0]);else clearDetail()}
 function clearDetail(){$("detailTitle").textContent="-";$("detailCount").textContent="";["kpKonter","kpTotal","kpPeng","kpLaba"].forEach(id=>$(id).textContent="Rp 0");$("tbody").innerHTML='<tr><td colspan="7" class="empty">Belum ada transaksi.</td></tr>'}

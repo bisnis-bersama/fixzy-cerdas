@@ -92,11 +92,11 @@ async function load() {
       ${row('Nomor Nota', lastFourNota(d.nomorNota || d.nota || snap.id) || short)}
       ${row('Tanggal', d.tanggal || d.tanggalMasuk || '-')}
       ${row('Nama Pelanggan', d.pelanggan?.nama || d.namaPelanggan || d.nama || '-')}
-      ${row('No. WhatsApp Pelanggan', d.pelanggan?.wa || d.pelanggan?.noWa || d.noWa || d.wa || d.nomorWa || '-')}
+      ${row('Nomor WhatsApp', d.pelanggan?.wa || d.pelanggan?.noWa || d.noWa || d.wa || d.nomorWa || '-')}
       ${row('Alamat Pelanggan', d.pelanggan?.alamat || d.alamatPelanggan || d.alamat || '-')}
-      ${row('Konter', d.namaKonter || 'A YUDI THEA')}
-      ${row('Alamat Konter', d.alamatKonter || "Depan Pasar Hewan, Blok Jum'at, Maja Utara, Maja, Majalengka")}
-      ${row('Perangkat', d.brandTipe || d.servisan?.brandTipe || d.merekTipe || '-')}
+      ${row('Tanggal Servis', d.tanggal || d.tanggalMasuk || '-')}
+      ${row('Nama Konter', d.namaKonter || 'A YUDI THEA')}
+      ${row('Merek dan Tipe HP', d.brandTipe || d.servisan?.brandTipe || d.merekTipe || '-')}
       ${row('Keluhan', d.jenisKerusakan || d.servisan?.jenisKerusakan || d.keluhan || '-')}
       ${row('Teknisi', d.namaTeknisi || d.teknisi || '-')}
       <div class="row"><span class="label">Status</span><b><span class="status">${safe(d.status || 'Dalam proses')}</span></b></div>

@@ -196,7 +196,7 @@ function employeePhone(a){return String(a.whatsapp||a.noWhatsapp||a.nomorWa||a.n
 function waNumber(value){let n=String(value||"").replace(/\D/g,"");if(n.startsWith("0"))n="62"+n.slice(1);else if(n.startsWith("8"))n="62"+n;return n;}
 function salaryMessage(a,c){
  const p=periodKey(),periodText=p.length===10?new Date(p+"T12:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):p.length===4?p: new Date(p+"-01T12:00:00").toLocaleDateString("id-ID",{month:"long",year:"numeric"});
- const lines=[`Halo ${nama(a)}, berikut rincian gaji kamu dari ${profile.namaKonter||profile.nama||"FIXZY"}.`,`Periode: ${periodText}`,"",`Jabatan: ${a.jabatan||a.posisi||a.role||"-"}`,`Sistem upah: ${jenisLabel(c.jenis)}`,`Hari hadir: ${c.hadir} hari`,`Hari libur: ${c.libur} hari`,`Tidak hadir: ${c.tidak} hari`,`Tarif: ${tarifLabel(c)}`,`TOTAL UPAH: ${money(c.gross)}`,`Kasbon: ${money(c.kb)}`,`SISA UPAH DITERIMA: ${money(c.net)}`,"","Mohon periksa rincian ini. Jika ada yang tidak sesuai, silakan kabari. Terima kasih."];
+ const lines=[`Halo Kak ${nama(a)}, berikut rincian gaji kamu dari ${profile.namaKonter||profile.namaToko||profile.namaUsaha||profile.namaKonterUsaha||profile.nama||"Pemilik Konter"}.`,`Periode: ${periodText}`,"",`Jabatan: ${a.jabatan||a.posisi||a.role||"-"}`,`Sistem upah: ${jenisLabel(c.jenis)}`,`Hari hadir: ${c.hadir} hari`,`Hari libur: ${c.libur} hari`,`Tidak hadir: ${c.tidak} hari`,`Tarif: ${tarifLabel(c)}`,`TOTAL UPAH: ${money(c.gross)}`,`Kasbon: ${money(c.kb)}`,`SISA UPAH DITERIMA: ${money(c.net)}`,"","Mohon periksa rincian ini. Jika ada yang tidak sesuai, silakan kabari. Terima kasih."];
  return lines.join("\n");
 }
 function render(){

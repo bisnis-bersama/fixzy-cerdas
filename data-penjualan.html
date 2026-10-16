@@ -83,7 +83,7 @@ body.dark-mode .summary{background:#000;border:1px solid #ffc107}
 </style>
 </head>
 <body>
-<header><div class="in"><div class="brand"><img class="logo" src="logo.png" alt="Logo FIXZY" onerror="this.onerror=null;this.style.background='#000';this.alt='FIXZY'"><div class="brand-text"><h1>FIXZY — TAGIHAN PELANGGAN</h1><small id="accountLine">Memuat nama owner...</small></div></div><div class="head-actions"><button class="btn yellow" id="headerRefreshBtn" type="button">↻ Refresh</button><button class="btn dark" id="darkModeBtn" type="button">🌙</button></div></div></header>
+<header><div class="in"><div class="brand"><img class="logo" src="logo.png" alt="Logo FIXZY" onerror="this.onerror=null;this.style.background='#000';this.alt='FIXZY'"><div class="brand-text"><h1>FIXZY — TAGIHAN PELANGGAN</h1><small id="accountLine">Memuat nama owner...</small></div></div><div class="head-actions"><button class="btn green" id="backupBtn" type="button">📥 Backup Excel</button><button class="btn yellow" id="headerRefreshBtn" type="button">↻ Refresh</button><button class="btn dark" id="darkModeBtn" type="button">🌙</button></div></div></header>
 <main class="wrap">
 <section class="card"><h2 style="margin:0 0 14px">Pencarian Tagihan</h2><div class="grid"><div><label>NAMA / NOMOR WHATSAPP</label><input id="search" placeholder="Cari nama atau nomor WA"></div><div><label>TANGGAL DARI</label><input id="from" type="date"></div><div><label>TANGGAL SAMPAI</label><input id="to" type="date"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn yellow" id="filterBtn">🔎 Tampilkan Tagihan</button><button class="btn dark" id="reloadBtn">↻ Muat Ulang</button></div><p id="msg" class="muted">Tagihan diambil dari transaksi penjualan berstatus Tagihan dan sisa pembayaran lebih dari Rp0.</p></section>
 <div id="summary" class="summary">Memuat ringkasan...</div><section class="card"><div id="results"><div class="empty">Memuat data...</div></div></section></main>
@@ -153,6 +153,46 @@ window.markLunas=async id=>{const d=all.find(x=>x.id===id);if(!d||status(d)!=='t
 $('saveEdit').addEventListener('click',async()=>{if(!editingId)return;const btn=$('saveEdit');btn.disabled=true;$('editMsg').textContent='Menyimpan perubahan...';try{const ref=doc(db,'penjualan',editingId),snap=await getDoc(ref);if(!snap.exists())throw Error('Transaksi tidak ditemukan di Firebase.');const current=snap.data()||{};if(String(current.ownerUid||current.ownerId||'')!==String(ownerUid))throw Error('Transaksi ini bukan milik owner yang sedang aktif.');const nt=Math.max(0,Number($('edTotal').value)||0),dis=Math.max(0,Number($('edDiskon').value)||0),paid=Math.max(0,Number($('edDp').value)||0),st=$('edStatus').value,wa=$('edWa').value.trim(),customer=$('edNama').value.trim()||'Pelanggan',nota=$('edNota').value.trim()||current.nomorNota||current.nota||editingId;let s=st==='tagihan'?Math.max(0,nt-dis-paid):0;const patch={tanggal:$('edTanggal').value||date(current),nomorNota:nota,nota,namaPelanggan:customer,noHp:wa,noWhatsapp:wa,wa,items:$('edProduk').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),total:nt,diskon:dis,dp:paid,sisa:s,status:st,pendapatan:['lunas','tunai'].includes(st)?Math.max(0,nt-dis):st==='tagihan'?Math.min(paid,Math.max(0,nt-dis)):0,updatedAt:serverTimestamp(),ownerUid,ownerId:ownerUid};if(current.pelanggan&&typeof current.pelanggan==='object')patch.pelanggan={...current.pelanggan,nama:customer,wa};await updateDoc(ref,patch);closeEdit();$('msg').textContent='Perubahan transaksi berhasil disimpan.';await load()}catch(e){$('editMsg').textContent='Gagal menyimpan: '+(e.message||e)}finally{btn.disabled=false}});
 $('cancelEdit').addEventListener('click',closeEdit);$('editModal').addEventListener('click',e=>{if(e.target===$('editModal'))closeEdit()});$('filterBtn').addEventListener('click',render);$('search').addEventListener('input',render);$('from').addEventListener('change',render);$('to').addEventListener('change',render);$('reloadBtn').addEventListener('click',load);
 $('headerRefreshBtn').addEventListener('click',load);
+// Backup Excel berisi seluruh transaksi milik owner yang sudah dimuat dari Firestore,
+// tidak hanya data yang sedang tampil setelah pencarian/filter.
+$('backupBtn').addEventListener('click',async()=>{
+ const btn=$('backupBtn');
+ if(!all.length){alert('Belum ada data transaksi untuk di-backup. Silakan muat ulang data terlebih dahulu.');return}
+ btn.disabled=true;const oldText=btn.textContent;btn.textContent='⏳ Menyiapkan...';
+ try{
+  const XLSX=await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm');
+  const data=[...all].sort((a,b)=>date(a).localeCompare(date(b))).map(d=>({
+   'Tanggal':date(d),
+   'Nomor Nota':d.nomorNota||d.nota||d.id,
+   'Nama Pelanggan':name(d),
+   'Nomor WhatsApp':phone(d),
+   'Detail Produk':productList(d).join(' | '),
+   'Total':Math.max(0,total(d)-diskon(d)),
+   'Diskon':diskon(d),
+   'DP / Dibayar':dp(d),
+   'Sisa Tagihan':sisa(d),
+   'Status':status(d).toUpperCase(),
+   'Owner':ownerLabel,
+   'ID Transaksi':d.id
+  }));
+  const unpaid=data.filter(x=>x.Status==='TAGIHAN');
+  const summary=[
+   {'Keterangan':'Nama Owner/Konter','Nilai':ownerLabel},
+   {'Keterangan':'Waktu Backup','Nilai':new Date().toLocaleString('id-ID')},
+   {'Keterangan':'Jumlah Transaksi','Nilai':data.length},
+   {'Keterangan':'Jumlah Nota Tagihan','Nilai':unpaid.length},
+   {'Keterangan':'Total Sisa Tagihan','Nilai':data.reduce((n,x)=>n+(Number(x['Sisa Tagihan'])||0),0)}
+  ];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summary),'RINGKASAN');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),'DATA TAGIHAN');
+  const safe=String(ownerLabel||'Owner').replace(/[^a-z0-9_-]+/gi,'_').replace(/^_+|_+$/g,'')||'Owner';
+  const stamp=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`Backup_Tagihan_${safe}_${stamp}.xlsx`);
+  $('msg').textContent=`Backup Excel berhasil dibuat: ${data.length} transaksi, termasuk semua status dan tidak terpengaruh filter pencarian.`;
+ }catch(e){console.error(e);alert('Backup Excel gagal dibuat. Periksa koneksi internet lalu coba lagi.\n'+(e.message||e))}
+ finally{btn.disabled=false;btn.textContent=oldText}
+});
 const darkModeBtn=$('darkModeBtn');
 function applyDarkMode(on){document.body.classList.toggle('dark-mode',on);darkModeBtn.textContent=on?'☀️':'🌙';darkModeBtn.setAttribute('aria-pressed',String(on));try{localStorage.setItem('fixzy-tagihan-dark-mode',on?'1':'0')}catch(e){}}
 let savedDark=false;try{savedDark=localStorage.getItem('fixzy-tagihan-dark-mode')==='1'}catch(e){}

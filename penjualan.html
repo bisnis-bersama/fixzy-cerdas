@@ -7,7 +7,7 @@
 *{box-sizing:border-box}body{margin:0;background:#f4f6f9;color:#172033;font-family:Arial,Helvetica,sans-serif}.header{background:#111;border-bottom:4px solid #ffc107;color:#fff;padding:12px 15px;position:sticky;top:0;z-index:10}.headin{max-width:1100px;margin:auto;display:flex;align-items:center;gap:11px}.logo{width:56px;height:56px;flex:0 0 56px;object-fit:contain;border-radius:13px;background:#111;border:2px solid #ffc107;padding:3px;box-shadow:0 0 0 2px #111}.brand{font-size:19px;font-weight:900}.brand small{display:block;font-size:11px;color:#ffc107;margin-top:4px}.wrap{max-width:1100px;margin:15px auto;padding:0 12px 50px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:15px;margin-bottom:13px;box-shadow:0 4px 14px #0f172a08}.title{font-size:16px;font-weight:900;margin-bottom:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field label{display:block;font-size:11px;font-weight:800;color:#64748b;margin-bottom:5px}.field input,.field select,.field textarea,.search{width:100%;min-height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font:inherit;background:white}.field textarea{min-height:70px}.full{grid-column:1/-1}.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:900;cursor:pointer}.yellow{background:#ffc107;color:#111}.dark{background:#111827;color:white}.green{background:#15803d;color:white}.red{background:#dc2626;color:white}.muted{font-size:12px;color:#64748b;line-height:1.5}.notice{padding:10px;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px;white-space:pre-line;display:none;margin-top:10px}.notice.show{display:block}.product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}.product{border:1px solid #e2e8f0;border-radius:12px;padding:11px;min-width:0}.pname{font-weight:900;font-size:13px;overflow-wrap:anywhere}.pmeta{font-size:11px;color:#64748b;margin:5px 0}.price{font-weight:900;color:#a16207;font-size:13px}.product button{width:100%;margin-top:9px}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:600px}th,td{text-align:left;padding:9px;border-bottom:1px solid #e2e8f0;font-size:12px}th{background:#f8fafc}.qty{width:70px;padding:7px;border:1px solid #cbd5e1;border-radius:7px}.totals{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:13px;margin-top:12px}.grand{font-size:20px;font-weight:900}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.status{font-weight:900}.hidden{display:none!important}.qrbox{display:flex;gap:14px;align-items:center;flex-wrap:wrap;min-width:0}.qrbox img{display:block;width:190px;height:190px;max-width:100%;object-fit:contain;background:#fff;border:2px solid #ffc107;padding:8px;border-radius:14px;box-shadow:0 4px 12px #0f172a12}.qrbox>div{min-width:0;flex:1}.qrbox b{overflow-wrap:anywhere}.qrbox .muted{overflow-wrap:anywhere}#receiptText{overflow-wrap:anywhere;word-break:break-word;line-height:1.65}.loading{position:fixed;inset:0;background:#1118;display:none;align-items:center;justify-content:center;z-index:30}.loading.show{display:flex}.loading div{background:white;padding:22px;border-radius:12px;font-weight:900}@media(max-width:700px){.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.full{grid-column:auto}.wrap{padding:0 8px 40px}.card{padding:12px}}@media(max-width:380px){.product-grid{grid-template-columns:1fr}}
 
 /* Nota QR FIXZY: adaptif desktop dan ponsel */
-.sale-ticket{max-width:560px;margin:0 auto;background:#fff;border:1px solid #dbe2ea;border-radius:16px;overflow:hidden;color:#111827;box-shadow:0 8px 24px #0f172a12}
+.sale-ticket{width:100%;max-width:560px;margin:0 auto;background:#fff;border:1px solid #dbe2ea;border-radius:16px;overflow:hidden;color:#111827;box-shadow:0 8px 24px #0f172a12}
 .ticket-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px;background:#111;color:#fff;border-bottom:5px solid #ffc107}
 .ticket-brand strong{display:block;font-size:22px;line-height:1.15;font-weight:900;overflow-wrap:anywhere}
 .ticket-brand span{display:block;font-size:9px;letter-spacing:1px;color:#ffc107;margin-top:4px}
@@ -114,14 +114,82 @@ function setQrForSale(nota){
 window.downloadSaleJPG=async()=>{
  const target=$('saleTicket');
  if(!target||!lastSale)return;
- if(typeof window.html2canvas!=='function'){alert('Fitur unduh gambar belum siap. Periksa koneksi internet lalu coba lagi.');return;}
+ if(typeof window.html2canvas!=='function'){
+   alert('Fitur unduh gambar belum siap. Periksa koneksi internet lalu coba lagi.');
+   return;
+ }
+ const btn=event?.currentTarget;
+ const oldText=btn?btn.textContent:'';
  try{
+   if(btn){btn.disabled=true;btn.textContent='Menyiapkan nota...';}
    $('loading').classList.add('show');
-   await new Promise((resolve,reject)=>{const im=$('qr');if(im.complete&&im.naturalWidth)resolve();else{im.onload=resolve;im.onerror=()=>reject(new Error('QR gagal dimuat'));}});
-   const canvas=await html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
-   const a=document.createElement('a');a.href=canvas.toDataURL('image/jpeg',0.95);a.download=(lastSale.nota||'nota-penjualan')+'.jpg';a.click();
- }catch(e){alert('Gagal membuat JPG nota: '+e.message)}
- finally{$('loading').classList.remove('show')}
+
+   // Pastikan font dan QR sudah selesai dimuat sebelum mengambil gambar.
+   if(document.fonts?.ready) await document.fonts.ready;
+   const qr=$('qr');
+   if(qr && (!qr.complete || !qr.naturalWidth)){
+     await new Promise((resolve,reject)=>{
+       const timer=setTimeout(()=>reject(new Error('Waktu tunggu QR habis. Coba lagi.')),15000);
+       qr.onload=()=>{clearTimeout(timer);resolve();};
+       qr.onerror=()=>{clearTimeout(timer);reject(new Error('QR gagal dimuat. Periksa koneksi internet.'));};
+       if(qr.complete && qr.naturalWidth){clearTimeout(timer);resolve();}
+     });
+   }
+
+   // Ukur seluruh nota, bukan tinggi viewport HP.
+   const rect=target.getBoundingClientRect();
+   const width=Math.ceil(Math.max(target.scrollWidth,rect.width));
+   const height=Math.ceil(Math.max(target.scrollHeight,rect.height));
+   if(!width||!height)throw new Error('Ukuran nota tidak terbaca.');
+
+   const canvas=await html2canvas(target,{
+     scale:2,
+     backgroundColor:'#ffffff',
+     useCORS:true,
+     allowTaint:false,
+     logging:false,
+     width,
+     height,
+     windowWidth:Math.max(document.documentElement.clientWidth,width),
+     windowHeight:Math.max(window.innerHeight,height),
+     scrollX:0,
+     scrollY:0,
+     onclone:(clonedDoc)=>{
+       const cloned=clonedDoc.getElementById('saleTicket');
+       if(cloned){
+         cloned.style.width=width+'px';
+         cloned.style.maxWidth='none';
+         cloned.style.height='auto';
+         cloned.style.maxHeight='none';
+         cloned.style.overflow='visible';
+         cloned.style.position='static';
+         cloned.style.transform='none';
+       }
+       // Jangan ikutkan efek sticky/overlay halaman ke hasil JPG.
+       clonedDoc.body.style.margin='0';
+       clonedDoc.body.style.background='#ffffff';
+     }
+   });
+
+   if(!canvas.width||!canvas.height)throw new Error('Gambar nota kosong.');
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.96));
+   if(!blob)throw new Error('Gagal mengubah nota menjadi JPG.');
+
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement('a');
+   a.href=url;
+   a.download=(lastSale.nota||'nota-penjualan')+'.jpg';
+   document.body.appendChild(a);
+   a.click();
+   a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }catch(e){
+   console.error('Unduh nota JPG:',e);
+   alert('Gagal membuat JPG nota: '+(e?.message||'Kesalahan tidak diketahui'));
+ }finally{
+   $('loading').classList.remove('show');
+   if(btn){btn.disabled=false;btn.textContent=oldText||'⬇ Unduh Nota JPG';}
+ }
 };
 
 function num(v){if(typeof v==='number')return v;let s=String(v??'').trim().replace(/[^\d,.-]/g,'');if(!s)return 0;let dots=(s.match(/\./g)||[]).length,commas=(s.match(/,/g)||[]).length;if(dots&&commas){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');}else if(commas){let a=s.split(',');s=a.length===2&&a[1].length<=2?s.replace(',','.'):s.replace(/,/g,'');}else if(dots){let a=s.split('.');if(!(a.length===2&&a[1].length<=2))s=s.replace(/\./g,'');}return Number(s)||0}

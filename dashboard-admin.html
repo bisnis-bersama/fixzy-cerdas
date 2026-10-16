@@ -122,7 +122,10 @@ const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-up
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);const rupiah=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID");const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let ownerUid="",allServis=[],allJual=[],allKeluar=[],allUsers=[],allAbsensi=[];
-const pname=d=>d.pelanggan?.nama||d.namaPelanggan||d.nama||"-";const date=d=>String(d.tanggal||"").slice(0,10)||(d.createdAt?.toDate?d.createdAt.toDate().toISOString().slice(0,10):"");
+const pname=d=>d.pelanggan?.nama||d.namaPelanggan||d.nama||"-";
+// Tanggal lokal Indonesia: hindari tanggal bergeser akibat konversi UTC.
+const localToday=()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`};
+const date=d=>{const raw=String(d.tanggal||d.date||"").slice(0,10);if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;const t=d.createdAt?.toDate?d.createdAt.toDate():null;return t?`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`:""};
 async function getAll(colName){
  let rows=[];let logs=[];const fields=["ownerUid","ownerId","uid","createdBy","businessUid","userId"];
  for(const f of fields){try{const snap=await getDocs(query(collection(db,colName),where(f,"==",ownerUid)));logs.push(`${f}:${snap.size}`);snap.forEach(d=>rows.push({id:d.id,...d.data()}));}catch{}}
@@ -346,7 +349,7 @@ function renderStats(){
     .reduce((a,r) => a + nilaiTransaksi(r), 0);
 
   const omsetJual = allJual
-    .filter(r => ["masuk","tagihan","tunai"].includes(norm(r.status)))
+    .filter(r => ["masuk","tagihan","tunai","lunas"].includes(norm(r.status)))
     .reduce((a,r) => a + nilaiTransaksi(r), 0);
 
   const omset = omsetServis + omsetJual;
@@ -359,7 +362,7 @@ function renderStats(){
   // =========================================================
   const tagihanServis = allServis
     .filter(r => norm(r.status) === "selesai")
-    .reduce((a,r) => a + Math.max(0, nilaiTransaksi(r) - dp(r)), 0);
+    .reduce((a,r) => a + tagihanDariData(r), 0);
 
   const tagihanJual = allJual
     .filter(r => ["masuk","tagihan"].includes(norm(r.status)))
@@ -388,7 +391,7 @@ function renderStats(){
 
   const pendJual = allJual.reduce((a,r) => {
     const st = norm(r.status);
-    if (st === "tunai") return a + nilaiTransaksi(r);
+    if (st === "tunai" || st === "lunas") return a + nilaiTransaksi(r);
     if (st === "masuk" || st === "tagihan") return a + dp(r);
     return a;
   }, 0);
@@ -436,8 +439,9 @@ function renderStats(){
   // Sesuai kesepakatan terakhir:
   // stock/belanja ditampilkan terpisah, tidak dicampur ke pengeluaran.
   // Laba menggunakan pengeluaran operasional.
-  const labaKotor = omset;
-  const labaBersih = labaKotor - pengeluaran;
+  // HPP/biaya langsung penjualan belum tersedia konsisten di dokumen penjualan.
+  // Jangan menamainya laba bersih karena akan menyesatkan; tampilkan sisa sementara.
+  const sisaSementara = pendapatan - pengeluaran;
 
   $("summary").innerHTML = `
     💰 <b>${totalServis} servis • ${totalJual} penjualan</b>
@@ -445,14 +449,14 @@ function renderStats(){
     • Pendapatan <b class="green">${rupiah(pendapatan)}</b>
     • Tagihan <b class="yellow">${rupiah(totalTagihan)}</b>
     • Pengeluaran <b class="red">${rupiah(pengeluaran)}</b>
-    • Laba Bersih <b class="${labaBersih>=0?'green':'red'}">${rupiah(labaBersih)}</b>
+    • Sisa sementara <b class="${sisaSementara>=0?'green':'red'}">${rupiah(sisaSementara)}</b>
   `;
 
   $("stats").innerHTML = `
     <div class="stat blue">
       <small>Omset</small>
       <b>${rupiah(omset)}</b>
-      <i>Servis selesai/diambil + penjualan masuk/tagihan/tunai</i>
+      <i>Servis selesai/diambil + penjualan aktif/lunas</i>
     </div>
     <div class="stat yellow">
       <small>Tagihan</small>
@@ -462,12 +466,12 @@ function renderStats(){
     <div class="stat green">
       <small>Pendapatan</small>
       <b>${rupiah(pendapatan)}</b>
-      <i>Diambil + Tunai + DP</i>
+      <i>Pembayaran diterima: DP + tunai/lunas</i>
     </div>
-    <div class="stat ${labaBersih>=0?'green':'red'}">
-      <small>Laba Bersih</small>
-      <b>${rupiah(labaBersih)}</b>
-      <i>Omset - pengeluaran operasional</i>
+    <div class="stat ${sisaSementara>=0?'green':'red'}">
+      <small>Sisa Sementara</small>
+      <b>${rupiah(sisaSementara)}</b>
+      <i>Pendapatan diterima - pengeluaran operasional; belum dikurangi HPP</i>
     </div>
   `;
 
@@ -503,12 +507,12 @@ function renderStats(){
   ).join("");
   $("servisCount").textContent=`${totalServis} data`;
 
-  const statusJual=["masuk","tagihan","tunai","batal"];
+  const statusJual=["masuk","tagihan","tunai","lunas","batal"];
   const countJual=statusJual.map(s =>
     allJual.filter(r=>norm(r.status)===s).length
   );
   const maxJ=Math.max(1,...countJual);
-  const warnaJual=["#2563eb","#f59e0b","#16a34a","#dc2626"];
+  const warnaJual=["#2563eb","#f59e0b","#16a34a","#059669","#dc2626"];
   $("chartJual").innerHTML=countJual.map((c,i)=>
     `<div class="bar" style="height:${Math.min(100,(c/maxJ*100)+10)}%;background:${warnaJual[i]}"><span>${c}</span></div>`
   ).join("");
@@ -531,14 +535,14 @@ function renderStats(){
   ).join("")||'<tr><td colspan="5">Belum ada</td></tr>';
 
   // Keuangan hari ini mengikuti logika status yang sama.
-  const today=new Date().toISOString().slice(0,10);
+  const today=localToday();
 
   const hariOmsetServis=allServis
     .filter(r=>date(r)===today && ["selesai","diambil"].includes(norm(r.status)))
     .reduce((a,r)=>a+nilaiTransaksi(r),0);
 
   const hariOmsetJual=allJual
-    .filter(r=>date(r)===today && ["masuk","tagihan","tunai"].includes(norm(r.status)))
+    .filter(r=>date(r)===today && ["masuk","tagihan","tunai","lunas"].includes(norm(r.status)))
     .reduce((a,r)=>a+nilaiTransaksi(r),0);
 
   const hariPendServis=allServis
@@ -554,7 +558,7 @@ function renderStats(){
     .filter(r=>date(r)===today)
     .reduce((a,r)=>{
       const st=norm(r.status);
-      if(st==="tunai") return a+nilaiTransaksi(r);
+      if(st==="tunai"||st==="lunas") return a+nilaiTransaksi(r);
       if(st==="masuk"||st==="tagihan") return a+dp(r);
       return a;
     },0);
@@ -569,7 +573,7 @@ function renderStats(){
 
   const hariOmset=hariOmsetServis+hariOmsetJual;
   const hariPendapatan=hariPendServis+hariPendJual;
-  const hariLaba=hariOmset-hariPengeluaran;
+  const hariSisa=hariPendapatan-hariPengeluaran;
 
   $("keuangan").innerHTML=`
     <b>Hari ini (${today})</b><br>
@@ -577,8 +581,8 @@ function renderStats(){
     • Pendapatan diterima: <span style="color:#16a34a;font-weight:900">${rupiah(hariPendapatan)}</span><br>
     • Pengeluaran: <span style="color:#dc2626;font-weight:900">${rupiah(hariPengeluaran)}</span><br>
     • Belanja / Stock: ${rupiah(hariBelanja)} <small>(dipisahkan)</small><br>
-    • <b>Laba Bersih:
-      <span style="color:${hariLaba>=0?'#16a34a':'#dc2626'}">${rupiah(hariLaba)}</span>
+    • <b>Sisa sementara (belum dikurangi HPP):
+      <span style="color:${hariSisa>=0?'#16a34a':'#dc2626'}">${rupiah(hariSisa)}</span>
     </b>
   `;
 
@@ -601,9 +605,9 @@ onAuthStateChanged(auth,async u=>{
     getOwnedUsers(),
     getOwnedCollection("absensi")
   ]);
-  allServis=servisRes.data.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));
-  allJual=jualRes.data.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));
-  allKeluar=keluarRes.data.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));
+  allServis=servisRes.data.sort((a,b)=>date(b).localeCompare(date(a)));
+  allJual=jualRes.data.sort((a,b)=>date(b).localeCompare(date(a)));
+  allKeluar=keluarRes.data.sort((a,b)=>date(b).localeCompare(date(a)));
   allUsers=salaryUsers;
   allAbsensi=salaryAbsensi;
   $("debug").textContent=`Servis ${servisRes.logs.join(" | ")} • Jual ${jualRes.logs.join(" | ")} • Keluar ${keluarRes.logs.join(" | ")} • Karyawan:${allUsers.length} • Absensi:${allAbsensi.length}`;

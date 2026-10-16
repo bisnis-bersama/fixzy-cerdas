@@ -291,62 +291,21 @@ window.simpanStatus=async()=>{
    ? Math.min(dp,total)
    : 0;
 
- const sisa=newSt==="diambil"?0:Math.max(0,total-dp);
+ const sisa=Math.max(0,total-dp);
 
  try{
-  // Simpan status terbaru pada data servis utama.
   await updateDoc(doc(db,"servis",editId),{
    status:newSt,
    statusTerakhir:newSt,
    pendapatan,
    sisa,
    sisaBayar:sisa,
-   'estimasi.sisa':sisa,
-   'estimasi.sisaBayar':sisa,
+   ownerUid:ownerUid,
+   ownerId:ownerUid,
+   uid:uid,
    updatedAt:serverTimestamp(),
    ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
   });
-
-  // Sinkronkan status ke halaman cek servis publik.
-  // Koleksi publik memakai ID dokumen berupa 4 digit terakhir nota.
-  const notaLengkap=String(getNota(r)||editId).trim();
-  const nomorPendek=notaLengkap.replace(/\D/g,"").slice(-4);
-  if(/^\d{4}$/.test(nomorPendek)){
-   const publicRef=doc(db,"cek_servis_public",nomorPendek);
-   try{
-    const publicSnap=await getDoc(publicRef);
-    if(!publicSnap.exists()){
-     console.warn("Dokumen cek_servis_public tidak ditemukan:",nomorPendek);
-     alert("Status utama tersimpan, tetapi dokumen cek_servis_public untuk nota "+nomorPendek+" tidak ditemukan. Periksa penyimpanan data publik saat nota dibuat.");
-    } else {
-     const publicData=publicSnap.data()||{};
-     const notaPublikLengkap=String(publicData.nomorNotaLengkap||publicData.notaLengkap||"").trim();
-     if(notaPublikLengkap && notaPublikLengkap!==notaLengkap){
-      console.warn("Nomor nota publik berbeda; status publik tidak diubah.",{notaLengkap,notaPublikLengkap});
-      alert("Status utama tersimpan, tetapi nomor nota lengkap pada data publik berbeda. Data publik tidak diubah demi mencegah salah nota.");
-     } else {
-      const sisaPublik=newSt==="diambil"?0:Math.max(0,total-dp);
-      await updateDoc(publicRef,{
-       status:newSt,
-       sisa:sisaPublik,
-       sisaPembayaran:sisaPublik,
-       updatedAt:serverTimestamp(),
-       ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
-      });
-      const cekUlang=await getDoc(publicRef);
-      const statusTersimpan=String(cekUlang.data()?.status||"");
-      if(statusTersimpan!==newSt){
-       throw new Error("Verifikasi status publik tidak cocok: "+statusTersimpan);
-      }
-     }
-    }
-   }catch(syncErr){
-    console.error("Gagal sinkron status cek_servis_public:",syncErr);
-    alert("Status di Data Servis tersimpan, tetapi status Cek Servis gagal diperbarui. Firebase: "+(syncErr?.message||syncErr)+". Periksa Firestore Rules untuk cek_servis_public.");
-   }
-  } else {
-   console.warn("Nomor nota tidak menghasilkan 4 digit:",notaLengkap);
-  }
 
   closeEdit();
   await muatSemua();
@@ -372,7 +331,42 @@ window.simpanStatus=async()=>{
 window.kirimWALangsung=id=>{const r=allRows.find(x=>x.id===id);if(!r)return;const waNomor=nomorWA(getWa(r));if(!waNomor){alert("No WA kosong");return}const pesan=buildPesanWA(r,getStatus(r));siapkanTombolWA(waNomor,pesan);$("waInfo").innerHTML=`Kirim WA manual - Nota <b>${esc(getNota(r))}</b> Status <b>${esc(getStatus(r))}</b>`;$("waText").textContent=pesan;$("waPopup").classList.add("show")}
 window.tutupWA=()=>{$("waPopup").classList.remove("show");pendingWA=null;$("waLinkBtn").onclick=null}
 window.salinWA=async()=>{if(!pendingWA)return;try{await navigator.clipboard.writeText(pendingWA.message);alert("Pesan disalin ✅")}catch{const range=document.createRange();range.selectNode($("waText"));window.getSelection().removeAllRanges();window.getSelection().addRange(range);document.execCommand("copy");alert("Pesan disalin ✅")}}
-window.editDataServis=editDataServis;window.hapusServis=hapusServis;window.bukaScan=()=>{$("scanPopup").classList.add("show");$("scanResult").textContent="Menyalakan kamera...";html5Qr=new Html5Qrcode("reader");html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},decodedText=>{$("scanResult").textContent="✅ Terdeteksi: "+decodedText;$("q").value=decodedText;render();setTimeout(tutupScan,1000)},err=>{}).catch(e=>$("scanResult").textContent="❌ Gagal buka kamera: "+e)}
+window.editDataServis=editDataServis;window.hapusServis=hapusServis;function normalisasiHasilScan(raw){
+ let value=String(raw||"").trim();
+ if(!value)return "";
+ // QR pelanggan biasanya berisi URL scan-barcode.html?nota=5648.
+ // Ambil nilai parameternya, jangan masukkan URL lengkap ke kotak pencarian.
+ try{
+  if(/^https?:\/\//i.test(value)){
+   const u=new URL(value);
+   const param=u.searchParams.get("nota")||u.searchParams.get("nomorNota")||u.searchParams.get("no")||u.searchParams.get("barcode");
+   if(param)value=param.trim();
+  }
+ }catch(_){ }
+ // Untuk URL atau kode yang tetap berbentuk SRV panjang, cari dengan nota lengkap.
+ // Untuk nomor pendek 4 digit, pertahankan nol di depan.
+ const clean=value.replace(/^FX-/i,"").trim();
+ if(/^\d{1,4}$/.test(clean))return clean.padStart(4,"0");
+ return clean;
+}
+window.bukaScan=()=>{
+ if(typeof Html5Qrcode==="undefined"){
+  $("scanResult").textContent="❌ Fitur scanner belum termuat. Periksa koneksi internet lalu refresh.";
+  $("scanPopup").classList.add("show");
+  return;
+ }
+ $("scanPopup").classList.add("show");
+ $("scanResult").textContent="Menyalakan kamera...";
+ html5Qr=new Html5Qrcode("reader");
+ html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},decodedText=>{
+  const hasil=normalisasiHasilScan(decodedText);
+  $("q").value=hasil;
+  render();
+  const cocok=filteredRows().length>0;
+  $("scanResult").textContent=cocok?"✅ Nota ditemukan: "+hasil:"⚠️ Kode terbaca: "+hasil+" — data servis tidak ditemukan. Coba scan barcode nota yang tercetak.";
+  if(cocok)setTimeout(tutupScan,900);
+ },err=>{}).catch(e=>$("scanResult").textContent="❌ Gagal buka kamera: "+e);
+}
 window.tutupScan=()=>{$("scanPopup").classList.remove("show");if(html5Qr){html5Qr.stop().then(()=>{html5Qr.clear();html5Qr=null}).catch(()=>{})}}
 $("q").addEventListener("input",render);$("fStatus").addEventListener("change",render);$("fTanggal").addEventListener("change",render);
 

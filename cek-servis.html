@@ -1,11 +1,33 @@
 <!DOCTYPE html>
-<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0f14"><title>A YUDI THEA | Cek Status Servis</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#111827;font-family:Arial,sans-serif}.head{background:#0b0f14;color:#fff;border-bottom:4px solid #ffc107;padding:18px 14px;text-align:center}.head b{color:#ffc107}.wrap{max-width:560px;margin:20px auto;padding:0 12px}.card{background:#fff;border:2px solid #111827;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:4px 4px 0 #111827}.title{font-weight:900;font-size:20px;margin:0 0 12px}.row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid #e5e7eb;font-size:13px}.row:last-child{border-bottom:0}.row span{color:#64748b}.row b{text-align:right;max-width:60%;overflow-wrap:anywhere}.status{display:inline-block;background:#ffc107;color:#111827;padding:7px 11px;border-radius:999px;font-weight:900}.muted{font-size:13px;line-height:1.5;color:#64748b}button{width:100%;padding:13px;border:2px solid #111827;border-radius:9px;background:#ffc107;font-weight:900;box-shadow:3px 3px 0 #111827;cursor:pointer}.error{color:#b91c1c;font-weight:800}</style>
-</head><body><header class="head"><div style="font-size:22px;font-weight:900">A YUDI THEA <b>CEK SERVIS</b></div><div style="font-size:12px;margin-top:5px">Software &amp; Hardware Solution</div><div style="font-size:11px;margin-top:4px">Depan Pasar Hewan, Blok Jum'at, Maja Utara, Maja, Majalengka</div></header>
-<main class="wrap"><section class="card"><h1 class="title">Status Servis Anda</h1><p id="loading" class="muted">Memuat data servis...</p><div id="detail" hidden></div><p id="err" class="error"></p><button onclick="location.href='scan-barcode.html'">SCAN / CEK NOTA LAIN</button></section><p class="muted">Halaman ini hanya menampilkan ringkasan servis. Data pribadi pelanggan, nomor WhatsApp, alamat, IMEI, sandi, dan pola kunci tidak ditampilkan.</p></main>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0f14">
+<title>A YUDI THEA | Cek Status Servis</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef2f6;color:#111827;font-family:Arial,sans-serif}.head{background:#0b0f14;color:#fff;border-bottom:4px solid #ffc107;padding:18px 14px;text-align:center}.head b{color:#ffc107}.wrap{max-width:560px;margin:20px auto;padding:0 12px}.card{background:#fff;border:2px solid #111827;border-radius:22px;padding:20px;margin-bottom:14px;box-shadow:5px 5px 0 #111827}.title{font-weight:900;font-size:24px;margin:0 0 16px}.row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid #e5e7eb;font-size:14px}.row:last-child{border-bottom:0}.row span.label{color:#64748b}.row b{text-align:right;max-width:62%;overflow-wrap:anywhere}.status{display:inline-block;background:#ffc107;color:#111827;padding:7px 11px;border-radius:999px;font-weight:900}.muted{font-size:14px;line-height:1.6;color:#64748b}button{width:100%;padding:15px;border:2px solid #111827;border-radius:13px;background:#ffc107;font-weight:900;font-size:15px;box-shadow:3px 3px 0 #111827;cursor:pointer;margin-top:8px}.error{color:#b91c1c;font-weight:800;line-height:1.5}.success{color:#166534;font-weight:700}
+</style>
+</head>
+<body>
+<header class="head">
+  <div style="font-size:22px;font-weight:900">A YUDI THEA <b>CEK SERVIS</b></div>
+  <div style="font-size:15px;margin-top:7px">Software &amp; Hardware Solution</div>
+  <div style="font-size:13px;margin-top:5px">Depan Pasar Hewan, Blok Jum'at, Maja Utara, Maja, Majalengka</div>
+</header>
+<main class="wrap">
+  <section class="card">
+    <h1 class="title">Status Servis Anda</h1>
+    <p id="loading" class="muted">Memuat data servis...</p>
+    <div id="detail" hidden></div>
+    <p id="err" class="error" role="alert"></p>
+    <button onclick="location.href='scan-barcode.html'">SCAN / CEK NOTA LAIN</button>
+  </section>
+  <p class="muted">Halaman ini hanya menampilkan ringkasan servis. Data pribadi pelanggan, nomor WhatsApp, alamat pelanggan, IMEI, sandi, dan pola kunci tidak ditampilkan.</p>
+</main>
 <script type="module">
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, limit } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
 const cfg = {
   apiKey: 'AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI',
@@ -18,61 +40,110 @@ const cfg = {
 const app = getApps().length ? getApp() : initializeApp(cfg);
 const db = getFirestore(app);
 const $ = id => document.getElementById(id);
-const safe = v => String(v ?? '-').replace(/[&<>"']/g, c => ({
-  '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
-}[c]));
+const safe = v => String(v ?? '-').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = v => 'Rp ' + (Number(v) || 0).toLocaleString('id-ID');
 function row(label, value) {
-  return `<div class="row"><span>${safe(label)}</span><b>${safe(value)}</b></div>`;
+  return `<div class="row"><span class="label">${safe(label)}</span><b>${safe(value)}</b></div>`;
 }
-function shortNote(nota) {
-  const match = String(nota || '').match(/(\d{4})$/);
-  return match ? match[1] : '';
+
+// Nomor nota yang dicetak hanya 4 digit. ID dokumen Firebase bisa berupa SRV-...,
+// jadi pencarian tidak boleh hanya mengandalkan ID dokumen.
+function normalizeNota(value) {
+  const s = String(value ?? '').trim();
+  if (!s) return '';
+  // Jika QR membawa URL atau ID panjang, ambil parameter nota bila ada.
+  try {
+    if (/^https?:\/\//i.test(s)) {
+      const u = new URL(s);
+      const fromParam = u.searchParams.get('nota') || u.searchParams.get('nomorNota') || u.searchParams.get('no');
+      if (fromParam) return normalizeNota(fromParam);
+    }
+  } catch (_) {}
+  // Nota 4 digit bisa berada dalam parameter atau teks QR yang mengandung ID panjang.
+  if (/^\d{4}$/.test(s)) return s;
+  const match = s.match(/(?:nota|no)[=:_\-/ ]*(\d{4})\b/i);
+  if (match) return match[1];
+  return s;
 }
-async function readPublic(nota) {
-  // savePublicServis menyimpan dokumen publik memakai nomor nota 4 digit.
-  const short = shortNote(nota);
-  const ids = [...new Set([short, nota].filter(Boolean))];
-  for (const id of ids) {
-    const snap = await getDoc(doc(db, 'cek_servis_public', id));
-    if (snap.exists()) return snap;
+
+async function findPublicServis(notaInput) {
+  const nota = normalizeNota(notaInput);
+  const publicCol = collection(db, 'cek_servis_public');
+
+  // 1. Coba ID dokumen langsung, baik nomor 4 digit maupun ID panjang dari QR.
+  const directIds = [...new Set([notaInput.trim(), nota].filter(Boolean))];
+  for (const id of directIds) {
+    try {
+      const snap = await getDoc(doc(db, 'cek_servis_public', id));
+      if (snap.exists()) return snap;
+    } catch (e) {
+      // Lanjutkan ke pencarian field; hasil akhirnya akan menampilkan pesan yang sesuai.
+      console.debug('Pencarian ID dokumen dilewati:', e.code || e.message);
+    }
+  }
+
+  // 2. Cari berdasarkan FIELD nomorNota, bukan ID dokumen.
+  // Mendukung data yang menyimpan nomor nota sebagai string atau angka.
+  const candidates = [...new Set([nota, String(notaInput).trim()].filter(Boolean))];
+  for (const candidate of candidates) {
+    try {
+      const q = query(publicCol, where('nomorNota', '==', candidate), limit(1));
+      const result = await getDocs(q);
+      if (!result.empty) return result.docs[0];
+    } catch (e) {
+      console.debug('Pencarian nomorNota string gagal:', e.code || e.message);
+    }
+    if (/^\d+$/.test(candidate)) {
+      try {
+        const qNum = query(publicCol, where('nomorNota', '==', Number(candidate)), limit(1));
+        const resultNum = await getDocs(qNum);
+        if (!resultNum.empty) return resultNum.docs[0];
+      } catch (e) {
+        console.debug('Pencarian nomorNota angka gagal:', e.code || e.message);
+      }
+    }
   }
   return null;
 }
+
 async function load() {
-  const nota = String(new URLSearchParams(location.search).get('nota') || '').trim();
-  if (!nota) {
+  const params = new URLSearchParams(location.search);
+  const rawNota = String(params.get('nota') || params.get('nomorNota') || params.get('no') || '').trim();
+  if (!rawNota) {
     $('loading').textContent = 'Nomor nota belum diisi.';
-    $('err').textContent = 'Silakan scan QR atau masukkan nomor nota.';
+    $('err').textContent = 'Silakan scan QR nota yang benar atau masukkan nomor nota.';
     return;
   }
   try {
-    const snap = await readPublic(nota);
+    const snap = await findPublicServis(rawNota);
     $('loading').hidden = true;
     if (!snap) {
-      $('err').textContent = 'Data cek servis publik belum tersedia atau nomor nota tidak ditemukan. Pastikan data publik sudah tersimpan, lalu coba lagi.';
+      $('err').textContent = `Nota ${normalizeNota(rawNota)} belum ditemukan di data publik. Pastikan dokumen tersedia di koleksi cek_servis_public dan field nomorNota berisi nomor nota 4 digit yang sama.`;
       return;
     }
     const d = snap.data() || {};
+    $('err').textContent = '';
     $('detail').hidden = false;
     $('detail').innerHTML = `
-      ${row('Nomor Nota', d.nomorNota || nota)}
-      ${row('Tanggal', d.tanggal || '-')}
+      ${row('Nomor Nota', d.nomorNota || normalizeNota(rawNota))}
+      ${row('Tanggal', d.tanggal || d.tanggalMasuk || '-')}
       ${row('Konter', d.namaKonter || 'A YUDI THEA')}
       ${row('Alamat Konter', d.alamatKonter || "Depan Pasar Hewan, Blok Jum'at, Maja Utara, Maja, Majalengka")}
-      ${row('Perangkat', d.brandTipe || '-')}
-      ${row('Keluhan', d.jenisKerusakan || '-')}
-      ${row('Teknisi', d.namaTeknisi || '-')}
-      <div class="row"><span>Status</span><b><span class="status">${safe(d.status || 'Dalam proses')}</span></b></div>
+      ${row('Perangkat', d.brandTipe || d.merekTipe || '-')}
+      ${row('Keluhan', d.jenisKerusakan || d.keluhan || '-')}
+      ${row('Teknisi', d.namaTeknisi || d.teknisi || '-')}
+      <div class="row"><span class="label">Status</span><b><span class="status">${safe(d.status || 'Dalam proses')}</span></b></div>
       ${row('Estimasi Biaya', money(d.estimasiBiaya))}
       ${row('DP', money(d.dp))}
-      ${row('Sisa Pembayaran', money(d.sisa))}
+      ${row('Sisa Pembayaran', money(d.sisa ?? d.sisaPembayaran))}
     `;
   } catch (e) {
     console.error('Gagal memuat status servis:', e);
     $('loading').hidden = true;
-    $('err').textContent = 'Status servis gagal dimuat. Periksa koneksi internet dan izin baca dokumen cek_servis_public di Firebase.';
+    $('err').textContent = 'Status servis gagal dimuat. Periksa koneksi internet dan aturan akses baca Firebase untuk koleksi cek_servis_public.';
   }
 }
 load();
-</script></body></html>
+</script>
+</body>
+</html>

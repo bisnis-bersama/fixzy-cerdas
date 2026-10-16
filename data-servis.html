@@ -291,9 +291,11 @@ window.simpanStatus=async()=>{
    ? Math.min(dp,total)
    : 0;
 
- const sisa=Math.max(0,total-dp);
+ // Jika status DIAMBIL, anggap pembayaran sudah lunas.
+ const sisa=newSt==="diambil" ? 0 : Math.max(0,total-dp);
 
  try{
+  // Simpan perubahan ke dokumen servis utama.
   await updateDoc(doc(db,"servis",editId),{
    status:newSt,
    statusTerakhir:newSt,
@@ -306,6 +308,39 @@ window.simpanStatus=async()=>{
    updatedAt:serverTimestamp(),
    ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
   });
+
+  // Sinkronkan status dan sisa pembayaran ke halaman cek servis publik.
+  // Pastikan nomor nota lengkap cocok agar tidak mengubah nota lain yang kebetulan
+  // memiliki empat digit akhir sama.
+  const notaLengkap=String(getNota(r)||editId).trim();
+  const nomorPendek=notaLengkap.replace(/\D/g,"").slice(-4);
+  if(/^\d{4}$/.test(nomorPendek)){
+   const publicRef=doc(db,"cek_servis_public",nomorPendek);
+   try{
+    const publicSnap=await getDoc(publicRef);
+    if(!publicSnap.exists()){
+     console.warn("Dokumen cek_servis_public tidak ditemukan:",nomorPendek);
+     alert("Status Data Servis tersimpan, tetapi data Cek Servis publik untuk nota "+nomorPendek+" tidak ditemukan.");
+    }else{
+     const publicData=publicSnap.data()||{};
+     const notaPublikLengkap=String(publicData.nomorNotaLengkap||publicData.notaLengkap||"").trim();
+     if(notaPublikLengkap && notaPublikLengkap!==notaLengkap){
+      alert("Status Data Servis tersimpan, tetapi Cek Servis tidak diubah karena nomor nota lengkap berbeda.");
+     }else{
+      await updateDoc(publicRef,{
+       status:newSt,
+       sisa,
+       sisaPembayaran:sisa,
+       updatedAt:serverTimestamp(),
+       ...(newSt==="diambil"?{tanggalDiambil:new Date().toISOString()}: {})
+      });
+     }
+    }
+   }catch(syncErr){
+    console.error("Gagal sinkron status ke cek_servis_public:",syncErr);
+    alert("Status Data Servis tersimpan, tetapi Cek Servis gagal diperbarui. Periksa Firestore Rules cek_servis_public: "+(syncErr?.message||syncErr));
+   }
+  }
 
   closeEdit();
   await muatSemua();

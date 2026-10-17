@@ -171,28 +171,22 @@ window.hapusAkun = async function(id) {
     );
 
   } catch (e) {
-    console.error("Kesalahan menghapus akun:", e);
+  console.error("GAGAL HAPUS AKUN:", e);
 
-    let pesan = e.message || "Penghapusan gagal.";
+  const kode = e?.code || "tidak diketahui";
+  const pesan = e?.message || "Tidak ada keterangan dari Firebase.";
 
-    if (
-      e.code === "permission-denied" ||
-      /permission-denied|insufficient permissions/i.test(pesan)
-    ) {
-      pesan =
-        "Firestore menolak penghapusan. Periksa Security Rules " +
-        "koleksi users. Owner harus diizinkan menghapus dokumen " +
-        "jika field ownerUid dokumen sama dengan UID Owner.";
-    } else if (e.code === "unavailable") {
-      pesan = "Firebase sedang tidak tersedia. Periksa koneksi internet.";
-    }
+  $("status").innerHTML =
+    '<span class="err">Penghapusan gagal: ' +
+    esc(kode) + '</span>';
 
-    $("status").innerHTML =
-      '<span class="err">Penghapusan gagal.</span>';
-
-    tampilNotice("Gagal Menghapus", esc(pesan));
-  }
-};
+  tampilNotice(
+    "❌ Penghapusan Gagal",
+    "<b>Kode:</b> " + esc(kode) +
+    "<br><br><b>Pesan Firebase:</b><br>" +
+    esc(pesan)
+  );
+}
 window.resetFilter=()=>{$("roleFilter").value="";$("cari").value="";render()};
 window.bukaTambah=()=>{if(!ready)return;editId=null;$("popupTitle").textContent="＋ Tambah Akun";$("fNama").value="";$("fRole").value="employee";$("fRole").disabled=false;$("fEmail").value="";$("fWA").value="";$("fPassword").value="";$("fJabatan").value="";$("fUpah").value="";$("fStatus").value="aktif";setIzin([]);$("passWrap").style.display="flex";$("editInfo").textContent="Akun dibuat di Firebase Authentication dan dihubungkan ke Owner ini.";$("popup").classList.add("show")};
 window.editAkun=id=>{const a=accounts.find(x=>x.id===id);if(!a)return;editId=id;$("popupTitle").textContent="✏️ Edit Akun";$("fNama").value=nama(a);$("fRole").value=a.role;$("fRole").disabled=true;$("fEmail").value=a.email||"";$("fWA").value=a.noWA||a.wa||a.noWa||a.noHp||"";$("fPassword").value="";$("fJabatan").value=a.jabatan||a.posisi||"";$("fUpah").value=a.upahHarian??a.upah??a.gajiHarian??0;$("fStatus").value=a.status||"aktif";setIzin(gabungIzin(a));$("passWrap").style.display="none";$("editInfo").textContent="Email/password tidak diubah saat edit. Owner dapat mengubah status, jabatan, upah, dan seluruh hak akses.";$("popup").classList.add("show")};

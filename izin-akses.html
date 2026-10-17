@@ -43,7 +43,7 @@ main{max-width:1180px;margin:auto;padding:14px 10px 70px}.card{background:#fff;b
 <label class="check"><input type="checkbox" value="servisan.html" class="izin">🧾 Input Servisan</label>
 <label class="check"><input type="checkbox" value="stock.html" class="izin">📦 Stock Produk</label>
 <label class="check"><input type="checkbox" value="upah-kerja.html" class="izin">💵 Upah Kerja</label></div><div class="status">Checklist di atas memuat <b>seluruh file HTML yang ditemukan di ZIP 6</b>. Hak akses disimpan ke Firebase pada field <b>izin</b> dan <b>permissions</b>. Halaman login dan registrasi sebaiknya tidak diberikan kepada akun operasional. Akses ke Dashboard Admin / Izin Akses tetap mengikuti pengamanan role pada index.</div></div><div id="editInfo" class="status"></div><div class="popup-actions"><button class="btn secondary" onclick="tutupPopup()">Batal</button><button class="btn primary" onclick="simpanAkun()">💾 Simpan</button></div></div></div>
-<div class="popup" id="notice"><div class="popup-box" style="width:min(500px,calc(100% - 22px))"><h3 id="noticeTitle">FIXZY</h3><div id="noticeText" class="notice-text"></div><div class="popup-actions"><button class="btn primary" onclick="tutupNotice()">OK</button></div></div></div><div class="popup" id="waPopup"><div class="popup-box" style="width:min(540px,calc(100% - 22px))"><h3>📲 Kirim Data Login ke WhatsApp?</h3><div id="waText" class="notice-text"></div><div class="popup-actions"><button class="btn secondary" onclick="tutupWaPopup()">Tidak</button><button class="btn primary" onclick="kirimWhatsApp()">📲 Kirim WhatsApp</button></div></div></div>
+<div class="popup" id="notice"><div class="popup-box" style="width:min(500px,calc(100% - 22px))"><h3 id="noticeTitle">FIXZY</h3><div id="noticeText" class="notice-text"></div><div class="popup-actions"><button class="btn primary" onclick="tutupNotice()">OK</button></div></div></div><div class="popup" id="waPopup"><div class="popup-box" style="width:min(540px,calc(100% - 22px))"><h3>📲 Kirim Data Login ke WhatsApp?</h3><div id="waText" class="notice-text"></div><div class="popup-actions"><button class="btn secondary" onclick="tutupWaPopup()">Tidak</button><button class="btn primary" onclick="kirimWhatsApp()">📲 Kirim Link & Akun Login via WhatsApp</button></div></div></div>
 
 <script>
 function tutupHalaman(){try{if(window.frameElement){window.frameElement.remove();return}}catch(e){}try{if(window.parent!==window){window.parent.postMessage({type:"FIXZY_CLOSE_IZIN_AKSES"},"*");return}}catch(e){}if(history.length>1)history.back();else location.href="index.html"}
@@ -219,7 +219,7 @@ Hak Akses:
 ${izin.length?izin.map(izinLabel).join(", "):"Tidak ada"}
 
 Silahkan login melalui:
-https://fixzy-olive.vercel.app`;
+https://fixzy-cerdas.vercel.app`;
 
    window._waPending={phone:wa,message:pesanEdit,name:n,email,password:"",role:r,mode:"edit"};
    editId=null;
@@ -258,7 +258,7 @@ Jabatan: ${j||"-"}
 Upah Harian: ${rupiah(upah)}
 
 Link Login:
-https://fixzy-olive.vercel.app`;
+https://fixzy-cerdas.vercel.app`;
 
  window._waPending={phone:wa,message:pesan,name:n,email,password:pass,role:r};
  await load();

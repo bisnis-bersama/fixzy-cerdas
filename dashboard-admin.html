@@ -97,6 +97,7 @@ body.dark{background:#0b0f14!important;color:#e5e7eb}.dark .card,.dark .table-wr
 <div class="actions" style="margin-bottom:14px">
 </div>
 
+<div class="card"><div class="card-title">📈 Modal & Perhitungan Laba</div><div class="grid3" id="statsLaba"></div><div id="labaDetail" style="margin-top:10px;font-size:11px;color:#64748b;line-height:1.6"></div></div>
 <div class="card"><div class="card-title">💸 Pengeluaran & Upah Karyawan</div><div class="grid3" id="statsKeluar"></div><div id="keluarDetail" style="margin-top:10px;font-size:11px;color:#64748b"></div></div>
 
 <div class="grid2" style="margin-top:14px">
@@ -334,7 +335,7 @@ function renderStats(){
     .reduce((a,r) => a + nilaiTransaksi(r), 0);
 
   const omsetJual = allJual
-    .filter(r => ["masuk","tagihan","tunai"].includes(norm(r.status)))
+    .filter(r => ["masuk","tagihan","tunai","lunas"].includes(norm(r.status)))
     .reduce((a,r) => a + nilaiTransaksi(r), 0);
 
   const omset = omsetServis + omsetJual;
@@ -347,7 +348,7 @@ function renderStats(){
   // =========================================================
   const tagihanServis = allServis
     .filter(r => norm(r.status) === "selesai")
-    .reduce((a,r) => a + Math.max(0, nilaiTransaksi(r) - dp(r)), 0);
+    .reduce((a,r) => a + tagihanDariData(r), 0);
 
   const tagihanJual = allJual
     .filter(r => ["masuk","tagihan"].includes(norm(r.status)))
@@ -376,12 +377,40 @@ function renderStats(){
 
   const pendJual = allJual.reduce((a,r) => {
     const st = norm(r.status);
-    if (st === "tunai") return a + nilaiTransaksi(r);
+    if (st === "tunai" || st === "lunas") return a + nilaiTransaksi(r);
     if (st === "masuk" || st === "tagihan") return a + dp(r);
     return a;
   }, 0);
 
   const pendapatan = pendServis + pendJual;
+
+  // =========================================================
+  // HPP / MODAL YANG BENAR-BENAR TERSIMPAN PADA TRANSAKSI.
+  // Penjualan lama tidak menyimpan modal per item, jadi tidak boleh
+  // mengarang HPP dari harga jual. Nilai yang tidak tersedia ditandai.
+  // =========================================================
+  const modalServis = allServis
+    .filter(r => ["selesai","diambil"].includes(norm(r.status)))
+    .reduce((sum,r) => {
+      const direct = Number(r.totalModal ?? r.modalTotal ?? 0) || 0;
+      if (direct > 0) return sum + direct;
+      const parts = Array.isArray(r.spareparts) ? r.spareparts : (Array.isArray(r.sparepart) ? r.sparepart : []);
+      return sum + parts.reduce((sub,p) => sub + (Number(p.totalModal ?? p.modalSatuan * (Number(p.qty ?? p.jumlah ?? 1)) ?? 0) || 0), 0);
+    }, 0);
+
+  const jualAktif = allJual.filter(r => ["masuk","tagihan","tunai","lunas"].includes(norm(r.status)));
+  const jualItemDenganModal = jualAktif.reduce((acc,r) => {
+    const items = Array.isArray(r.items) ? r.items : [];
+    return acc + items.filter(i => Number(i.totalModal ?? i.modalTotal ?? ((Number(i.modal ?? i.hargaModal ?? i.modalSatuan ?? 0) || 0) * (Number(i.qty ?? i.jumlah ?? 1) || 1))) > 0).length;
+  }, 0);
+  const jualItemTotal = jualAktif.reduce((acc,r) => acc + (Array.isArray(r.items) ? r.items.length : 0), 0);
+  const modalJual = jualAktif.reduce((sum,r) => sum + (Array.isArray(r.items) ? r.items.reduce((sub,i) => {
+    const q = Number(i.qty ?? i.jumlah ?? 1) || 1;
+    const direct = Number(i.totalModal ?? i.modalTotal ?? 0) || 0;
+    const unit = Number(i.modal ?? i.hargaModal ?? i.modalSatuan ?? 0) || 0;
+    return sub + (direct > 0 ? direct : unit * q);
+  },0) : 0),0);
+  const hppTercatat = modalServis + modalJual;
 
   // =========================================================
   // PENGELUARAN
@@ -424,7 +453,7 @@ function renderStats(){
   // Sesuai kesepakatan terakhir:
   // stock/belanja ditampilkan terpisah, tidak dicampur ke pengeluaran.
   // Laba menggunakan pengeluaran operasional.
-  const labaKotor = omset;
+  const labaKotor = omset - hppTercatat;
   const labaBersih = labaKotor - pengeluaran;
 
   $("summary").innerHTML = `
@@ -433,8 +462,15 @@ function renderStats(){
     • Pendapatan <b class="green">${rupiah(pendapatan)}</b>
     • Tagihan <b class="yellow">${rupiah(totalTagihan)}</b>
     • Pengeluaran <b class="red">${rupiah(pengeluaran)}</b>
-    • Laba Bersih <b class="${labaBersih>=0?'green':'red'}">${rupiah(labaBersih)}</b>
+    • Laba Bersih Estimasi <b class="${labaBersih>=0?'green':'red'}">${rupiah(labaBersih)}</b>
   `;
+
+  $("statsLaba").innerHTML = `
+    <div class="stat blue"><small>Modal Servis Terdata</small><b>${rupiah(modalServis)}</b><i>Dari totalModal transaksi servis</i></div>
+    <div class="stat yellow"><small>Modal Penjualan Terdata</small><b>${rupiah(modalJual)}</b><i>${jualItemDenganModal} dari ${jualItemTotal} item memiliki data modal</i></div>
+    <div class="stat ${labaBersih>=0?'green':'red'}"><small>Laba Bersih Estimasi</small><b>${rupiah(labaBersih)}</b><i>Omset − modal tercatat − pengeluaran operasional</i></div>
+  `;
+  $("labaDetail").innerHTML = `Modal/HPP tercatat: <b>${rupiah(hppTercatat)}</b>. Belanja stok (${rupiah(belanjaStock)}) dipisahkan dan tidak langsung mengurangi laba. ` + (jualItemTotal > jualItemDenganModal ? `<b style="color:#b45309">Perhatian:</b> ${jualItemTotal-jualItemDenganModal} item penjualan belum memiliki data modal, sehingga laba bersih masih estimasi dan bisa lebih tinggi dari laba sebenarnya.` : `Semua item penjualan yang tersimpan memiliki data modal.`);
 
   $("statsKeluar").innerHTML = `
     <div class="stat red">
@@ -468,7 +504,7 @@ function renderStats(){
   ).join("");
   $("servisCount").textContent=`${totalServis} data`;
 
-  const statusJual=["masuk","tagihan","tunai","batal"];
+  const statusJual=["masuk","tagihan","tunai","lunas","batal"];
   const countJual=statusJual.map(s =>
     allJual.filter(r=>norm(r.status)===s).length
   );
@@ -503,7 +539,7 @@ function renderStats(){
     .reduce((a,r)=>a+nilaiTransaksi(r),0);
 
   const hariOmsetJual=allJual
-    .filter(r=>date(r)===today && ["masuk","tagihan","tunai"].includes(norm(r.status)))
+    .filter(r=>date(r)===today && ["masuk","tagihan","tunai","lunas"].includes(norm(r.status)))
     .reduce((a,r)=>a+nilaiTransaksi(r),0);
 
   const hariPendServis=allServis
@@ -519,7 +555,7 @@ function renderStats(){
     .filter(r=>date(r)===today)
     .reduce((a,r)=>{
       const st=norm(r.status);
-      if(st==="tunai") return a+nilaiTransaksi(r);
+      if(st==="tunai"||st==="lunas") return a+nilaiTransaksi(r);
       if(st==="masuk"||st==="tagihan") return a+dp(r);
       return a;
     },0);
@@ -534,7 +570,7 @@ function renderStats(){
 
   const hariOmset=hariOmsetServis+hariOmsetJual;
   const hariPendapatan=hariPendServis+hariPendJual;
-  const hariLaba=hariOmset-hariPengeluaran;
+  const hariLaba=hariOmset-hariPengeluaran; // estimasi harian: HPP historis tidak tersedia konsisten
 
   $("keuangan").innerHTML=`
     <b>Hari ini (${today})</b><br>
@@ -542,7 +578,7 @@ function renderStats(){
     • Pendapatan diterima: <span style="color:#16a34a;font-weight:900">${rupiah(hariPendapatan)}</span><br>
     • Pengeluaran: <span style="color:#dc2626;font-weight:900">${rupiah(hariPengeluaran)}</span><br>
     • Belanja / Stock: ${rupiah(hariBelanja)} <small>(dipisahkan)</small><br>
-    • <b>Laba Bersih:
+    • <b>Laba Hari Ini (sebelum HPP):
       <span style="color:${hariLaba>=0?'#16a34a':'#dc2626'}">${rupiah(hariLaba)}</span>
     </b>
   `;

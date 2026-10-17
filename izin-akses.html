@@ -109,7 +109,7 @@ window.hapusAkun = async function(id) {
   if (!ready || !ownerUid) {
     tampilNotice(
       "Akses Belum Siap",
-      "Sesi Owner belum siap. Silakan login ulang."
+      "Sesi Owner belum siap. Silakan muat ulang halaman."
     );
     return;
   }
@@ -117,62 +117,63 @@ window.hapusAkun = async function(id) {
   const akun = accounts.find(a => a.id === id);
 
   if (!akun) {
-    await load();
     tampilNotice(
       "Data Tidak Ditemukan",
-      "Daftar akun sudah diperbarui. Silakan periksa kembali."
+      "Akun tidak ditemukan. Tekan Refresh dan coba kembali."
     );
     return;
   }
 
+  // Pastikan akun karyawan benar-benar milik Owner ini.
   if (akun.ownerUid !== ownerUid) {
     tampilNotice(
       "Akses Ditolak",
-      "Akun ini bukan milik Owner yang sedang login."
+      "Akun ini tidak tercatat sebagai milik Owner yang sedang login."
     );
     return;
   }
 
-  const yakin = confirm(
-    "HAPUS AKUN INI?\n\n" +
-    "Nama: " + nama(akun) + "\n" +
-    "Email: " + (akun.email || "-") + "\n\n" +
-    "Profil akun akan dihapus dari Firestore.\n" +
-    "Akun login Firebase Authentication tidak ikut terhapus.\n\n" +
-    "Lanjutkan?"
-  );
+  const namaAkun = nama(akun);
 
-  if (!yakin) return;
+  if (!confirm(
+    "YAKIN HAPUS AKUN KARYAWAN INI?\n\n" +
+    "Nama: " + namaAkun + "\n" +
+    "Email: " + (akun.email || "-") + "\n\n" +
+    "Profil akan dihapus dari Firestore.\n" +
+    "Akun login Firebase Authentication tidak ikut terhapus."
+  )) {
+    return;
+  }
 
   try {
-    $("status").textContent = "Menghapus data akun...";
+    $("status").textContent = "Sedang menghapus akun...";
 
-    // Hapus dokumen berdasarkan ID yang dipilih.
+    // Hapus profil karyawan berdasarkan ID dokumen.
     await deleteDoc(doc(db, "users", id));
 
-    // Pastikan dokumen memang sudah tidak tersedia.
-    const pemeriksaan = await getDoc(doc(db, "users", id));
+    // Pastikan dokumen sudah tidak ada.
+    const hasil = await getDoc(doc(db, "users", id));
 
-    if (pemeriksaan.exists()) {
+    if (hasil.exists()) {
       throw new Error(
-        "Dokumen masih ditemukan setelah proses penghapusan."
+        "Dokumen masih ditemukan setelah penghapusan."
       );
     }
 
-    // Muat ulang data langsung dari Firestore.
+    // Perbarui daftar akun dari Firebase.
     accounts = accounts.filter(a => a.id !== id);
     await load();
 
     tampilNotice(
-      "Berhasil",
-      "Profil akun <b>" + esc(nama(akun)) +
+      "Berhasil Menghapus",
+      "Profil karyawan <b>" + esc(namaAkun) +
       "</b> berhasil dihapus dari Firestore."
     );
 
   } catch (e) {
-    console.error("Gagal menghapus akun:", e);
+    console.error("Kesalahan menghapus akun:", e);
 
-    let pesan = e.message || "Terjadi kesalahan saat menghapus akun.";
+    let pesan = e.message || "Penghapusan gagal.";
 
     if (
       e.code === "permission-denied" ||
@@ -180,14 +181,16 @@ window.hapusAkun = async function(id) {
     ) {
       pesan =
         "Firestore menolak penghapusan. Periksa Security Rules " +
-        "untuk koleksi users agar Owner dapat menghapus dokumen " +
-        "yang memiliki ownerUid sesuai UID Owner.";
+        "koleksi users. Owner harus diizinkan menghapus dokumen " +
+        "jika field ownerUid dokumen sama dengan UID Owner.";
+    } else if (e.code === "unavailable") {
+      pesan = "Firebase sedang tidak tersedia. Periksa koneksi internet.";
     }
 
-    tampilNotice("Gagal Menghapus", esc(pesan));
-
     $("status").innerHTML =
-      '<span class="err">Penghapusan gagal. Periksa pesan kesalahan.</span>';
+      '<span class="err">Penghapusan gagal.</span>';
+
+    tampilNotice("Gagal Menghapus", esc(pesan));
   }
 };
 window.resetFilter=()=>{$("roleFilter").value="";$("cari").value="";render()};

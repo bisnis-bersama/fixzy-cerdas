@@ -105,88 +105,30 @@ function renderIzin(a){const izin=gabungIzin(a);if(!izin.length)return '<span st
 async function load(){if(!ready)return;const s=await getDocs(query(collection(db,"users"),where("ownerUid","==",ownerUid)));accounts=s.docs.map(d=>({id:d.id,...d.data()})).filter(x=>["employee","reseller"].includes(norm(x.role)));render();$("status").innerHTML=`<span class="ok">✓ ${accounts.length} akun karyawan/reseller ditemukan • Hak akses siap diatur.</span>`}
 function render(){const role=$("roleFilter").value,q=norm($("cari").value);const arr=accounts.filter(a=>(!role||a.role===role)&&(!q||norm(nama(a)).includes(q)||norm(a.email).includes(q)||norm(a.jabatan).includes(q)));$("total").textContent=arr.length;$("aktif").textContent=arr.filter(a=>norm(a.status)==="aktif").length;$("jmlKaryawan").textContent=arr.filter(a=>a.role==="employee").length;$("jmlReseller").textContent=arr.filter(a=>a.role==="reseller").length;$("tbody").innerHTML=arr.length?arr.map(a=>`<tr><td><b>${esc(nama(a))}</b></td><td>${esc(a.email||"-")}</td><td>${esc(a.noWA||a.wa||a.noWa||a.noHp||"-")}</td><td><span class="badge ${esc(a.role||"")}">${esc(roleLabel(a.role))}</span></td><td>${esc(a.jabatan||a.posisi||"-")}</td><td><span class="badge ${norm(a.status)==="aktif"?"active":"off"}">${esc(a.status||"-")}</span></td><td>${renderIzin(a)}</td><td><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn secondary" style="padding:7px 9px;font-size:10px" onclick="editAkun('${a.id}')">✏️ Edit</button><button class="btn danger" style="padding:7px 9px;font-size:10px" onclick="hapusAkun('${a.id}')">🗑️ Hapus</button></div></td></tr>`).join(""):'<tr><td colspan="8" class="empty">Belum ada akun karyawan/reseller.</td></tr>'}
 window.render=render;
-window.hapusAkun = async function(id) {
-  if (!ready || !ownerUid) {
-    tampilNotice(
-      "Akses Belum Siap",
-      "Sesi Owner belum siap. Silakan muat ulang halaman."
-    );
-    return;
-  }
-
-  const akun = accounts.find(a => a.id === id);
-
-  if (!akun) {
-    tampilNotice(
-      "Data Tidak Ditemukan",
-      "Akun tidak ditemukan. Tekan Refresh dan coba kembali."
-    );
-    return;
-  }
-
-  // Pastikan akun karyawan benar-benar milik Owner ini.
-  if (akun.ownerUid !== ownerUid) {
-    tampilNotice(
-      "Akses Ditolak",
-      "Akun ini tidak tercatat sebagai milik Owner yang sedang login."
-    );
-    return;
-  }
-
-  const namaAkun = nama(akun);
-
-  if (!confirm(
-    "YAKIN HAPUS AKUN KARYAWAN INI?\n\n" +
-    "Nama: " + namaAkun + "\n" +
-    "Email: " + (akun.email || "-") + "\n\n" +
-    "Profil akan dihapus dari Firestore.\n" +
-    "Akun login Firebase Authentication tidak ikut terhapus."
-  )) {
-    return;
-  }
-
-  try {
-    $("status").textContent = "Sedang menghapus akun...";
-
-    // Hapus profil karyawan berdasarkan ID dokumen.
-    await deleteDoc(doc(db, "users", id));
-
-    // Pastikan dokumen sudah tidak ada.
-    const hasil = await getDoc(doc(db, "users", id));
-
-    if (hasil.exists()) {
-      throw new Error(
-        "Dokumen masih ditemukan setelah penghapusan."
-      );
+window.hapusAkun=async id=>{
+  if(!ready){tampilNotice("Akses Belum Siap","Sesi Owner belum siap. Silakan muat ulang halaman.");return}
+  const a=accounts.find(x=>x.id===id);
+  if(!a){tampilNotice("Data Tidak Ditemukan","Data karyawan/reseller tidak ditemukan atau sudah dihapus.");return}
+  if(a.ownerUid!==ownerUid){tampilNotice("Akses Ditolak","Data ini bukan milik konter Anda.");return}
+  const namaAkun=nama(a),emailAkun=a.email||"-";
+  const yakin=confirm(`HAPUS DATA AKUN?\n\nNama: ${namaAkun}\nRole: ${roleLabel(a.role)}\nEmail: ${emailAkun}\n\nData profil pengguna di Firestore akan dihapus. Akun login Firebase Authentication tidak ikut terhapus.\n\nLanjutkan?`);
+  if(!yakin)return;
+  try{
+    await deleteDoc(doc(db,"users",id));
+    accounts=accounts.filter(x=>x.id!==id);
+    render();
+    $("status").innerHTML=`<span class="ok">✓ Data profil ${esc(namaAkun)} berhasil dihapus dari daftar konter ini.</span>`;
+    tampilNotice("✅ Data Profil Dihapus",`Data profil <b>${esc(namaAkun)}</b> sudah dihapus dari Firestore.<br><br><b>Catatan penting:</b> identitas login di Firebase Authentication masih ada. Untuk mencabut login sepenuhnya, akun tersebut perlu dinonaktifkan/dihapus melalui backend Admin SDK atau Cloud Function.`);
+  }catch(e){
+    console.error("Gagal menghapus data akun:",e);
+    const code=e?.code||"";
+    let pesan=e?.message||"Terjadi kesalahan saat menghapus data akun.";
+    if(code==="permission-denied"||/permission|insufficient/i.test(pesan)){
+      pesan="Firestore menolak penghapusan (permission-denied). Periksa Firestore Security Rules: Owner harus diizinkan menghapus dokumen users milik sendiri berdasarkan ownerUid. Tombol sudah berjalan, tetapi aturan database belum mengizinkan operasi hapus.";
     }
-
-    // Perbarui daftar akun dari Firebase.
-    accounts = accounts.filter(a => a.id !== id);
-    await load();
-
-    tampilNotice(
-      "Berhasil Menghapus",
-      "Profil karyawan <b>" + esc(namaAkun) +
-      "</b> berhasil dihapus dari Firestore."
-    );
-
-  } catch (e) {
-  console.error("GAGAL HAPUS AKUN:", e);
-
-  const kode = e?.code || "tidak diketahui";
-  const pesan = e?.message || "Tidak ada keterangan dari Firebase.";
-
-  $("status").innerHTML =
-    '<span class="err">Penghapusan gagal: ' +
-    esc(kode) + '</span>';
-
-  tampilNotice(
-    "❌ Penghapusan Gagal",
-    "<b>Kode:</b> " + esc(kode) +
-    "<br><br><b>Pesan Firebase:</b><br>" +
-    esc(pesan)
-  );
-}
+    tampilNotice("❌ Gagal Menghapus",esc(pesan));
+  }
+};
 window.resetFilter=()=>{$("roleFilter").value="";$("cari").value="";render()};
 window.bukaTambah=()=>{if(!ready)return;editId=null;$("popupTitle").textContent="＋ Tambah Akun";$("fNama").value="";$("fRole").value="employee";$("fRole").disabled=false;$("fEmail").value="";$("fWA").value="";$("fPassword").value="";$("fJabatan").value="";$("fUpah").value="";$("fStatus").value="aktif";setIzin([]);$("passWrap").style.display="flex";$("editInfo").textContent="Akun dibuat di Firebase Authentication dan dihubungkan ke Owner ini.";$("popup").classList.add("show")};
 window.editAkun=id=>{const a=accounts.find(x=>x.id===id);if(!a)return;editId=id;$("popupTitle").textContent="✏️ Edit Akun";$("fNama").value=nama(a);$("fRole").value=a.role;$("fRole").disabled=true;$("fEmail").value=a.email||"";$("fWA").value=a.noWA||a.wa||a.noWa||a.noHp||"";$("fPassword").value="";$("fJabatan").value=a.jabatan||a.posisi||"";$("fUpah").value=a.upahHarian??a.upah??a.gajiHarian??0;$("fStatus").value=a.status||"aktif";setIzin(gabungIzin(a));$("passWrap").style.display="none";$("editInfo").textContent="Email/password tidak diubah saat edit. Owner dapat mengubah status, jabatan, upah, dan seluruh hak akses.";$("popup").classList.add("show")};

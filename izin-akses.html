@@ -16,8 +16,23 @@
 <div class="popup" id="notice"><div class="popup-box" style="width:min(500px,calc(100% - 22px))"><h3 id="noticeTitle">FIXZY</h3><div id="noticeText" class="notice-text"></div><div class="popup-actions"><button class="btn primary" onclick="tutupNotice()">OK</button></div></div></div><div class="popup" id="waPopup"><div class="popup-box" style="width:min(540px,calc(100% - 22px))"><h3>📲 Kirim Data Login ke WhatsApp?</h3><div id="waText" class="notice-text"></div><div class="popup-actions"><button class="btn secondary" onclick="tutupWaPopup()">Tidak</button><button class="btn primary" onclick="kirimWhatsApp()">📲 Kirim Link & Akun Login via WhatsApp</button></div></div></div>
 <script>
 function tutupHalaman(){try{if(window.frameElement){window.frameElement.remove();return}}catch(e){}try{if(window.parent!==window){window.parent.postMessage({type:"FIXZY_CLOSE_IZIN_AKSES"},"*");return}}catch(e){}if(history.length>1)history.back();else location.href="index.html"}
-function bukaNavigasi(file){try{if(window.parent!==window){window.parent.postMessage({type:"FIXZY_NAVIGATE",page:file},"*");return}}catch(e){}location.href=new URL(file,location.href).href}
-function bagikanLinkWhatsApp(){const pesan="Halo, silakan buka FIXZY melalui tautan berikut:\nhttps://fixzy-cerdas.vercel.app\n\nGunakan email dan password akun FIXZY yang sudah diberikan Owner.";window.open("https://wa.me/?text="+encodeURIComponent(pesan),"_blank")}
+function bukaNavigasi(file){
+  const target=new URL(file,location.href).href;
+  // Minta aplikasi induk berpindah halaman jika listener tersedia.
+  if(window.parent!==window){
+    try{window.parent.postMessage({type:"FIXZY_NAVIGATE",page:file,url:target},"*")}catch(e){}
+    // Fallback supaya tombol tetap bekerja jika halaman induk tidak menangani pesan.
+    setTimeout(()=>{if(location.href===location.href)location.href=target},350);
+    return;
+  }
+  location.href=target;
+}
+function bagikanLinkWhatsApp(){
+  const pesan="Halo, silakan buka FIXZY melalui tautan berikut:\nhttps://fixzy-cerdas.vercel.app\n\nSilakan login menggunakan email dan password akun FIXZY yang diberikan Owner. Jangan membagikan password kepada orang lain.";
+  const url="https://wa.me/?text="+encodeURIComponent(pesan);
+  const tab=window.open(url,"_blank");
+  if(!tab) location.href=url;
+}
 </script>
 <script type="module">
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
@@ -30,7 +45,7 @@ const norm=v=>String(v??"").trim().toLowerCase(),nama=a=>a.nama||a.namaKaryawan|
 function normalisasi(v){if(Array.isArray(v))return v.map(String);if(v&&typeof v==="object")return Object.keys(v).filter(k=>v[k]===true||v[k]==="true");if(typeof v==="string")return v.split(/[,|;]+/).map(x=>x.trim()).filter(Boolean);return[]}
 function izin(a){return [...new Set([...normalisasi(a.izin),...normalisasi(a.permissions)])]}
 function izinValues(){return [...document.querySelectorAll(".izin:checked")].map(x=>x.value)}function updateCount(){$("izinCount").textContent=izinValues().length+" izin dipilih"}function setIzin(v){const vals=normalisasi(v).map(x=>x.toLowerCase());document.querySelectorAll(".izin").forEach(x=>x.checked=vals.includes(x.value.toLowerCase()));updateCount()}
-document.addEventListener("change",e=>{if(e.target.classList?.contains("izin"))updateCount()});function notice(t,x){$("noticeTitle").textContent=t;$("noticeText").innerHTML=x;$("notice").classList.add("show")}window.tutupNotice=()=>$ ("notice").classList.remove("show");window.tutupPopup=()=>{$("popup").classList.remove("show");$("fRole").disabled=false;editId=null};window.tutupWaPopup=()=>{$("waPopup").classList.remove("show");window._waPending=null};
+document.addEventListener("change",e=>{if(e.target.classList?.contains("izin"))updateCount()});function notice(t,x){$("noticeTitle").textContent=t;$("noticeText").innerHTML=x;$("notice").classList.add("show")}window.tutupNotice=()=>$("notice").classList.remove("show");window.tutupPopup=()=>{$("popup").classList.remove("show");$("fRole").disabled=false;editId=null};window.tutupWaPopup=()=>{$("waPopup").classList.remove("show");window._waPending=null};
 window.pilihSemuaIzin=()=>{document.querySelectorAll(".izin").forEach(x=>x.checked=true);updateCount()};window.hapusSemuaIzin=()=>{document.querySelectorAll(".izin").forEach(x=>x.checked=false);updateCount()};window.pilihAksesOperasional=()=>{const s=new Set(["servisan.html","penjualan.html","data-servis.html","data-penjualan.html","stock.html","ringkasan-pendapatan.html","absensi-karyawan.html","data-karyawan.html","pengeluaran.html","cek-paket.html","page.html"]);document.querySelectorAll(".izin").forEach(x=>x.checked=s.has(x.value));updateCount()};
 function render(){const role=$("roleFilter").value,q=norm($("cari").value),arr=accounts.filter(a=>(!role||a.role===role)&&(!q||norm(nama(a)).includes(q)||norm(a.email).includes(q)||norm(a.jabatan).includes(q)));$("total").textContent=arr.length;$("aktif").textContent=arr.filter(a=>norm(a.status)==="aktif").length;$("jmlKaryawan").textContent=arr.filter(a=>a.role==="employee").length;$("jmlReseller").textContent=arr.filter(a=>a.role==="reseller").length;$("tbody").innerHTML=arr.length?arr.map(a=>`<tr><td><b>${esc(nama(a))}</b></td><td>${esc(a.email||"-")}</td><td>${esc(a.noWA||a.wa||a.noWa||a.noHp||"-")}</td><td><span class="badge">${esc(roleLabel(a.role))}</span></td><td>${esc(a.jabatan||a.posisi||"-")}</td><td><span class="badge ${norm(a.status)==="aktif"?"active":"off"}">${esc(a.status||"-")}</span></td><td>${izin(a).map(v=>`<span class="badge">${esc(v)}</span>`).join("")||"Tidak ada akses"}</td><td><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn secondary" style="padding:7px 9px;font-size:10px" onclick="editAkun('${a.id}')">✏️ Edit</button><button class="btn danger" style="padding:7px 9px;font-size:10px" onclick="hapusAkun('${a.id}')">🗑️ Hapus</button><button class="btn greenbtn" style="padding:7px 9px;font-size:10px" onclick="kirimDataLoginWhatsApp('${a.id}')">📲 WhatsApp</button></div></td></tr>`).join(""):'<tr><td colspan="8" class="empty" style="text-align:center;padding:25px">Belum ada akun karyawan/reseller.</td></tr>'}window.render=render;
 async function load(){if(!ready)return;$("status").textContent="Memuat akun...";const found=new Map(),errs=[];for(const f of ["ownerUid","ownerId"]){try{const s=await getDocs(query(collection(db,"users"),where(f,"==",ownerUid)));s.forEach(d=>found.set(d.id,{id:d.id,...d.data()}))}catch(e){errs.push(e);console.warn(e)}}accounts=[...found.values()].filter(a=>["employee","reseller"].includes(norm(a.role))&&(a.ownerUid===ownerUid||a.ownerId===ownerUid));render();$("status").innerHTML=errs.length&&!accounts.length?'<span class="err">Gagal membaca data. Periksa Firestore Security Rules.</span>':`<span class="ok">✓ ${accounts.length} akun ditemukan.</span>`}window.muatSemua=()=>load().catch(e=>notice("Gagal Memuat",esc(e.message)));

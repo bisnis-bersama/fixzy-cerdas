@@ -120,8 +120,13 @@ import{initializeApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-ap
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);const rupiah=n=>"Rp "+(Number(n)||0).toLocaleString("id-ID");const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let ownerUid="",allServis=[],allJual=[],allKeluar=[],allUsers=[],allAbsensi=[];
+let ownerUid="",allServis=[],allJual=[],allKeluar=[],allUsers=[],allAbsensi=[],spreadsheetProducts=[];
 const pname=d=>d.pelanggan?.nama||d.namaPelanggan||d.nama||"-";const date=d=>String(d.tanggal||"").slice(0,10)||(d.createdAt?.toDate?d.createdAt.toDate().toISOString().slice(0,10):"");
+const cleanKey=v=>String(v??"").trim().toLowerCase().replace(/[\s_\-()./]+/g,"");
+function parseStockNum(v){if(typeof v==="number")return Number.isFinite(v)?v:0;let x=String(v??"").trim().replace(/[^\d,.-]/g,"");if(!x)return 0;let d=x.lastIndexOf("."),c=x.lastIndexOf(",");if(d>=0&&c>=0){if(c>d)x=x.replace(/\./g,"").replace(",",".");else x=x.replace(/,/g,"")}else if(c>=0){x=x.length-c-1===3?x.replace(/,/g,""):x.replace(",",".")}else if(d>=0&&x.length-d-1===3)x=x.replace(/\./g,"");const n=Number(x);return Number.isFinite(n)?n:0}
+function parseStockCSV(t){const out=[];let row=[],cell="",quoted=false;t=String(t||"").replace(/^\uFEFF/,"");for(let i=0;i<t.length;i++){const c=t[i],n=t[i+1];if(c==='"'){if(quoted&&n==='"'){cell+='"';i++}else quoted=!quoted}else if(c===","&&!quoted){row.push(cell);cell=""}else if((c==="\n"||c==="\r")&&!quoted){if(c==="\r"&&n==="\n")i++;row.push(cell);cell="";if(row.some(v=>String(v).trim()))out.push(row);row=[]}else cell+=c}if(cell!==""||row.length){row.push(cell);if(row.some(v=>String(v).trim()))out.push(row)}return out}
+function stockCsvUrl(raw){const u=new URL(raw);if(!u.hostname.includes("docs.google.com")||!u.pathname.includes("/spreadsheets/"))throw Error("Tautan bukan Google Spreadsheet");const gid=u.searchParams.get("gid")||(raw.match(/[?#&]gid=([^&#]+)/i)||[])[1]||"0";const pub=u.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub(?:html)?/i);if(pub)return `https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv`;const id=u.pathname.match(/\/spreadsheets\/d\/([^/]+)/i);if(!id)throw Error("ID Spreadsheet tidak ditemukan");return `https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`}
+async function loadSpreadsheetProducts(){spreadsheetProducts=[];try{const snap=await getDoc(doc(db,"pengaturan_spreadsheet",ownerUid));if(!snap.exists())return;const d=snap.data()||{},links=Array.isArray(d.spreadsheetLinks)?d.spreadsheetLinks.slice():[];if(!links.length&&d.spreadsheetUrl)links.push(d.spreadsheetUrl);const products=[];for(const link of links){try{const res=await fetch(stockCsvUrl(link),{cache:"no-store"});if(!res.ok)continue;const rows=parseStockCSV(await res.text());if(!rows.length)continue;const headers=rows[0].map(cleanKey);for(let i=1;i<rows.length;i++){const raw=rows[i],o={};headers.forEach((h,j)=>o[h]=raw[j]??"");const pick=keys=>{for(const k of keys){const v=o[cleanKey(k)];if(v!==undefined&&String(v).trim()!=="")return v}return ""};const name=pick(["nama barang","nama produk","nama","produk","product","barang"]);if(!name)continue;const modalRaw=pick(["modal","harga modal","harga beli","hpp","harga pokok"]),jualRaw=pick(["jual","harga jual","harga penjualan"]);products.push({kode:String(pick(["kode","sku","kode produk","id"])||raw[0]||"").trim(),nama:String(name).trim(),modal:modalRaw!==""?parseStockNum(modalRaw):(raw[3]!==undefined&&String(raw[3]).trim()!==""?parseStockNum(raw[3]):null),jual:jualRaw!==""?parseStockNum(jualRaw):(raw[4]!==undefined&&String(raw[4]).trim()!==""?parseStockNum(raw[4]):null)})}}catch(e){console.warn("Spreadsheet modal tidak terbaca:",e)}}spreadsheetProducts=products}catch(e){console.warn("Pengaturan Spreadsheet tidak tersedia:",e)}}
 async function getAll(colName){
   if(!ownerUid) throw new Error("Akun ini tidak memiliki akses data bisnis.");
   let rows=[];let logs=[];
@@ -399,17 +404,13 @@ function renderStats(){
     }, 0);
 
   const jualAktif = allJual.filter(r => ["masuk","tagihan","tunai","lunas"].includes(norm(r.status)));
-  const jualItemDenganModal = jualAktif.reduce((acc,r) => {
-    const items = Array.isArray(r.items) ? r.items : [];
-    return acc + items.filter(i => Number(i.totalModal ?? i.modalTotal ?? ((Number(i.modal ?? i.hargaModal ?? i.modalSatuan ?? 0) || 0) * (Number(i.qty ?? i.jumlah ?? 1) || 1))) > 0).length;
-  }, 0);
-  const jualItemTotal = jualAktif.reduce((acc,r) => acc + (Array.isArray(r.items) ? r.items.length : 0), 0);
-  const modalJual = jualAktif.reduce((sum,r) => sum + (Array.isArray(r.items) ? r.items.reduce((sub,i) => {
-    const q = Number(i.qty ?? i.jumlah ?? 1) || 1;
-    const direct = Number(i.totalModal ?? i.modalTotal ?? 0) || 0;
-    const unit = Number(i.modal ?? i.hargaModal ?? i.modalSatuan ?? 0) || 0;
-    return sub + (direct > 0 ? direct : unit * q);
-  },0) : 0),0);
+  const stockByCode=new Map(),stockByName=new Map();
+  spreadsheetProducts.forEach(p=>{const c=cleanKey(p.kode),n=cleanKey(p.nama);if(c&&!stockByCode.has(c))stockByCode.set(c,p);if(n&&!stockByName.has(n))stockByName.set(n,p)});
+  const resolveItemModal=i=>{const direct=Number(i.totalModal??i.modalTotal??0)||0;if(direct>0)return direct;const unit=Number(i.modal??i.hargaModal??i.harga_modal??i.modalSatuan??i.hargaBeli??i.harga_beli??i.hpp??0)||0;const q=Number(i.qty??i.jumlah??i.quantity??1)||1;if(unit>0)return unit*q;const code=cleanKey(i.kode??i.code??i.sku??i.productCode??"");const name=cleanKey(i.nama??i.namaProduk??i.name??i.produk??i.productName??"");const p=(code&&stockByCode.get(code))||(name&&stockByName.get(name));return p&&p.modal!==null&&Number(p.modal)>0?Number(p.modal)*q:0};
+  const itemHasModal=i=>resolveItemModal(i)>0;
+  const jualItemDenganModal = jualAktif.reduce((acc,r)=>acc+(Array.isArray(r.items)?r.items.filter(itemHasModal).length:0),0);
+  const jualItemTotal = jualAktif.reduce((acc,r)=>acc + (Array.isArray(r.items) ? r.items.length : 0), 0);
+  const modalJual = jualAktif.reduce((sum,r)=>sum+(Array.isArray(r.items)?r.items.reduce((sub,i)=>sub+resolveItemModal(i),0):0),0);
   const hppTercatat = modalServis + modalJual;
 
   // =========================================================
@@ -462,15 +463,15 @@ function renderStats(){
     • Pendapatan <b class="green">${rupiah(pendapatan)}</b>
     • Tagihan <b class="yellow">${rupiah(totalTagihan)}</b>
     • Pengeluaran <b class="red">${rupiah(pengeluaran)}</b>
-    • Laba Bersih Estimasi <b class="${labaBersih>=0?'green':'red'}">${rupiah(labaBersih)}</b>
+    • Laba Kotor <b class="${labaKotor>=0?'green':'red'}">${rupiah(labaKotor)}</b> • Laba Bersih Estimasi <b class="${labaBersih>=0?'green':'red'}">${rupiah(labaBersih)}</b>
   `;
 
   $("statsLaba").innerHTML = `
     <div class="stat blue"><small>Modal Servis Terdata</small><b>${rupiah(modalServis)}</b><i>Dari totalModal transaksi servis</i></div>
     <div class="stat yellow"><small>Modal Penjualan Terdata</small><b>${rupiah(modalJual)}</b><i>${jualItemDenganModal} dari ${jualItemTotal} item memiliki data modal</i></div>
-    <div class="stat ${labaBersih>=0?'green':'red'}"><small>Laba Bersih Estimasi</small><b>${rupiah(labaBersih)}</b><i>Omset − modal tercatat − pengeluaran operasional</i></div>
+    <div class="stat ${labaKotor>=0?'green':'red'}"><small>Laba Kotor Sebelum Pengeluaran</small><b>${rupiah(labaKotor)}</b><i>Omset − HPP/modal barang terjual</i></div>
   `;
-  $("labaDetail").innerHTML = `Modal/HPP tercatat: <b>${rupiah(hppTercatat)}</b>. Belanja stok (${rupiah(belanjaStock)}) dipisahkan dan tidak langsung mengurangi laba. ` + (jualItemTotal > jualItemDenganModal ? `<b style="color:#b45309">Perhatian:</b> ${jualItemTotal-jualItemDenganModal} item penjualan belum memiliki data modal, sehingga laba bersih masih estimasi dan bisa lebih tinggi dari laba sebenarnya.` : `Semua item penjualan yang tersimpan memiliki data modal.`);
+  $("labaDetail").innerHTML = `Laba bersih estimasi setelah pengeluaran operasional: <b>${rupiah(labaBersih)}</b>. Modal/HPP tercatat: <b>${rupiah(hppTercatat)}</b>. Belanja stok (${rupiah(belanjaStock)}) dipisahkan dan tidak langsung mengurangi laba. ` + (jualItemTotal > jualItemDenganModal ? `<b style="color:#b45309">Perhatian:</b> ${jualItemTotal-jualItemDenganModal} item penjualan belum memiliki data modal, sehingga laba bersih masih estimasi dan bisa lebih tinggi dari laba sebenarnya.` : `Semua item penjualan yang tersimpan memiliki data modal.`);
 
   $("statsKeluar").innerHTML = `
     <div class="stat red">
@@ -617,6 +618,7 @@ onAuthStateChanged(auth,async u=>{
   allKeluar=keluarRes.data.sort((a,b)=>String(b.tanggal||"").localeCompare(String(a.tanggal||"")));
   allUsers=salaryUsers;
   allAbsensi=salaryAbsensi;
+  await loadSpreadsheetProducts();
   $("debug").textContent=`Servis ${servisRes.logs.join(" | ")} • Jual ${jualRes.logs.join(" | ")} • Keluar ${keluarRes.logs.join(" | ")} • Karyawan:${allUsers.length} • Absensi:${allAbsensi.length}`;
   $("loading").style.display="none";$("page").style.display="block";renderStats();
  }catch(e){$("loading").innerHTML=`<span style="color:#b42318">Gagal: ${esc(e.message)}</span>`}

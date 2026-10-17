@@ -121,7 +121,12 @@ window.hapusAkun=async id=>{
     tampilNotice("✅ Data Profil Dihapus",`Data profil <b>${esc(namaAkun)}</b> sudah dihapus dari Firestore.<br><br><b>Catatan penting:</b> identitas login di Firebase Authentication masih ada. Untuk mencabut login sepenuhnya, akun tersebut perlu dinonaktifkan/dihapus melalui backend Admin SDK atau Cloud Function.`);
   }catch(e){
     console.error("Gagal menghapus data akun:",e);
-    tampilNotice("❌ Gagal Menghapus",esc(e.message||"Terjadi kesalahan saat menghapus data akun."));
+    const code=e?.code||"";
+    let pesan=e?.message||"Terjadi kesalahan saat menghapus data akun.";
+    if(code==="permission-denied"||/permission|insufficient/i.test(pesan)){
+      pesan="Firestore menolak penghapusan (permission-denied). Periksa Firestore Security Rules: Owner harus diizinkan menghapus dokumen users milik sendiri berdasarkan ownerUid. Tombol sudah berjalan, tetapi aturan database belum mengizinkan operasi hapus.";
+    }
+    tampilNotice("❌ Gagal Menghapus",esc(pesan));
   }
 };
 window.resetFilter=()=>{$("roleFilter").value="";$("cari").value="";render()};

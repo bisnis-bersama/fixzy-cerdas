@@ -11,48 +11,29 @@ header{background:#0b0f14;color:#fff;border-bottom:4px solid #ffc107;padding:13p
 .head{max-width:1250px;margin:auto;display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;object-fit:contain;border-radius:10px}.brand{flex:1;min-width:0}.brand b{font-size:18px}.brand small{display:block;color:#cbd5e1;margin-top:4px;font-size:11px}
 button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 13px;font-weight:800}.yellow{background:#ffc107;color:#111}.dark{background:#111827;color:white}
 main{max-width:1250px;margin:auto;padding:14px}.notice,.card{background:white;border:1px solid #dbe3ed;border-radius:15px;padding:14px;margin-bottom:13px;box-shadow:0 3px 12px #0f172a0a}.notice{font-size:12px;line-height:1.6;color:#475569}.notice b{color:#111827}
+.sales-detail{background:#fff;border:1px solid #dbe3ed;border-radius:15px;padding:14px;margin-bottom:13px;box-shadow:0 3px 12px #0f172a0a}.sales-title{font-size:16px;font-weight:900;margin-bottom:5px;color:#111827}.sales-subtitle{font-size:11px;color:#64748b;line-height:1.5;margin-bottom:12px}.sales-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.sales-box{min-width:0;padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}.sales-box small{display:block;color:#64748b;font-size:10px;font-weight:900;line-height:1.4}.sales-box b{display:block;font-size:17px;margin-top:7px;overflow-wrap:anywhere}.sales-box.revenue{background:#fef3c7;border-color:#fcd34d}.sales-box.revenue b{color:#92400e}.sales-box.profit{background:#dcfce7;border-color:#86efac}.sales-box.profit b{color:#166534}.sales-warning{font-size:10px;color:#64748b;line-height:1.5;margin-top:10px}
+@media(max-width:400px){.sales-box{padding:9px}.sales-box b{font-size:14px}}
 .toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}.search{flex:1;min-width:210px;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font:inherit}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:13px}.stat{border:2px solid #111827;border-radius:13px;padding:13px;background:#fff;box-shadow:3px 3px 0 #111827}.stat small{display:block;font-size:10px;color:#64748b;font-weight:900}.stat b{display:block;font-size:21px;margin-top:7px}.stat.yellowbg{background:#fef3c7}.stat.greenbg{background:#dcfce7}.stat.darkbg{background:#111827;color:#fff}.stat.darkbg small{color:#cbd5e1}
 .tablewrap{overflow:auto;border:2px solid #111827;border-radius:12px}table{width:100%;border-collapse:collapse;min-width:750px}th{background:#111827;color:#fff;text-align:left;padding:11px;font-size:11px;white-space:nowrap}td{padding:10px;border-bottom:1px solid #e2e8f0;font-size:12px}tr:last-child td{border-bottom:0}.num{text-align:right;white-space:nowrap}.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-weight:900;font-size:10px}.ok{background:#dcfce7;color:#166534}.low{background:#fef3c7;color:#92400e}.zero{background:#fee2e2;color:#991b1b}.muted{color:#64748b;font-size:11px}.empty{text-align:center;padding:25px;color:#64748b}
 @media(max-width:750px){main{padding:9px}.stats{grid-template-columns:1fr 1fr}.stat{padding:10px}.stat b{font-size:18px}.head{gap:8px}.logo{width:40px;height:40px}.brand b{font-size:15px}button{padding:9px 10px;font-size:12px}}
-/* PERBAIKAN NAMA PRODUK KHUSUS TAMPILAN HP */
-@media (max-width:750px) {
-  .tablewrap {
-    max-width:100%;
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-
-  table {
-    table-layout:auto;
-  }
-
-  th, td {
-    overflow-wrap:break-word;
-  }
-
-  td:nth-child(3) {
-    white-space:normal;
-    overflow-wrap:anywhere;
-    word-break:break-word;
-    min-width:120px;
-    max-width:200px;
-    line-height:1.4;
-  }
-
-  td:nth-child(2),
-  td:nth-child(4) {
-    overflow-wrap:anywhere;
-    word-break:break-word;
-  }
-}
 </style>
 </head>
 <body>
 <header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="brand"><b>📦 STOK TERKINI FIXZY</b><small>Stok Spreadsheet dikurangi penjualan Firestore • Tampilan saja</small><small id="accountInfo">Memeriksa sesi login...</small></div><button class="yellow" onclick="loadAll()">↻ Muat ulang</button></div></header>
 <main>
 <div class="notice" id="status">⏳ Menghubungkan ke FIXZY...</div>
-<div class="notice"><b>Catatan:</b> Halaman ini hanya menghitung dan menampilkan stok tersisa. Tidak mengubah Google Spreadsheet atau transaksi Firestore. Penjualan berstatus Batal tidak mengurangi stok. Produk dicocokkan berdasarkan kode produk, lalu nama produk jika kode tidak tersedia.</div>
+<section class="sales-detail">
+ <div class="sales-title">📊 Rincian Penjualan &amp; Keuntungan</div>
+ <div class="sales-subtitle">Ringkasan item penjualan dari Firestore. Harga modal dan jual diambil dari transaksi jika tersedia, lalu memakai harga pada Spreadsheet sebagai cadangan.</div>
+ <div class="sales-grid">
+  <div class="sales-box"><small>JUMLAH PRODUK TERJUAL</small><b id="detailQty">0 pcs</b></div>
+  <div class="sales-box"><small>MODAL BARANG TERJUAL</small><b id="detailModal">Rp0</b></div>
+  <div class="sales-box revenue"><small>PENDAPATAN PENJUALAN</small><b id="detailRevenue">Rp0</b></div>
+  <div class="sales-box profit"><small>LABA KOTOR</small><b id="detailProfit">Rp0</b></div>
+ </div>
+ <div class="sales-warning" id="salesWarning">Menunggu data transaksi penjualan.</div>
+</section>
 <div class="stats">
  <div class="stat darkbg"><small>JENIS PRODUK</small><b id="countProducts">0</b></div>
  <div class="stat yellowbg"><small>TOTAL STOK SPREADSHEET</small><b id="stockStart">0</b></div>
@@ -78,7 +59,7 @@ function num(v){if(typeof v==="number")return Number.isFinite(v)?v:0;let s=Strin
 function parseCSV(text){const out=[];let row=[],cell="",q=false;text=text.replace(/^\uFEFF/,"");for(let i=0;i<text.length;i++){let c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}else if(c===","&&!q){row.push(cell);cell=""}else if((c==="\n"||c==="\r")&&!q){if(c==="\r"&&n==="\n")i++;row.push(cell);cell="";if(row.some(x=>String(x).trim()))out.push(row);row=[]}else cell+=c}if(cell!==""||row.length){row.push(cell);if(row.some(x=>String(x).trim()))out.push(row)}return out}
 function csvUrl(url){const u=new URL(url);if(!u.hostname.includes("docs.google.com")||!u.pathname.includes("/spreadsheets/"))throw Error("Tautan bukan Google Spreadsheet");const gid=u.searchParams.get("gid")||(url.match(/[?#&]gid=([^&#]+)/i)||[])[1]||"0";const pub=u.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub(?:html)?/i);if(pub)return `https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv`;const id=u.pathname.match(/\/spreadsheets\/d\/([^/]+)/i);if(!id)throw Error("ID Spreadsheet tidak ditemukan");return `https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`}
 function pick(obj,keys){for(const k of keys){const v=obj[clean(k)];if(v!==undefined&&String(v).trim()!=="")return v}return ""}
-function normalize(rows,source){if(!rows.length)return[];const headers=rows[0].map(clean),out=[];for(let i=1;i<rows.length;i++){const raw=rows[i],o={};headers.forEach((h,j)=>o[h]=raw[j]??"");const name=pick(o,["nama barang","nama produk","nama","produk","product","barang"]);if(!name)continue;out.push({kode:String(pick(o,["kode","sku","kode produk","id"])||raw[0]||"").trim(),nama:String(name).trim(),supplier:String(pick(o,["supplier","suplier","nama supplier","nama suplier","vendor"])||raw[5]||"").trim(),stok:Math.max(0,num(pick(o,["stock","stok","sisa stok","sisa","jumlah stok"])!==""?pick(o,["stock","stok","sisa stok","sisa","jumlah stok"]):(raw[6]??""))),sourceSpreadsheet:source})}return out}
+function normalize(rows,source){if(!rows.length)return[];const headers=rows[0].map(clean),out=[];for(let i=1;i<rows.length;i++){const raw=rows[i],o={};headers.forEach((h,j)=>o[h]=raw[j]??"");const name=pick(o,["nama barang","nama produk","nama","produk","product","barang"]);if(!name)continue;const modalRaw=pick(o,["modal","harga modal","harga beli","hpp","harga pokok"]);const jualRaw=pick(o,["jual","harga jual","harga penjualan"]);const stockRaw=pick(o,["stock","stok","sisa stok","sisa","jumlah stok"]);out.push({kode:String(pick(o,["kode","sku","kode produk","id"])||raw[0]||"").trim(),nama:String(name).trim(),modal:modalRaw!==""?num(modalRaw):(raw[3]!==undefined&&String(raw[3]).trim()!==""?num(raw[3]):null),jual:jualRaw!==""?num(jualRaw):(raw[4]!==undefined&&String(raw[4]).trim()!==""?num(raw[4]):null),supplier:String(pick(o,["supplier","suplier","nama supplier","nama suplier","vendor"])||raw[5]||"").trim(),stok:Math.max(0,num(stockRaw!==""?stockRaw:(raw[6]??""))),sourceSpreadsheet:source})}return out}
 async function ownedDocs(col){const map=new Map();for(const field of ["ownerUid","ownerId","uid","userId","createdBy","businessUid"]){for(const val of [...new Set([ownerUid,uid].filter(Boolean))]){try{const s=await getDocs(query(collection(db,col),where(field,"==",val)));s.forEach(d=>map.set(d.id,{id:d.id,...d.data()}))}catch(e){console.warn(col,field,e.message)}}}return [...map.values()]}
 function itemKey(item){const code=clean(item?.kode||item?.code||item?.sku||item?.productCode||"");if(code)return "c:"+code;return "n:"+clean(item?.nama||item?.namaProduk||item?.name||item?.produk||item?.productName||"")}
 function saleIsCancelled(s){const st=clean(s?.status||s?.paymentStatus);return ["batal","dibatalkan","cancel","canceled"].includes(st)}
@@ -94,8 +75,9 @@ const qty=sales.filter(s=>!saleIsCancelled(s)).reduce((sum,s)=>sum+(Array.isArra
 $("status").textContent=`✅ ${products.length} baris produk • ${sales.length} transaksi penjualan dibaca`+(errors.length?` • Peringatan: ${errors.join(" | ")}`:"");
 render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];render()}}
 function calculate(){const byCode=new Map(),byName=new Map();for(const s of sales){if(saleIsCancelled(s))continue;for(const it of (Array.isArray(s.items)?s.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));const code=clean(it.kode||it.code||it.sku||it.productCode||"");const name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");if(code)byCode.set(code,(byCode.get(code)||0)+qty);else if(name)byName.set(name,(byName.get(name)||0)+qty)}}return products.map(p=>{const code=clean(p.kode),name=clean(p.nama);const sold=code&&byCode.has(code)?byCode.get(code):(name?byName.get(name)||0:0);return {...p,terjual:sold,sisa:p.stok-sold}})}
+function calculateSalesDetail(){let qtyTotal=0,modalTotal=0,revenueTotal=0,incomplete=0;const byCode=new Map(),byName=new Map();products.forEach(p=>{const c=clean(p.kode),n=clean(p.nama);if(c&&!byCode.has(c))byCode.set(c,p);if(n&&!byName.has(n))byName.set(n,p)});const val=(obj,keys)=>{for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null};for(const sale of sales){if(saleIsCancelled(sale))continue;for(const it of(Array.isArray(sale.items)?sale.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));if(!qty)continue;const code=clean(it.kode||it.code||it.sku||it.productCode||""),name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");const p=(code&&byCode.get(code))||(name&&byName.get(name));const mv=val(it,["hargaModal","harga_modal","modal","hargaBeli","harga_beli","hpp","costPrice"]);const jv=val(it,["hargaJual","harga_jual","harga","price","unitPrice"]);const m=mv!==null?num(mv):(p?p.modal:null);const j=jv!==null?num(jv):(p?p.jual:null);qtyTotal+=qty;if(m===null||j===null){incomplete++;continue}modalTotal+=m*qty;revenueTotal+=j*qty}}const fmt=n=>"Rp"+Math.round(n).toLocaleString("id-ID");$("detailQty").textContent=qtyTotal.toLocaleString("id-ID")+" pcs";$("detailModal").textContent=fmt(modalTotal);$("detailRevenue").textContent=fmt(revenueTotal);$("detailProfit").textContent=fmt(revenueTotal-modalTotal);$("salesWarning").textContent=incomplete?`${incomplete} item transaksi belum memiliki harga modal atau harga jual lengkap. Total rupiah belum mencakup item tersebut.`:"Perhitungan tidak memasukkan transaksi batal. Laba kotor = pendapatan dikurangi modal barang; belum dikurangi biaya operasional."}
 function render(){const q=clean($("search").value),data=calculate(),filtered=data.filter(p=>!q||clean(p.nama).includes(q)||clean(p.kode).includes(q)||clean(p.supplier).includes(q));$("countProducts").textContent=data.length.toLocaleString("id-ID");$("stockStart").textContent=data.reduce((a,p)=>a+p.stok,0).toLocaleString("id-ID");$("soldTotal").textContent=data.reduce((a,p)=>a+p.terjual,0).toLocaleString("id-ID");$("stockRemain").textContent=data.reduce((a,p)=>a+p.sisa,0).toLocaleString("id-ID");$("resultCount").textContent=`Menampilkan ${filtered.length} dari ${data.length} produk`;
-$("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="badge zero">Stok minus / perlu cek</span>':p.sisa===0?'<span class="badge zero">Habis</span>':p.sisa<=3?'<span class="badge low">Stok menipis</span>':'<span class="badge ok">Tersedia</span>';return `<tr><td>${i+1}</td><td>${esc(p.kode||"-")}</td><td><b>${esc(p.nama)}</b></td><td>${esc(p.supplier||"-")}</td><td class="num">${p.stok.toLocaleString("id-ID")}</td><td class="num">${p.terjual.toLocaleString("id-ID")}</td><td class="num"><b>${p.sisa.toLocaleString("id-ID")}</b></td><td>${status}</td></tr>`}).join("")||'<tr><td colspan="8" class="empty">Tidak ada produk yang cocok.</td></tr>'}
+$("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="badge zero">Stok minus / perlu cek</span>':p.sisa===0?'<span class="badge zero">Habis</span>':p.sisa<=3?'<span class="badge low">Stok menipis</span>':'<span class="badge ok">Tersedia</span>';return `<tr><td>${i+1}</td><td>${esc(p.kode||"-")}</td><td><b>${esc(p.nama)}</b></td><td>${esc(p.supplier||"-")}</td><td class="num">${p.stok.toLocaleString("id-ID")}</td><td class="num">${p.terjual.toLocaleString("id-ID")}</td><td class="num"><b>${p.sisa.toLocaleString("id-ID")}</b></td><td>${status}</td></tr>`}).join("")||'<tr><td colspan="8" class="empty">Tidak ada produk yang cocok.</td></tr>';calculateSalesDetail()}
 window.render=render;window.loadAll=loadAll;
 window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Stok Spreadsheet","Terjual Firestore","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
 async function initFixzySession(user){

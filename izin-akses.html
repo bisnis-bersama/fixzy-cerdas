@@ -102,16 +102,44 @@ window.pilihAksesOperasional=()=>{
   updateCount();
 };
 function renderIzin(a){const izin=gabungIzin(a);if(!izin.length)return '<span style="color:#94a3b8">Tidak ada akses</span>';return izin.map(v=>`<span class="badge">${esc(izinLabel(v))}</span>`).join("")}
-async function load(){if(!ready)return;const s=await getDocs(query(collection(db,"users"),where("ownerUid","==",ownerUid)));accounts=s.docs.map(d=>({id:d.id,...d.data()})).filter(x=>["employee","reseller"].includes(norm(x.role)));render();$("status").innerHTML=`<span class="ok">✓ ${accounts.length} akun karyawan/reseller ditemukan • Hak akses siap diatur.</span>`}
+async function load(){
+  if(!ready)return;
+  $("status").textContent="Memuat akun lama dan akun terbaru...";
+  const usersRef=collection(db,"users");
+  const found=new Map();
+  const errors=[];
+  // Data lama bisa memakai ownerUid atau ownerId. Gabungkan tanpa duplikasi.
+  for(const field of ["ownerUid","ownerId"]){
+    try{
+      const snap=await getDocs(query(usersRef,where(field,"==",ownerUid)));
+      snap.forEach(d=>found.set(d.id,{id:d.id,...d.data()}));
+    }catch(e){
+      errors.push({field,code:e?.code||"",message:e?.message||String(e)});
+      console.warn("Gagal membaca akun melalui "+field,e);
+    }
+  }
+  // Tampilkan hanya akun operasional yang memang terkait dengan Owner ini.
+  accounts=[...found.values()].filter(a=>
+    ["employee","reseller"].includes(norm(a.role)) &&
+    (a.ownerUid===ownerUid || a.ownerId===ownerUid)
+  );
+  render();
+  if(errors.length && !accounts.length){
+    $("status").innerHTML='<span class="err">Data belum bisa dibaca dari Firestore. Periksa Security Rules dan field kepemilikan akun lama.</span>';
+  }else{
+    $("status").innerHTML=`<span class="ok">✓ ${accounts.length} akun karyawan/reseller ditemukan. Data yang memakai ownerUid dan ownerId digabung tanpa duplikasi.</span>`;
+    if(errors.length) $("status").innerHTML+=`<br><span class="err">Sebagian pencarian ditolak Firestore. Data lama tertentu mungkin masih belum tampil.</span>`;
+  }
+}
 function render(){const role=$("roleFilter").value,q=norm($("cari").value);const arr=accounts.filter(a=>(!role||a.role===role)&&(!q||norm(nama(a)).includes(q)||norm(a.email).includes(q)||norm(a.jabatan).includes(q)));$("total").textContent=arr.length;$("aktif").textContent=arr.filter(a=>norm(a.status)==="aktif").length;$("jmlKaryawan").textContent=arr.filter(a=>a.role==="employee").length;$("jmlReseller").textContent=arr.filter(a=>a.role==="reseller").length;$("tbody").innerHTML=arr.length?arr.map(a=>`<tr><td><b>${esc(nama(a))}</b></td><td>${esc(a.email||"-")}</td><td>${esc(a.noWA||a.wa||a.noWa||a.noHp||"-")}</td><td><span class="badge ${esc(a.role||"")}">${esc(roleLabel(a.role))}</span></td><td>${esc(a.jabatan||a.posisi||"-")}</td><td><span class="badge ${norm(a.status)==="aktif"?"active":"off"}">${esc(a.status||"-")}</span></td><td>${renderIzin(a)}</td><td><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn secondary" style="padding:7px 9px;font-size:10px" onclick="editAkun('${a.id}')">✏️ Edit</button><button class="btn danger" style="padding:7px 9px;font-size:10px" onclick="hapusAkun('${a.id}')">🗑️ Hapus</button></div></td></tr>`).join(""):'<tr><td colspan="8" class="empty">Belum ada akun karyawan/reseller.</td></tr>'}
 window.render=render;
 window.hapusAkun=async id=>{
   if(!ready){tampilNotice("Akses Belum Siap","Sesi Owner belum siap. Silakan muat ulang halaman.");return}
   const a=accounts.find(x=>x.id===id);
   if(!a){tampilNotice("Data Tidak Ditemukan","Data karyawan/reseller tidak ditemukan atau sudah dihapus.");return}
-  if(a.ownerUid!==ownerUid){tampilNotice("Akses Ditolak","Data ini bukan milik konter Anda.");return}
+  if(a.ownerUid!==ownerUid && a.ownerId!==ownerUid){tampilNotice("Akses Ditolak","Data ini bukan milik konter Anda.");return}
   const namaAkun=nama(a),emailAkun=a.email||"-";
-  const yakin=confirm(`HAPUS DATA AKUN?\n\nNama: ${namaAkun}\nRole: ${roleLabel(a.role)}\nEmail: ${emailAkun}\n\nData profil pengguna di Firestore akan dihapus. Akun login Firebase Authentication tidak ikut terhapus.\n\nLanjutkan?`);
+  const yakin=confirm(`HAPUS DATA AKUN?\n\nNama: ${namaAkun}\nRole: ${roleLabel(a.role)}\nEmail: ${emailAkun}\n\nData profil karyawan/reseller di Firestore akan dihapus. Akun login Firebase Authentication tidak ikut terhapus.\n\nLanjutkan?`);
   if(!yakin)return;
   try{
     await deleteDoc(doc(db,"users",id));
@@ -124,7 +152,7 @@ window.hapusAkun=async id=>{
     const code=e?.code||"";
     let pesan=e?.message||"Terjadi kesalahan saat menghapus data akun.";
     if(code==="permission-denied"||/permission|insufficient/i.test(pesan)){
-      pesan="Firestore menolak penghapusan (permission-denied). Periksa Firestore Security Rules: Owner harus diizinkan menghapus dokumen users milik sendiri berdasarkan ownerUid. Tombol sudah berjalan, tetapi aturan database belum mengizinkan operasi hapus.";
+      pesan="Firestore menolak penghapusan (permission-denied). Firestore Security Rules menolak penghapusan. Aturan harus mengizinkan Owner menghapus dokumen users miliknya sendiri, baik data lama yang memakai ownerId maupun data baru yang memakai ownerUid. Jangan membuka izin hapus untuk semua pengguna.";
     }
     tampilNotice("❌ Gagal Menghapus",esc(pesan));
   }
@@ -274,7 +302,7 @@ window.kirimWhatsApp=()=>{
  window._waPending=null;
 };
 async function init(){onAuthStateChanged(auth,async u=>{if(!u){location.replace("login.html");return}uid=u.uid;try{const s=await getDoc(doc(db,"users",uid));if(!s.exists())throw new Error("Profil Owner tidak ditemukan.");profile=s.data()||{};if(!["owner","superadmin"].includes(norm(profile.role)))throw new Error("Halaman Izin Akses hanya dapat dibuka oleh Owner.");ownerUid=uid;ready=true;await load()}catch(e){ready=false;$("status").innerHTML=`<span class="err">🔒 ${esc(e.message||e)}</span>`;$("tbody").innerHTML='<tr><td colspan="8" class="empty">Akses halaman tidak tersedia.</td></tr>';document.querySelectorAll("button,input,select").forEach(el=>{if(!["close"].includes(el.className))el.disabled=true})}})}
-window.muatSemua=async()=>{if(ready){$("status").textContent="Memuat ulang akun dan hak akses...";await load()}};
+window.muatSemua=async()=>{if(ready){try{await load()}catch(e){console.error(e);$("status").innerHTML=`<span class="err">Gagal memuat data: ${esc(e.message||e)}</span>`}}};
 init();
 </script>
 </body>

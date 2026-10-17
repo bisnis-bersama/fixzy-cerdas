@@ -602,36 +602,116 @@ async function loadEmployees(){
   employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
 }
 
+function clean(v){return String(v??"").trim().toLowerCase().replace(/\s+/g," ")}
+function parseCSV(text){
+ const out=[];let row=[],cell="",quoted=false;text=String(text).replace(/^\uFEFF/,"");
+ for(let i=0;i<text.length;i++){
+  const c=text[i],n=text[i+1];
+  if(c==='"'){if(quoted&&n==='"'){cell+='"';i++}else quoted=!quoted}
+  else if(c===","&&!quoted){row.push(cell);cell=""}
+  else if((c==="\n"||c==="\r")&&!quoted){if(c==="\r"&&n==="\n")i++;row.push(cell);cell="";if(row.some(x=>x.trim()))out.push(row);row=[]}
+  else cell+=c;
+ }
+ if(cell!==""||row.length){row.push(cell);if(row.some(x=>x.trim()))out.push(row)}
+ return out;
+}
+function normalize(rows,source){
+ if(!rows.length)return[];
+ const headers=rows[0].map(clean),out=[];
+ for(let i=1;i<rows.length;i++){
+  const r=rows[i],o={};headers.forEach((h,j)=>o[h]=r[j]??"");
+  const get=keys=>{for(const k of keys){const v=o[clean(k)];if(v!==undefined&&String(v).trim()!=="")return v}return""};
+  const name=get(["nama barang","nama produk","nama","produk","product","barang"])||r[1]||r[0];
+  if(!String(name).trim())continue;
+  const modal=numValue(get(["modal","harga modal","harga beli","hpp"])||r[3]);
+  const jual=numValue(get(["jual","harga jual","harga penjualan"])||r[4]);
+  const stok=numValue(get(["stock","stok","sisa stok","jumlah stok"])||r[6]);
+  const kode=get(["kode","sku","kode produk","barcode","id"])||r[0]||"";
+  out.push({id:source+"-"+i,nama:String(name).trim(),kode:String(kode).trim(),supplier:get(["supplier","suplier","nama supplier"])||source,modal,jual,stokSheet:Math.max(0,stok),stok:Math.max(0,stok),terjual:0});
+ }
+ return out;
+}
+function numValue(v){
+ if(typeof v==="number")return v;
+ let s=String(v??"").trim().replace(/[^\d,.-]/g,"");if(!s)return 0;
+ const dots=(s.match(/\./g)||[]).length,commas=(s.match(/,/g)||[]).length;
+ if(dots&&commas){if(s.lastIndexOf(",")>s.lastIndexOf("."))s=s.replace(/\./g,"").replace(",",".");else s=s.replace(/,/g,"")}
+ else if(commas){const a=s.split(",");s=a.length===2&&a[1].length<=2?s.replace(",","."):s.replace(/,/g,"")}
+ else if(dots){const a=s.split(".");if(!(a.length===2&&a[1].length<=2))s=s.replace(/\./g,"")}
+ return Number(s)||0;
+}
+function csvUrl(raw){
+ const u=new URL(raw),h=u.hostname.toLowerCase();
+ if(!h.includes("docs.google.com")||!u.pathname.includes("/spreadsheets/"))return raw;
+ const gid=u.searchParams.get("gid")||"0";
+ const pub=u.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub(?:html)?/i);
+ if(pub)return `https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv`;
+ const id=u.pathname.match(/\/spreadsheets\/d\/([^/]+)/i);
+ if(id)return `https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`;
+ return raw;
+}
+async function getSalesForStock(){
+ const found=new Map();
+ for(const field of ["ownerUid","uid","createdBy"]){
+  try{const snap=await getDocs(query(collection(db,"penjualan"),where(field,"==",businessUid)));snap.forEach(d=>found.set(d.id,{id:d.id,...d.data()}))}
+  catch(e){console.warn("Tidak dapat membaca penjualan berdasarkan "+field,e)}
+ }
+ return [...found.values()];
+}
+function countSoldForProduct(product,sales){
+ let total=0;const pCode=clean(product.kode),pName=clean(product.nama);
+ for(const sale of sales){
+  const status=clean(sale.status||sale.paymentStatus||"");
+  if(["batal","dibatalkan","cancel","cancelled"].includes(status))continue;
+  const items=Array.isArray(sale.items)?sale.items:[];
+  for(const item of items){
+   const qty=Math.max(0,numValue(item.qty??item.jumlah??item.quantity));if(!qty)continue;
+   const iCode=clean(item.kode||item.barcode||item.sku||"");
+   const iName=clean(item.nama||item.namaProduk||item.productName||item.produk||"");
+   const match=(pCode&&iCode)?pCode===iCode:!!pName&&pName===iName;
+   if(match)total+=qty;
+  }
+ }
+ return total;
+}
 async function loadProducts(){
  products=[];
- const map=new Map();
-
- const queries=[
-  query(collection(db,"stok"),where("ownerUid","==",businessUid)),
-  query(collection(db,"stok"),where("ownerId","==",businessUid))
- ];
-
- for(const q of queries){
-  const snap=await getDocs(q);
-  snap.forEach(d=>{
-   const data=d.data()||{};
-   const stokVal=Number(data.sisa??data.stok??0)||0;
-   const produk={id:d.id,_stok:stokVal,...data};
-   const key=String(data.kode||data.nama||d.id).toLowerCase();
-   if(!map.has(key)||produk._stok>map.get(key)._stok)map.set(key,produk);
-  });
+ try{
+  const snap=await getDoc(doc(db,"pengaturan_spreadsheet",businessUid));
+  if(!snap.exists())throw new Error("Link Spreadsheet belum disimpan di halaman pengaturan produk.");
+  const data=snap.data()||{};
+  let links=Array.isArray(data.spreadsheetLinks)?data.spreadsheetLinks:[];
+  if(!links.length&&data.spreadsheetUrl)links=[data.spreadsheetUrl];
+  if(!links.length)throw new Error("Tidak ada link Spreadsheet tersimpan.");
+  const all=[],errs=[];
+  for(let i=0;i<links.length;i++){
+   try{
+    const response=await fetch(csvUrl(links[i]),{cache:"no-store"});
+    if(!response.ok)throw new Error("HTTP "+response.status);
+    const csv=await response.text();
+    if(/<html|<!doctype/i.test(csv.slice(0,400)))throw new Error("Spreadsheet belum dipublikasikan sebagai CSV.");
+    all.push(...normalize(parseCSV(csv),"Spreadsheet "+(i+1)));
+   }catch(e){errs.push("Spreadsheet "+(i+1)+": "+e.message)}
+  }
+  if(all.length){
+   const sales=await getSalesForStock();
+   products=all.map(p=>{const terjual=countSoldForProduct(p,sales);return{...p,terjual,stok:Math.max(0,p.stokSheet-terjual)}});
+  }
+  if(errs.length)console.warn(errs.join("\n"));
+ }catch(e){
+  console.error("Gagal memuat produk dari Spreadsheet:",e);
+  setNotice("Gagal memuat produk: "+e.message,"error");
  }
-
- products=Array.from(map.values());
 }
-
 function filterProduk(q=""){
  const box=$("hasilProduk");
  const key=String(q).trim().toLowerCase();
 
  const list=products.filter(p=>
   String(p.nama||"").toLowerCase().includes(key)||
-  String(p.kode||"").toLowerCase().includes(key)
+  String(p.kode||"").toLowerCase().includes(key)||
+  String(p.supplier||"").toLowerCase().includes(key)||
+  String(p.barcode||"").toLowerCase().includes(key)
  ).slice(0,50);
 
  if(!list.length){
@@ -640,7 +720,7 @@ function filterProduk(q=""){
   box.innerHTML=list.map(p=>`
    <button type="button" class="result" data-id="${p.id}">
     <div class="pname">${esc(p.nama||"-")}</div>
-    <div class="pmeta">Kode: ${esc(p.kode||"-")} • Stok: ${p._stok}</div>
+    <div class="pmeta">Kode: ${esc(p.kode||"-")} • Supplier: ${esc(p.supplier||"-")} • Sisa stok: ${p.stok}</div>
    </button>`).join("");
  }
 
@@ -727,7 +807,7 @@ function buildData(){
       qty:q,
       modalSatuan:modalProduk(selectedProduct),
       totalModal:modalProduk(selectedProduct)*q,
-      sumber:"firebase"
+      sumber:"spreadsheet"
     }
   : {
       produkId:null,

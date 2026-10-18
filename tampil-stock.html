@@ -93,7 +93,7 @@ function calculate(){const byCode=new Map(),byName=new Map();
   // Ini mencegah servis terlewat jika kode dari sumber transaksi berbeda.
   const byCodeQty=code?(byCode.get(code)||0):0;
   const byNameQty=name?(byName.get(name)||0):0;
-  const used=byCodeQty+byNameQty;
+  const used=byCodeQty>0?byCodeQty:byNameQty;
   const base=num(p.stokSheet??p.stok);
   return {...p,terjual:used,sisa:base-used};
  })}

@@ -547,7 +547,6 @@ function makeBarcode(nota){
 function namaProduk(p){return String(p.nama||p.namaProduk||"-")}
 function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
 function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
-function hargaJualProduk(p){return Number(p.hargaJual??p.jual??p.harga??p.price??p.unitPrice??0)||0}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
 
 function setInfo(){
@@ -667,9 +666,7 @@ function matchesProduct(product,item){
  const pCode=clean(product.kode),pName=clean(product.nama);
  const iCode=clean(item.kode||item.kodeProduk||item.barcode||item.sku||"");
  const iName=clean(item.nama||item.namaProduk||item.productName||item.produk||"");
- // Cocokkan kode ATAU nama. Jika kode dari dua sumber berbeda,
- // nama produk tetap menjadi cadangan agar pemakaian servis tidak hilang.
- return (!!pCode && !!iCode && pCode===iCode) || (!!pName && !!iName && pName===iName);
+ return (pCode&&iCode)?pCode===iCode:!!pName&&pName===iName;
 }
 function countSoldForProduct(product,sales){
  let total=0;
@@ -842,8 +839,6 @@ function buildData(){
       qty:q,
       modalSatuan:modalProduk(selectedProduct),
       totalModal:modalProduk(selectedProduct)*q,
-      hargaJualSatuan:hargaJualProduk(selectedProduct),
-      totalHargaProduk:hargaJualProduk(selectedProduct)*q,
       sumber:"spreadsheet"
     }
   : {
@@ -853,8 +848,6 @@ function buildData(){
       qty:q,
       modalSatuan:0,
       totalModal:0,
-      hargaJualSatuan:0,
-      totalHargaProduk:0,
       sumber:"manual"
     };
 
@@ -908,7 +901,12 @@ function buildData(){
    pola:$("pola").value.trim()
   },
 
-  penggunaanProduk:produkObj,
+  penggunaanProduk:{...produkObj,
+   hargaJualSatuan:Number(produkObj.hargaJualSatuan??produkObj.hargaJual??produkObj.jual??0),
+   modalSatuan:Number(produkObj.modalSatuan??produkObj.hargaModal??produkObj.modal??0),
+   totalHargaProduk:Number(produkObj.hargaJualSatuan??produkObj.hargaJual??produkObj.jual??0)*(Number(produkObj.qty)||1),
+   totalModal:Number(produkObj.modalSatuan??produkObj.hargaModal??produkObj.modal??0)*(Number(produkObj.qty)||1)
+  },
   produkDigunakan:produkText,
   produk:produkText,
   sparepart:produkText,

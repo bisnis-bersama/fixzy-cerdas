@@ -546,7 +546,10 @@ function makeBarcode(nota){
 
 function namaProduk(p){return String(p.nama||p.namaProduk||"-")}
 function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
-function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
+function modalProduk(p){
+ const v=p?.hargaModal??p?.modal??p?.harga_beli??p?.hpp??0;
+ return Math.max(0,numValue(v));
+}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
 
 function setInfo(){
@@ -650,57 +653,30 @@ function csvUrl(raw){
  if(id)return `https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`;
  return raw;
 }
-async function getOwnedRowsForStock(collectionName){
+async function getSalesForStock(){
  const found=new Map();
  for(const field of ["ownerUid","uid","createdBy"]){
-  try{
-   const snap=await getDocs(query(collection(db,collectionName),where(field,"==",businessUid)));
-   snap.forEach(d=>found.set(d.id,{id:d.id,...d.data()}));
-  }catch(e){console.warn("Tidak dapat membaca "+collectionName+" berdasarkan "+field,e)}
+  try{const snap=await getDocs(query(collection(db,"penjualan"),where(field,"==",businessUid)));snap.forEach(d=>found.set(d.id,{id:d.id,...d.data()}))}
+  catch(e){console.warn("Tidak dapat membaca penjualan berdasarkan "+field,e)}
  }
  return [...found.values()];
 }
-async function getSalesForStock(){return getOwnedRowsForStock("penjualan")}
-async function getServicesForStock(){return getOwnedRowsForStock("servis")}
-function matchesProduct(product,item){
- const pCode=clean(product.kode),pName=clean(product.nama);
- const iCode=clean(item.kode||item.kodeProduk||item.barcode||item.sku||"");
- const iName=clean(item.nama||item.namaProduk||item.productName||item.produk||"");
- return (pCode&&iCode)?pCode===iCode:!!pName&&pName===iName;
-}
 function countSoldForProduct(product,sales){
- let total=0;
+ let total=0;const pCode=clean(product.kode),pName=clean(product.nama);
  for(const sale of sales){
   const status=clean(sale.status||sale.paymentStatus||"");
   if(["batal","dibatalkan","cancel","cancelled"].includes(status))continue;
   const items=Array.isArray(sale.items)?sale.items:[];
   for(const item of items){
    const qty=Math.max(0,numValue(item.qty??item.jumlah??item.quantity));if(!qty)continue;
-   if(matchesProduct(product,item))total+=qty;
+   const iCode=clean(item.kode||item.barcode||item.sku||"");
+   const iName=clean(item.nama||item.namaProduk||item.productName||item.produk||"");
+   const match=(pCode&&iCode)?pCode===iCode:!!pName&&pName===iName;
+   if(match)total+=qty;
   }
  }
  return total;
 }
-
-function countUsedForProduct(product,services){
- let total=0;
- for(const service of services){
-  const status=clean(service.status||service.statusServis||"");
-  if(["batal","dibatalkan","cancel","cancelled"].includes(status))continue;
-  // Satu transaksi servis memakai satu jenis produk; baca field utama dahulu,
-  // lalu fallback ke alias struktur lama.
-  let item=service.penggunaanProduk;
-  if(!item||typeof item!=="object"){
-   const arr=Array.isArray(service.items)?service.items:Array.isArray(service.produkList)?service.produkList:[];
-   item=arr[0]||null;
-  }
-  if(!item||typeof item!=="object")continue;
-  const qty=Math.max(0,numValue(item.qty??item.jumlah??item.quantity));
-  if(qty&&matchesProduct(product,item))total+=qty;
- }
- return total;
-}
-
 async function loadProducts(){
  products=[];
  try{
@@ -721,13 +697,8 @@ async function loadProducts(){
    }catch(e){errs.push("Spreadsheet "+(i+1)+": "+e.message)}
   }
   if(all.length){
-   const [sales,services]=await Promise.all([getSalesForStock(),getServicesForStock()]);
-   products=all.map(p=>{
-    const terjual=countSoldForProduct(p,sales);
-    const dipakaiServis=countUsedForProduct(p,services);
-    const stokKeluar=terjual+dipakaiServis;
-    return {...p,terjual,dipakaiServis,stokKeluar,stok:Math.max(0,p.stokSheet-stokKeluar)};
-   });
+   const sales=await getSalesForStock();
+   products=all.map(p=>{const terjual=countSoldForProduct(p,sales);return{...p,terjual,stok:Math.max(0,p.stokSheet-terjual)}});
   }
   if(errs.length)console.warn(errs.join("\n"));
  }catch(e){
@@ -773,7 +744,7 @@ $("hasilProduk").addEventListener("click",e=>{
  $("cariProduk").value=p.nama;
  $("produkManual").value="";
  $("produkTerpilih").className="selected";
- $("produkTerpilih").innerHTML=`<b>${esc(p.nama)}</b> • Stok: ${p.stok}`;
+ $("produkTerpilih").innerHTML=`<b>${esc(p.nama)}</b> • Stok: ${Number(p.stok??p.stokSheet??0)}`;
  $("hasilProduk").classList.remove("show");
 });
 

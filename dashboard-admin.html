@@ -443,19 +443,23 @@ function renderStats(){
   const upahKaryawan = calculateCurrentEmployeeSalaryTotal();
 
   const upahDibayarDariPengeluaran = allKeluar
-    .filter(r => !isBelanjaStock(r) && (
-      norm(r.jenis).includes("upah") ||
-      norm(r.jenis).includes("gaji")
-    ))
+    .filter(r => {
+      if (isBelanjaStock(r)) return false;
+      const gabung = `${norm(r.jenis)} ${norm(r.keterangan)}`;
+      return gabung.includes("upah") || gabung.includes("gaji") ||
+             gabung.includes("bayar karyawan");
+    })
     .reduce((a,r) => a + (Number(r.nominal) || 0), 0);
 
-  const pengeluaranLain = pengeluaran;
+  // Upah yang sudah tercatat sebagai pengeluaran tidak dihitung dua kali.
+  const upahBelumMasukPengeluaran = Math.max(0, upahKaryawan - upahDibayarDariPengeluaran);
 
-  // Sesuai kesepakatan terakhir:
-  // stock/belanja ditampilkan terpisah, tidak dicampur ke pengeluaran.
-  // Laba menggunakan pengeluaran operasional.
+  // Laba usaha mengurangi HPP, semua beban operasional, dan upah berjalan
+  // yang belum tercatat sebagai pembayaran. Pembelian stok dipisahkan dari HPP
+  // sampai barangnya benar-benar terjual. Lain Lain tetap masuk biaya jika memang
+  // merupakan pengeluaran usaha; penarikan pribadi/cadangan bukan beban laba.
   const labaKotor = omset - hppTercatat;
-  const labaBersih = labaKotor - pengeluaran;
+  const labaBersih = labaKotor - pengeluaran - upahBelumMasukPengeluaran;
 
   $("summary").innerHTML = `
     💰 <b>${totalServis} servis • ${totalJual} penjualan</b>
@@ -471,7 +475,7 @@ function renderStats(){
     <div class="stat yellow"><small>Modal Penjualan Terdata</small><b>${rupiah(modalJual)}</b><i>${jualItemDenganModal} dari ${jualItemTotal} item memiliki data modal</i></div>
     <div class="stat ${labaKotor>=0?'green':'red'}"><small>Laba Kotor Sebelum Pengeluaran</small><b>${rupiah(labaKotor)}</b><i>Omset − HPP/modal barang terjual</i></div>
   `;
-  $("labaDetail").innerHTML = `Laba bersih estimasi setelah pengeluaran operasional: <b>${rupiah(labaBersih)}</b>. Modal/HPP tercatat: <b>${rupiah(hppTercatat)}</b>. Belanja stok (${rupiah(belanjaStock)}) dipisahkan dan tidak langsung mengurangi laba. ` + (jualItemTotal > jualItemDenganModal ? `<b style="color:#b45309">Perhatian:</b> ${jualItemTotal-jualItemDenganModal} item penjualan belum memiliki data modal, sehingga laba bersih masih estimasi dan bisa lebih tinggi dari laba sebenarnya.` : `Semua item penjualan yang tersimpan memiliki data modal.`);
+  $("labaDetail").innerHTML = `Laba bersih estimasi setelah HPP, pengeluaran operasional, dan upah yang belum tercatat sebagai pembayaran: <b>${rupiah(labaBersih)}</b>. Modal/HPP tercatat: <b>${rupiah(hppTercatat)}</b>. Upah berjalan: <b>${rupiah(upahKaryawan)}</b>; upah yang sudah tercatat di pengeluaran: <b>${rupiah(upahDibayarDariPengeluaran)}</b>. Belanja stok (${rupiah(belanjaStock)}) dipisahkan dan tidak langsung mengurangi laba. ` + (jualItemTotal > jualItemDenganModal ? `<b style="color:#b45309">Perhatian:</b> ${jualItemTotal-jualItemDenganModal} item penjualan belum memiliki data modal, sehingga laba bersih masih estimasi dan bisa lebih tinggi dari laba sebenarnya.` : `Semua item penjualan yang tersimpan memiliki data modal.`);
 
   $("statsKeluar").innerHTML = `
     <div class="stat red">
@@ -579,7 +583,7 @@ function renderStats(){
     • Pendapatan diterima: <span style="color:#16a34a;font-weight:900">${rupiah(hariPendapatan)}</span><br>
     • Pengeluaran: <span style="color:#dc2626;font-weight:900">${rupiah(hariPengeluaran)}</span><br>
     • Belanja / Stock: ${rupiah(hariBelanja)} <small>(dipisahkan)</small><br>
-    • <b>Laba Hari Ini (sebelum HPP):
+    • <b>Sisa harian sebelum HPP dan upah:
       <span style="color:${hariLaba>=0?'#16a34a':'#dc2626'}">${rupiah(hariLaba)}</span>
     </b>
   `;

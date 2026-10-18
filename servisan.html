@@ -547,6 +547,7 @@ function makeBarcode(nota){
 function namaProduk(p){return String(p.nama||p.namaProduk||"-")}
 function kodeProduk(p){return String(p.kode||p.kodeProduk||"").trim()}
 function modalProduk(p){return Number(p.hargaModal??p.modal??0)||0}
+function hargaJualProduk(p){return Number(p.hargaJual??p.jual??p.harga??p.price??p.unitPrice??0)||0}
 function dateOnly(){return new Date().toISOString().slice(0,10)}
 
 function setInfo(){
@@ -841,6 +842,8 @@ function buildData(){
       qty:q,
       modalSatuan:modalProduk(selectedProduct),
       totalModal:modalProduk(selectedProduct)*q,
+      hargaJualSatuan:hargaJualProduk(selectedProduct),
+      totalHargaProduk:hargaJualProduk(selectedProduct)*q,
       sumber:"spreadsheet"
     }
   : {
@@ -850,6 +853,8 @@ function buildData(){
       qty:q,
       modalSatuan:0,
       totalModal:0,
+      hargaJualSatuan:0,
+      totalHargaProduk:0,
       sumber:"manual"
     };
 

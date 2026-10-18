@@ -5,819 +5,167 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0b0b">
 <title>FIXZY | Sambutan & Tentang</title>
-
 <style>
-:root{
-  --y:#FFC107;
-  --orange:#ff9800;
-  --bg:#0b0b0b;
-  --card:#181818;
-  --card2:#222;
-  --line:#303030;
-  --text:#fff;
-  --muted:#d5d5d5;
-  --max:1100px;
-}
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Arial,sans-serif;
-}
-
-html{
-  scroll-behavior:smooth;
-}
-
-body{
-  background:linear-gradient(#111,#090909);
-  color:var(--text);
-  line-height:1.6;
-}
-
-/* =========================
-   HEADER
-========================= */
-
-header{
-  padding:20px 15px 25px;
-  text-align:center;
-  border-bottom:2px solid var(--y);
-  background:radial-gradient(circle at center,#171717 0%,#0b0b0b 70%);
-}
-
-/* SLIDER SPONSOR */
-
-.promo-stage{
-  width:min(1100px,96vw);
-  height:205px;
-  margin:auto;
-  position:relative;
-  overflow:hidden;
-  border-radius:24px;
-  background:#0d0e10;
-  box-shadow:0 0 30px rgba(255,193,7,.20);
-}
-
-.promo-marquee{
-  position:absolute;
-  left:0;
-  top:8px;
-  height:189px;
-  display:flex;
-  width:max-content;
-  animation:fixzyPromoMarquee 35s linear infinite;
-  will-change:transform;
-}
-
-.promo-group{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex:0 0 auto;
-  width:max-content;
-}
-
-.promo-grid{
-  flex:0 0 175px;
-  width:175px;
-  height:180px;
-  border-radius:18px;
-  overflow:hidden;
-  background:#181818;
-  border:1px solid #333;
-  box-shadow:0 4px 12px rgba(0,0,0,.35);
-}
-
-.promo-grid img{
-  display:block;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-@keyframes fixzyPromoMarquee{
-  from{
-    transform:translate3d(0,0,0);
-  }
-  to{
-    transform:translate3d(-50%,0,0);
-  }
-}
-
-/* =========================
-   GAMBAR FIXZY DIPERBESAR
-========================= */
-
-.fixzy-title{
-  width:100%;
-  margin:15px auto 0;
-  text-align:center;
-  line-height:0;
-}
-
-.fixzy-title img{
-  display:block;
-  width:min(750px,96vw);
-  max-width:100%;
-  height:auto;
-  max-height:none;
-  object-fit:contain;
-  margin:0 auto;
-  filter:drop-shadow(0 4px 10px rgba(255,193,7,.22));
-}
-
-/* Tidak menggunakan tagline,
-   deskripsi header, atau welcome badge */
-
-/* =========================
-   KONTROL HALAMAN
-========================= */
-
-.page-controls{
-  position:fixed;
-  top:12px;
-  right:12px;
-  z-index:9999;
-  display:flex;
-  gap:8px;
-}
-
-.page-control-btn{
-  border:1px solid #3b3210;
-  background:#1d1d1d;
-  color:var(--y);
-  padding:10px 14px;
-  border-radius:12px;
-  font-weight:bold;
-  font-size:14px;
-  cursor:pointer;
-  box-shadow:0 5px 15px rgba(0,0,0,.35);
-  transition:.2s;
-}
-
-.page-control-btn:hover{
-  background:var(--y);
-  color:#111;
-}
-
-.page-control-btn.close{
-  color:#fff;
-  border-color:#444;
-}
-
-.page-control-btn.close:hover{
-  background:#d32f2f;
-  color:#fff;
-}
-
-/* =========================
-   KONTEN UTAMA
-========================= */
-
-.wrap{
-  max-width:var(--max);
-  margin:auto;
-  padding:25px;
-}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:22px;
-  padding:25px;
-  margin-bottom:22px;
-  box-shadow:0 10px 25px rgba(0,0,0,.35);
-}
-
-.card h2{
-  font-size:30px;
-  color:var(--y);
-  margin-bottom:13px;
-}
-
-.card p{
-  color:#eee;
-  font-size:16px;
-}
-
-.welcome{
-  background:linear-gradient(135deg,#1d1d1d,#111);
-  border:1px solid #4a3c0a;
-}
-
-.welcome p{
-  font-size:17px;
-  color:#f1f1f1;
-}
-
-.highlight{
-  margin-top:16px;
-  padding:15px 17px;
-  border-left:4px solid var(--y);
-  background:#222;
-  border-radius:12px;
-  color:#fff;
-  font-weight:700;
-}
-
-.signature{
-  margin-top:15px;
-  color:var(--y);
-  font-weight:900;
-}
-
-/* GRID FITUR */
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
-}
-
-.info{
-  background:var(--card2);
-  border:1px solid #333;
-  border-radius:16px;
-  padding:17px;
-}
-
-.info .icon{
-  font-size:27px;
-}
-
-.info h3{
-  margin:6px 0 5px;
-  color:var(--y);
-  font-size:18px;
-}
-
-.info p{
-  font-size:13px;
-  color:#ccc;
-}
-
-/* DETAIL FITUR */
-
-details{
-  background:#222;
-  border-radius:15px;
-  margin:12px 0;
-  border:1px solid #2f2f2f;
-}
-
-summary{
-  cursor:pointer;
-  padding:16px;
-  font-size:20px;
-  font-weight:bold;
-  color:var(--y);
-  list-style:none;
-}
-
-summary::-webkit-details-marker{
-  display:none;
-}
-
-.content{
-  padding:0 18px 18px;
-}
-
-.content li{
-  padding:9px 0;
-  border-bottom:1px solid #333;
-  color:#eee;
-}
-
-.content li:last-child{
-  border-bottom:0;
-}
-
-/* LANGKAH PENGGUNAAN */
-
-.steps{
-  counter-reset:step;
-  list-style:none;
-}
-
-.steps li{
-  position:relative;
-  margin:9px 0;
-  padding:13px 15px 13px 48px;
-  background:#222;
-  border-radius:12px;
-  color:#eee;
-}
-
-.steps li:before{
-  counter-increment:step;
-  content:counter(step);
-  position:absolute;
-  left:12px;
-  top:10px;
-  width:28px;
-  height:28px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:var(--y);
-  color:#111;
-  font-weight:900;
-}
-
-/* BAGIAN PENUTUP */
-
-.closing{
-  text-align:center;
-  background:linear-gradient(135deg,#171717,#0d0d0d);
-}
-
-.closing h2{
-  font-size:28px;
-}
-
-.closing p{
-  max-width:780px;
-  margin:auto;
-  color:#ddd;
-}
-
-.slogan{
-  margin-top:15px;
-  display:inline-block;
-  padding:10px 16px;
-  background:linear-gradient(90deg,var(--y),var(--orange));
-  color:#111;
-  border-radius:13px;
-  font-weight:900;
-}
-
-footer{
-  text-align:center;
-  padding:25px;
-  color:#888;
-}
-
-/* =========================
-   RESPONSIVE TABLET
-========================= */
-
-@media(max-width:992px){
-
-  .wrap{
-    padding:20px;
-  }
-
-  .promo-stage{
-    height:180px;
-  }
-
-  .promo-marquee{
-    height:164px;
-  }
-
-  .promo-grid{
-    flex-basis:145px;
-    width:145px;
-    height:160px;
-  }
-
-  .card h2{
-    font-size:27px;
-  }
-
-  .fixzy-title img{
-    width:min(750px,96vw);
-  }
-}
-
-/* =========================
-   RESPONSIVE HP
-========================= */
-
-@media(max-width:768px){
-
-  header{
-    padding:15px 8px 20px;
-  }
-
-  .promo-stage{
-    height:150px;
-    border-radius:18px;
-  }
-
-  .promo-marquee{
-    height:134px;
-  }
-
-  .promo-grid{
-    flex-basis:112px;
-    width:112px;
-    height:130px;
-  }
-
-  .fixzy-title{
-    margin-top:12px;
-  }
-
-  .fixzy-title img{
-    width:96vw;
-    max-width:750px;
-  }
-
-  .wrap{
-    padding:15px;
-  }
-
-  .card{
-    padding:18px;
-    border-radius:18px;
-  }
-
-  .card h2{
-    font-size:23px;
-  }
-
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-  .welcome p{
-    font-size:15px;
-  }
-
-  .page-controls{
-    top:8px;
-    right:8px;
-  }
-
-  .page-control-btn{
-    padding:8px 10px;
-    font-size:13px;
-    border-radius:10px;
-  }
-}
-
-/* =========================
-   RESPONSIVE HP KECIL
-========================= */
-
-@media(max-width:420px){
-
-  .promo-stage{
-    height:130px;
-  }
-
-  .promo-marquee{
-    height:114px;
-  }
-
-  .promo-grid{
-    flex-basis:95px;
-    width:95px;
-    height:110px;
-  }
-
-  .fixzy-title img{
-    width:96vw;
-  }
-
-  .card h2{
-    font-size:21px;
-  }
-
-  .card p{
-    font-size:14px;
-  }
-}
+:root{--y:#FFC107;--orange:#ff9800;--bg:#0b0b0b;--card:#181818;--card2:#222;--line:#303030;--text:#fff;--muted:#d5d5d5;--max:1100px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(#111,#090909);color:var(--text);line-height:1.6}
+header{padding:20px 15px 25px;text-align:center;border-bottom:2px solid var(--y);background:radial-gradient(circle at center,#171717 0%,#0b0b0b 70%)}
+
+/* SLIDER PROMO LANDSCAPE: fixzyyudi.png + gambar1.png s.d. gambar5.png */
+.promo-stage{width:min(1100px,96vw);height:clamp(150px,27vw,310px);margin:auto;position:relative;overflow:hidden;border-radius:20px;background:#0d0e10;border:1px solid #333;box-shadow:0 0 30px rgba(255,193,7,.20)}
+.promo-slides{display:flex;height:100%;transition:transform .65s ease;will-change:transform}
+.promo-slide{flex:0 0 100%;width:100%;height:100%;position:relative}
+.promo-slide img{display:block;width:100%;height:100%;object-fit:contain;background:#101010}
+.promo-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:38px;height:38px;border:1px solid #ffffff55;border-radius:50%;background:#0009;color:#fff;font-size:24px;line-height:1;cursor:pointer}
+.promo-arrow:hover{background:var(--y);color:#111}
+.promo-arrow.prev{left:12px}.promo-arrow.next{right:12px}
+.promo-dots{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:7px;z-index:3}
+.promo-dot{width:8px;height:8px;padding:0;border:0;border-radius:20px;background:#ffffff99;cursor:pointer;transition:.25s}
+.promo-dot.active{width:23px;background:var(--y)}
+.fixzy-title{width:100%;margin:15px auto 0;text-align:center;line-height:0}
+.fixzy-title img{display:block;width:min(750px,96vw);max-width:100%;height:auto;object-fit:contain;margin:0 auto;filter:drop-shadow(0 4px 10px rgba(255,193,7,.22))}
+.page-controls{position:fixed;top:12px;right:12px;z-index:9999;display:flex;gap:8px}
+.page-control-btn{border:1px solid #3b3210;background:#1d1d1d;color:var(--y);padding:10px 14px;border-radius:12px;font-weight:bold;font-size:14px;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,.35);transition:.2s}
+.page-control-btn:hover{background:var(--y);color:#111}
+.wrap{max-width:var(--max);margin:auto;padding:25px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:25px;margin-bottom:22px;box-shadow:0 10px 25px rgba(0,0,0,.35)}
+.card h2{font-size:30px;color:var(--y);margin-bottom:13px}
+.card p{color:#eee;font-size:16px}
+.welcome{background:linear-gradient(135deg,#1d1d1d,#111);border:1px solid #4a3c0a}
+.welcome p{font-size:17px;color:#f1f1f1}
+.highlight{margin-top:16px;padding:15px 17px;border-left:4px solid var(--y);background:#222;border-radius:12px;color:#fff;font-weight:700}
+.signature{margin-top:15px;color:var(--y);font-weight:900}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.info{background:var(--card2);border:1px solid #333;border-radius:16px;padding:17px}
+.info .icon{font-size:27px}.info h3{margin:6px 0 5px;color:var(--y);font-size:18px}.info p{font-size:13px;color:#ccc}
+details{background:#222;border-radius:15px;margin:12px 0;border:1px solid #2f2f2f}
+summary{cursor:pointer;padding:16px;font-size:20px;font-weight:bold;color:var(--y);list-style:none}
+summary::-webkit-details-marker{display:none}
+.content{padding:0 18px 18px}.content li{padding:9px 0;border-bottom:1px solid #333;color:#eee}.content li:last-child{border-bottom:0}
+.steps{counter-reset:step;list-style:none}
+.steps li{position:relative;margin:9px 0;padding:13px 15px 13px 48px;background:#222;border-radius:12px;color:#eee}
+.steps li:before{counter-increment:step;content:counter(step);position:absolute;left:12px;top:10px;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:var(--y);color:#111;font-weight:900}
+.closing{text-align:center;background:linear-gradient(135deg,#171717,#0d0d0d)}
+.closing h2{font-size:28px}.closing p{max-width:780px;margin:auto;color:#ddd}
+.slogan{margin-top:15px;display:inline-block;padding:10px 16px;background:linear-gradient(90deg,var(--y),var(--orange));color:#111;border-radius:13px;font-weight:900}
+footer{text-align:center;padding:25px;color:#888}
+@media(max-width:992px){.wrap{padding:20px}.card h2{font-size:27px}.fixzy-title img{width:min(750px,96vw)}}
+@media(max-width:768px){header{padding:15px 8px 20px}.promo-stage{border-radius:15px}.promo-arrow{width:32px;height:32px;font-size:21px}.fixzy-title{margin-top:12px}.fixzy-title img{width:96vw;max-width:750px}.wrap{padding:15px}.card{padding:18px;border-radius:18px}.card h2{font-size:23px}.grid{grid-template-columns:1fr}.welcome p{font-size:15px}.page-controls{top:8px;right:8px}.page-control-btn{padding:8px 10px;font-size:13px;border-radius:10px}}
+@media(max-width:420px){.card h2{font-size:21px}.card p{font-size:14px}.promo-arrow.prev{left:7px}.promo-arrow.next{right:7px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.promo-slides{transition:none}}
 </style>
 </head>
-
 <body>
-
 <div class="page-controls" aria-label="Kontrol halaman">
-  <button
-    class="page-control-btn"
-    type="button"
-    onclick="location.reload()"
-    title="Refresh halaman"
-    aria-label="Refresh halaman"
-  >🔄</button>
+  <button class="page-control-btn" type="button" onclick="location.reload()" title="Refresh halaman" aria-label="Refresh halaman">🔄</button>
 </div>
-
 <header>
-
-  <!-- SLIDER SPONSOR: DIPERTAHANKAN -->
-  <div class="promo-stage" aria-label="Promo sponsor berjalan">
-    <div class="promo-marquee">
-
-      <div class="promo-group">
-        <div class="promo-grid">
-          <img src="iklan1.png" alt="Sponsor 1">
-        </div>
-
-        <div class="promo-grid">
-          <img src="iklan2.png" alt="Sponsor 2">
-        </div>
-
-        <div class="promo-grid">
-          <img src="sponsor3.png" alt="Sponsor 3">
-        </div>
-
-        <div class="promo-grid">
-          <img src="iklan4.png" alt="Sponsor 4">
-        </div>
-
-        <div class="promo-grid">
-          <img src="iklan5.png" alt="Sponsor 5">
-        </div>
-      </div>
-
-      <!-- Duplikat untuk animasi berulang -->
-      <div class="promo-group" aria-hidden="true">
-
-        <div class="promo-grid">
-          <img src="iklan1.png" alt="">
-        </div>
-
-        <div class="promo-grid">
-          <img src="iklan2.png" alt="">
-        </div>
-
-        <div class="promo-grid">
-          <img src="sponsor3.png" alt="">
-        </div>
-
-        <div class="promo-grid">
-          <img src="iklan4.png" alt="">
-        </div>
-
-        <div class="promo-grid">
-          <img src="iklan5.png" alt="">
-        </div>
-
-      </div>
-
+  <div class="promo-stage" aria-label="Slider gambar promosi FIXZY">
+    <div class="promo-slides" id="promoSlides">
+      <div class="promo-slide"><img src="./fixzyyudi.png" alt="Promosi FIXZY Yudi" fetchpriority="high"></div>
+      <div class="promo-slide"><img src="./gambar1.png" alt="Promosi FIXZY 1"></div>
+      <div class="promo-slide"><img src="./gambar2.png" alt="Promosi FIXZY 2"></div>
+      <div class="promo-slide"><img src="./gambar3.png" alt="Promosi FIXZY 3"></div>
+      <div class="promo-slide"><img src="./gambar4.png" alt="Promosi FIXZY 4"></div>
+      <div class="promo-slide"><img src="./gambar5.png" alt="Promosi FIXZY 5"></div>
     </div>
+    <button class="promo-arrow prev" type="button" id="promoPrev" aria-label="Gambar sebelumnya">‹</button>
+    <button class="promo-arrow next" type="button" id="promoNext" aria-label="Gambar berikutnya">›</button>
+    <div class="promo-dots" id="promoDots" aria-label="Pilih gambar promosi"></div>
   </div>
-
-  <!-- GAMBAR FIXZY DIPERBESAR -->
-  <!-- TAGLINE, DESKRIPSI, DAN LABEL SELAMAT DATANG DIHAPUS -->
-  <div class="fixzy-title">
-    <img
-      src="./fixzy-business.png"
-      alt="FIXZY BUSINESS"
-    >
-  </div>
-
+  <div class="fixzy-title"><img src="./fixzy-business.png" alt="FIXZY BUSINESS"></div>
 </header>
-
 <div class="wrap">
-
-  <!-- SAMBUTAN -->
   <section class="card welcome">
-
     <h2>👋 Selamat Datang di FIXZY</h2>
-
-    <p>
-      Terima kasih telah menggunakan FIXZY sebagai bagian dari perjalanan usaha Anda.
-      FIXZY dibuat untuk membantu Anda mencatat, mengelola, dan memahami usaha
-      dengan lebih mudah, rapi, dan terukur.
-    </p>
-
-    <div class="highlight">
-      Di sini bukan hanya tentang mencatat transaksi. FIXZY membantu Anda melihat
-      gambaran usaha secara lebih jelas — mulai dari servis, penjualan, stok,
-      pemasukan, pengeluaran, piutang, karyawan, hingga laporan keuangan.
-    </div>
-
-    <div class="signature">
-      Selamat bekerja dan semoga usaha semakin maju bersama FIXZY. 🚀
-    </div>
-
+    <p>Terima kasih telah menggunakan FIXZY sebagai bagian dari perjalanan usaha Anda. FIXZY dibuat untuk membantu Anda mencatat, mengelola, dan memahami usaha dengan lebih mudah, rapi, dan terukur.</p>
+    <div class="highlight">Di sini bukan hanya tentang mencatat transaksi. FIXZY membantu Anda melihat gambaran usaha secara lebih jelas — mulai dari servis, penjualan, stok, pemasukan, pengeluaran, piutang, karyawan, hingga laporan keuangan.</div>
+    <div class="signature">Selamat bekerja dan semoga usaha semakin maju bersama FIXZY. 🚀</div>
   </section>
-
-  <!-- TENTANG FIXZY -->
   <section class="card">
-
     <h2>📖 Tentang FIXZY</h2>
-
-    <p>
-      FIXZY adalah aplikasi pembukuan dan manajemen usaha yang dirancang untuk
-      membantu usaha servis dan penjualan bekerja lebih teratur.
-      Dengan data yang tercatat dalam satu sistem, pemilik usaha dapat lebih
-      mudah memantau kondisi bisnis dan mengambil keputusan berdasarkan data.
-    </p>
-
+    <p>FIXZY adalah aplikasi pembukuan dan manajemen usaha yang dirancang untuk membantu usaha servis dan penjualan bekerja lebih teratur. Dengan data yang tercatat dalam satu sistem, pemilik usaha dapat lebih mudah memantau kondisi bisnis dan mengambil keputusan berdasarkan data.</p>
   </section>
-
-  <!-- MANFAAT FIXZY -->
   <section class="card">
-
     <h2>🎯 FIXZY Membantu Anda</h2>
-
     <div class="grid">
-
-      <div class="info">
-        <div class="icon">🔧</div>
-        <h3>Kelola Servis</h3>
-        <p>
-          Catat pelanggan, perangkat, keluhan, estimasi, status pengerjaan,
-          dan riwayat servis.
-        </p>
-      </div>
-
-      <div class="info">
-        <div class="icon">🛒</div>
-        <h3>Kelola Penjualan</h3>
-        <p>
-          Catat transaksi penjualan produk dan pantau perkembangan penjualan usaha.
-        </p>
-      </div>
-
-      <div class="info">
-        <div class="icon">📦</div>
-        <h3>Kontrol Stok</h3>
-        <p>
-          Ketahui kondisi persediaan sehingga barang lebih mudah dikendalikan.
-        </p>
-      </div>
-
-      <div class="info">
-        <div class="icon">💰</div>
-        <h3>Pantau Keuangan</h3>
-        <p>
-          Lihat pemasukan, pengeluaran, omzet, laba, dan kondisi keuangan usaha.
-        </p>
-      </div>
-
-      <div class="info">
-        <div class="icon">📒</div>
-        <h3>Pantau Piutang</h3>
-        <p>
-          Catat transaksi yang belum dibayar agar kewajiban pelanggan tidak mudah terlupakan.
-        </p>
-      </div>
-
-      <div class="info">
-        <div class="icon">👨‍🔧</div>
-        <h3>Kelola Karyawan</h3>
-        <p>
-          Kelola absensi, upah, kasbon, dan data karyawan sesuai kebutuhan usaha.
-        </p>
-      </div>
-
+      <div class="info"><div class="icon">🔧</div><h3>Kelola Servis</h3><p>Catat pelanggan, perangkat, keluhan, estimasi, status pengerjaan, dan riwayat servis.</p></div>
+      <div class="info"><div class="icon">🛒</div><h3>Kelola Penjualan</h3><p>Catat transaksi penjualan produk dan pantau perkembangan penjualan usaha.</p></div>
+      <div class="info"><div class="icon">📦</div><h3>Kontrol Stok</h3><p>Ketahui kondisi persediaan sehingga barang lebih mudah dikendalikan.</p></div>
+      <div class="info"><div class="icon">💰</div><h3>Pantau Keuangan</h3><p>Lihat pemasukan, pengeluaran, omzet, laba, dan kondisi keuangan usaha.</p></div>
+      <div class="info"><div class="icon">📒</div><h3>Pantau Piutang</h3><p>Catat transaksi yang belum dibayar agar kewajiban pelanggan tidak mudah terlupakan.</p></div>
+      <div class="info"><div class="icon">👨‍🔧</div><h3>Kelola Karyawan</h3><p>Kelola absensi, upah, kasbon, dan data karyawan sesuai kebutuhan usaha.</p></div>
     </div>
-
   </section>
-
-  <!-- PENTINGNYA PEMBUKUAN -->
   <section class="card">
-
     <h2>🚀 Kenapa Pembukuan Itu Penting?</h2>
-
-    <p>
-      Omzet besar belum tentu berarti laba besar. Usaha yang sehat perlu mengetahui
-      uang yang masuk, uang yang keluar, piutang yang belum tertagih, biaya
-      operasional, serta nilai persediaan.
-    </p>
-
-    <div class="highlight">
-      <b>Catat → Kelola → Pantau → Evaluasi → Kembangkan.</b>
-      <br>
-      Kebiasaan pembukuan yang rapi membantu pemilik usaha mengetahui posisi
-      bisnis sebelum mengambil keputusan.
-    </div>
-
+    <p>Omzet besar belum tentu berarti laba besar. Usaha yang sehat perlu mengetahui uang yang masuk, uang yang keluar, piutang yang belum tertagih, biaya operasional, serta nilai persediaan.</p>
+    <div class="highlight"><b>Catat → Kelola → Pantau → Evaluasi → Kembangkan.</b><br>Kebiasaan pembukuan yang rapi membantu pemilik usaha mengetahui posisi bisnis sebelum mengambil keputusan.</div>
   </section>
-
-  <!-- FITUR UTAMA -->
   <section class="card">
-
     <h2>⚙️ Fitur Utama</h2>
-
-    <details open>
-      <summary>🔧 Kelola Servis & Penjualan</summary>
-
-      <div class="content">
-        <ul>
-          <li>Input pelanggan</li>
-          <li>Input servis dan penjualan</li>
-          <li>Keluhan dan kelengkapan</li>
-          <li>Estimasi harga</li>
-          <li>Status pengerjaan</li>
-        </ul>
-      </div>
-    </details>
-
-    <details>
-      <summary>👥 Pengaturan Akun</summary>
-
-      <div class="content">
-        <ul>
-          <li>Akun Admin</li>
-          <li>Akun Kasir</li>
-          <li>Akun Karyawan</li>
-          <li>Pengaturan akses sesuai kebutuhan</li>
-        </ul>
-      </div>
-    </details>
-
-    <details>
-      <summary>💰 Pembukuan & Laporan</summary>
-
-      <div class="content">
-        <ul>
-          <li>Pemasukan</li>
-          <li>Pengeluaran</li>
-          <li>Omzet</li>
-          <li>Laba</li>
-          <li>Piutang</li>
-          <li>Laporan harian, bulanan, dan tahunan</li>
-        </ul>
-      </div>
-    </details>
-
-    <details>
-      <summary>☁️ Data & Sinkronisasi</summary>
-
-      <div class="content">
-        <ul>
-          <li>Login akun</li>
-          <li>Sinkronisasi data</li>
-          <li>Data usaha tersimpan pada sistem cloud</li>
-        </ul>
-      </div>
-    </details>
-
+    <details open><summary>🔧 Kelola Servis & Penjualan</summary><div class="content"><ul><li>Input pelanggan</li><li>Input servis dan penjualan</li><li>Keluhan dan kelengkapan</li><li>Estimasi harga</li><li>Status pengerjaan</li></ul></div></details>
+    <details><summary>👥 Pengaturan Akun</summary><div class="content"><ul><li>Akun Admin</li><li>Akun Kasir</li><li>Akun Karyawan</li><li>Pengaturan akses sesuai kebutuhan</li></ul></div></details>
+    <details><summary>💰 Pembukuan & Laporan</summary><div class="content"><ul><li>Pemasukan</li><li>Pengeluaran</li><li>Omzet</li><li>Laba</li><li>Piutang</li><li>Laporan harian, bulanan, dan tahunan</li></ul></div></details>
+    <details><summary>☁️ Data & Sinkronisasi</summary><div class="content"><ul><li>Login akun</li><li>Sinkronisasi data</li><li>Data usaha tersimpan pada sistem cloud</li></ul></div></details>
   </section>
-
-  <!-- CARA MENGGUNAKAN -->
   <section class="card">
-
     <h2>📱 Cara Menggunakan FIXZY</h2>
-
-    <ol class="steps">
-      <li>Login menggunakan akun FIXZY.</li>
-      <li>Masukkan data pelanggan dan transaksi usaha.</li>
-      <li>Catat servis, penjualan, pemasukan, dan pengeluaran.</li>
-      <li>Perbarui status pekerjaan dan transaksi.</li>
-      <li>Pantau stok, piutang, karyawan, dan laporan.</li>
-      <li>Gunakan Dashboard Admin untuk melihat kondisi usaha secara keseluruhan.</li>
-    </ol>
-
+    <ol class="steps"><li>Login menggunakan akun FIXZY.</li><li>Masukkan data pelanggan dan transaksi usaha.</li><li>Catat servis, penjualan, pemasukan, dan pengeluaran.</li><li>Perbarui status pekerjaan dan transaksi.</li><li>Pantau stok, piutang, karyawan, dan laporan.</li><li>Gunakan Dashboard Admin untuk melihat kondisi usaha secara keseluruhan.</li></ol>
   </section>
-
-  <!-- PENUTUP -->
   <section class="card closing">
-
     <h2>🌟 Jadikan Data Sebagai Kekuatan Usaha</h2>
-
-    <p>
-      Jangan hanya mengejar banyak transaksi. Kenali angka usaha Anda,
-      kendalikan pengeluaran, pantau piutang, jaga stok, dan lihat laba
-      dengan lebih jelas.
-    </p>
-
-    <div class="slogan">
-      FIXZY — Catat Rapi • Kelola Cerdas • Usaha Berkelas
-    </div>
-
+    <p>Jangan hanya mengejar banyak transaksi. Kenali angka usaha Anda, kendalikan pengeluaran, pantau piutang, jaga stok, dan lihat laba dengan lebih jelas.</p>
+    <div class="slogan">FIXZY — Catat Rapi • Kelola Cerdas • Usaha Berkelas</div>
   </section>
-
 </div>
-
-<footer>
-  © 2026 FIXZY
-  <br>
-  Pembukuan Cerdas Bikin Usaha Makin Berkelas
-</footer>
-
+<footer>© 2026 FIXZY<br>Pembukuan Cerdas Bikin Usaha Makin Berkelas</footer>
 <script>
-function tutupHalaman(){
-  try{
-    if(window.frameElement){
-      window.frameElement.remove();
-      return;
-    }
-  }catch(e){}
+(() => {
+  const track = document.getElementById('promoSlides');
+  const dotsWrap = document.getElementById('promoDots');
+  const slides = Array.from(track.querySelectorAll('.promo-slide'));
+  let current = 0;
+  let timer;
+  const interval = 4500;
 
-  try{
-    if(window.parent!==window){
-      window.parent.postMessage(
-        {type:"FIXZY_CLOSE_PAGE"},
-        "*"
-      );
-      return;
-    }
-  }catch(e){}
+  slides.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'promo-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'Tampilkan gambar ' + (i + 1));
+    dot.addEventListener('click', () => goTo(i, true));
+    dotsWrap.appendChild(dot);
+  });
 
-  try{
-    window.close();
-  }catch(e){}
-}
+  function goTo(index, resetTimer = false) {
+    current = (index + slides.length) % slides.length;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    Array.from(dotsWrap.children).forEach((dot, i) => {
+      dot.classList.toggle('active', i === current);
+      dot.setAttribute('aria-current', i === current ? 'true' : 'false');
+    });
+    if (resetTimer) startTimer();
+  }
+  function startTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => goTo(current + 1), interval);
+  }
+  document.getElementById('promoPrev').addEventListener('click', () => goTo(current - 1, true));
+  document.getElementById('promoNext').addEventListener('click', () => goTo(current + 1, true));
+  const stage = document.querySelector('.promo-stage');
+  stage.addEventListener('mouseenter', () => clearInterval(timer));
+  stage.addEventListener('mouseleave', startTimer);
+  stage.addEventListener('focusin', () => clearInterval(timer));
+  stage.addEventListener('focusout', startTimer);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearInterval(timer);
+    else startTimer();
+  });
+  goTo(0);
+  startTimer();
+})();
 </script>
-
 </body>
 </html>

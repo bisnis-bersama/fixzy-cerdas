@@ -25,10 +25,11 @@ main{max-width:1250px;margin:auto;padding:14px}.notice,.card{background:white;bo
 <div class="notice" id="status">⏳ Menghubungkan ke FIXZY...</div>
 <section class="sales-detail">
  <div class="sales-title">📊 Rincian Penjualan &amp; Keuntungan</div>
- <div class="sales-subtitle">Ringkasan item penjualan dari Firestore. Harga modal dan jual diambil dari transaksi jika tersedia, lalu memakai harga pada Spreadsheet sebagai cadangan.</div>
+ <div class="sales-subtitle">Stok keluar dihitung dari penjualan dan produk yang dipakai pada DM Servisan. Harga modal diambil dari transaksi, lalu memakai Spreadsheet sebagai cadangan.</div>
  <div class="sales-grid">
   <div class="sales-box"><small>JUMLAH PRODUK TERJUAL</small><b id="detailQty">0 pcs</b></div>
   <div class="sales-box"><small>MODAL BARANG TERJUAL</small><b id="detailModal">Rp0</b></div>
+  <div class="sales-box"><small>MODAL PRODUK DIPAKAI SERVIS</small><b id="serviceModal">Rp0</b></div>
   <div class="sales-box revenue"><small>PENDAPATAN PENJUALAN</small><b id="detailRevenue">Rp0</b></div>
   <div class="sales-box profit"><small>LABA KOTOR</small><b id="detailProfit">Rp0</b></div>
  </div>
@@ -43,7 +44,7 @@ main{max-width:1250px;margin:auto;padding:14px}.notice,.card{background:white;bo
 <div class="card">
  <div class="toolbar"><input id="search" class="search" placeholder="Cari nama produk atau kode..." oninput="render()"><select id="statusFilter" class="search" aria-label="Filter status stok" onchange="render()"><option value="all">Semua status</option><option value="ready">Ready</option><option value="empty">Kosong</option></select><button class="dark" onclick="exportCSV()">⬇ Ekspor CSV</button></div>
  <div class="muted" id="resultCount" style="margin-bottom:9px">Menunggu data...</div>
- <div class="tablewrap"><table><thead><tr><th>No.</th><th>Kode</th><th>Nama Produk</th><th>Supplier</th><th>Stok Spreadsheet</th><th>Terjual Firestore</th><th>Stok Tersisa</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="empty">Memuat data...</td></tr></tbody></table></div>
+ <div class="tablewrap"><table><thead><tr><th>No.</th><th>Kode</th><th>Nama Produk</th><th>Supplier</th><th>Stok Spreadsheet</th><th>Keluar (Jual + Servis)</th><th>Stok Tersisa</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="empty">Memuat data...</td></tr></tbody></table></div>
 </div>
 </main>
 <script type="module">
@@ -52,7 +53,7 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.
 import{getFirestore,doc,getDoc,collection,getDocs,query,where}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
-let uid="",ownerUid="",products=[],sales=[];
+let uid="",ownerUid="",products=[],sales=[],services=[];
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const clean=v=>String(v??"").trim().toLowerCase().replace(/[\s_\-()./]+/g,"");
 function num(v){if(typeof v==="number")return Number.isFinite(v)?v:0;let s=String(v??"").trim().replace(/[^\d,.-]/g,"");if(!s)return 0;let dot=s.lastIndexOf("."),comma=s.lastIndexOf(",");if(dot>=0&&comma>=0){if(comma>dot)s=s.replace(/\./g,"").replace(",",".");else s=s.replace(/,/g,"")}else if(comma>=0){const dec=s.length-comma-1;s=dec===3?s.replace(/,/g,""):s.replace(",",".")}else if(dot>=0&&s.length-dot-1===3)s=s.replace(/\./g,"");const n=Number(s);return Number.isFinite(n)?n:0}
@@ -71,15 +72,34 @@ if(!all.length)throw Error(errors.join(" • ")||"Produk tidak ditemukan di Spre
 // Jangan gabungkan produk bernama sama dari sheet berbeda secara otomatis.
 products=all;
 sales=await ownedDocs("penjualan");
+services=await ownedDocs("servisan");
 const qty=sales.filter(s=>!saleIsCancelled(s)).reduce((sum,s)=>sum+(Array.isArray(s.items)?s.items.reduce((n,it)=>n+Math.max(0,num(it.qty??it.jumlah??it.quantity??1)),0):0),0);
-$("status").textContent=`✅ ${products.length} baris produk • ${sales.length} transaksi penjualan dibaca`+(errors.length?` • Peringatan: ${errors.join(" | ")}`:"");
-render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];render()}}
-function calculate(){const byCode=new Map(),byName=new Map();for(const s of sales){if(saleIsCancelled(s))continue;for(const it of (Array.isArray(s.items)?s.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));const code=clean(it.kode||it.code||it.sku||it.productCode||"");const name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");if(code)byCode.set(code,(byCode.get(code)||0)+qty);else if(name)byName.set(name,(byName.get(name)||0)+qty)}}return products.map(p=>{const code=clean(p.kode),name=clean(p.nama);const sold=code&&byCode.has(code)?byCode.get(code):(name?byName.get(name)||0:0);return {...p,terjual:sold,sisa:p.stok-sold}})}
-function calculateSalesDetail(){let qtyTotal=0,modalTotal=0,revenueTotal=0,incomplete=0;const byCode=new Map(),byName=new Map();products.forEach(p=>{const c=clean(p.kode),n=clean(p.nama);if(c&&!byCode.has(c))byCode.set(c,p);if(n&&!byName.has(n))byName.set(n,p)});const val=(obj,keys)=>{for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null};for(const sale of sales){if(saleIsCancelled(sale))continue;for(const it of(Array.isArray(sale.items)?sale.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));if(!qty)continue;const code=clean(it.kode||it.code||it.sku||it.productCode||""),name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");const p=(code&&byCode.get(code))||(name&&byName.get(name));const mv=val(it,["hargaModal","harga_modal","modal","hargaBeli","harga_beli","hpp","costPrice"]);const jv=val(it,["hargaJual","harga_jual","harga","price","unitPrice"]);const m=mv!==null?num(mv):(p?p.modal:null);const j=jv!==null?num(jv):(p?p.jual:null);qtyTotal+=qty;if(m===null||j===null){incomplete++;continue}modalTotal+=m*qty;revenueTotal+=j*qty}}const fmt=n=>"Rp"+Math.round(n).toLocaleString("id-ID");$("detailQty").textContent=qtyTotal.toLocaleString("id-ID")+" pcs";$("detailModal").textContent=fmt(modalTotal);$("detailRevenue").textContent=fmt(revenueTotal);$("detailProfit").textContent=fmt(revenueTotal-modalTotal);$("salesWarning").textContent=incomplete?`${incomplete} item transaksi belum memiliki harga modal atau harga jual lengkap. Total rupiah belum mencakup item tersebut.`:"Perhitungan tidak memasukkan transaksi batal. Laba kotor = pendapatan dikurangi modal barang; belum dikurangi biaya operasional."}
+$("status").textContent=`✅ ${products.length} baris produk • ${sales.length} penjualan • ${services.length} data servis dibaca`+(errors.length?` • Peringatan: ${errors.join(" | ")}`:"");
+render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];services=[];render()}}
+function serviceIsCancelled(s){const st=clean(s?.status||s?.statusServis||"");return ["batal","dibatalkan","cancel","canceled"].includes(st)}
+function serviceItems(s){
+ const p=s?.penggunaanProduk;
+ if(p && typeof p==="object" && (p.nama||p.namaProduk||p.name||p.produk||p.kode||p.code||p.sku)) return [{it:p,name:p.nama||p.namaProduk||p.name||p.produk||p.productName||"",code:p.kode||p.code||p.sku||p.productCode||"",qty:Math.max(0,num(p.qty??p.jumlah??p.quantity??1))}];
+ const arr=[...(Array.isArray(s?.items)?s.items:[]),...(Array.isArray(s?.produkList)?s.produkList:[])];
+ const it=arr.find(x=>x&&typeof x==="object"&&(x.nama||x.namaProduk||x.name||x.produk||x.kode||x.code||x.sku));
+ return it?[{it,name:it.nama||it.namaProduk||it.name||it.produk||it.productName||"",code:it.kode||it.code||it.sku||it.productCode||"",qty:Math.max(0,num(it.qty??it.jumlah??it.quantity??1))}]:[];
+}
+function calculate(){const byCode=new Map(),byName=new Map();
+ for(const s of sales){if(saleIsCancelled(s))continue;for(const it of(Array.isArray(s.items)?s.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));const code=clean(it.kode||it.code||it.sku||it.productCode||"");const name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");if(code)byCode.set(code,(byCode.get(code)||0)+qty);else if(name)byName.set(name,(byName.get(name)||0)+qty)}}
+ for(const serv of services){if(serviceIsCancelled(serv))continue;for(const x of serviceItems(serv)){if(!x.qty)continue;const code=clean(x.code),name=clean(x.name);if(code)byCode.set(code,(byCode.get(code)||0)+x.qty);else if(name)byName.set(name,(byName.get(name)||0)+x.qty)}}
+ return products.map(p=>{const code=clean(p.kode),name=clean(p.nama);const used=code&&byCode.has(code)?byCode.get(code):(name?byName.get(name)||0:0);return {...p,terjual:used,sisa:p.stok-used}})}
+function calculateSalesDetail(){let qtyTotal=0,modalTotal=0,revenueTotal=0,incomplete=0,serviceModalTotal=0,serviceMissing=0;
+ const byCode=new Map(),byName=new Map();products.forEach(p=>{const c=clean(p.kode),n=clean(p.nama);if(c&&!byCode.has(c))byCode.set(c,p);if(n&&!byName.has(n))byName.set(n,p)});
+ const val=(obj,keys)=>{for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null};
+ for(const sale of sales){if(saleIsCancelled(sale))continue;for(const it of(Array.isArray(sale.items)?sale.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));if(!qty)continue;const code=clean(it.kode||it.code||it.sku||it.productCode||""),name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");const p=(code&&byCode.get(code))||(name&&byName.get(name));const mv=val(it,["hargaModal","harga_modal","modal","hargaBeli","harga_beli","hpp","costPrice"]),jv=val(it,["hargaJual","harga_jual","harga","price","unitPrice"]);const m=mv!==null?num(mv):(p?p.modal:null),j=jv!==null?num(jv):(p?p.jual:null);qtyTotal+=qty;if(m===null||j===null){incomplete++;continue}modalTotal+=m*qty;revenueTotal+=j*qty}}
+ for(const serv of services){if(serviceIsCancelled(serv))continue;for(const x of serviceItems(serv)){if(!x.qty)continue;const code=clean(x.code),name=clean(x.name),p=(code&&byCode.get(code))||(name&&byName.get(name));const mv=val(x.it,["modalSatuan","hargaModal","harga_modal","modal","hargaBeli","harga_beli","hpp","costPrice"]),totalMv=val(x.it,["totalModal","total_modal"]);const m=mv!==null?num(mv):(totalMv!==null?num(totalMv)/x.qty:(p?p.modal:null));if(m===null){serviceMissing++;continue}serviceModalTotal+=m*x.qty}}
+ const fmt=n=>"Rp"+Math.round(n).toLocaleString("id-ID");$("detailQty").textContent=qtyTotal.toLocaleString("id-ID")+" pcs";$("detailModal").textContent=fmt(modalTotal);$("serviceModal").textContent=fmt(serviceModalTotal);$("detailRevenue").textContent=fmt(revenueTotal);$("detailProfit").textContent=fmt(revenueTotal-modalTotal);
+ let msg="Penjualan: laba kotor = pendapatan penjualan dikurangi modal barang terjual. Produk DM Servisan dihitung sebagai stok keluar; modal pemakaian servis ditampilkan terpisah.";if(incomplete)msg+=` ${incomplete} item penjualan belum memiliki harga modal/jual lengkap.`;if(serviceMissing)msg+=` Peringatan: modal ${serviceMissing} item produk servis belum ditemukan pada transaksi atau Spreadsheet.`;$("salesWarning").textContent=msg;
+}
 function render(){const q=clean($("search").value),statusFilter=$("statusFilter")?.value||"all",data=calculate(),filtered=data.filter(p=>{const matchesText=!q||clean(p.nama).includes(q)||clean(p.kode).includes(q)||clean(p.supplier).includes(q);const matchesStatus=statusFilter==="empty"?p.sisa<=0:statusFilter==="ready"?p.sisa>0:true;return matchesText&&matchesStatus});$("countProducts").textContent=data.length.toLocaleString("id-ID");$("stockStart").textContent=data.reduce((a,p)=>a+p.stok,0).toLocaleString("id-ID");$("stockEmpty").textContent=data.filter(p=>p.sisa<=0).length.toLocaleString("id-ID");$("stockRemain").textContent=data.reduce((a,p)=>a+p.sisa,0).toLocaleString("id-ID");$("resultCount").textContent=`Menampilkan ${filtered.length} dari ${data.length} produk`+(statusFilter==="empty"?" • Status: Kosong":statusFilter==="ready"?" • Status: Ready":"");
 $("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="badge zero">Stok minus / perlu cek</span>':p.sisa===0?'<span class="badge zero">Habis</span>':p.sisa<=3?'<span class="badge low">Stok menipis</span>':'<span class="badge ok">Tersedia</span>';return `<tr><td>${i+1}</td><td>${esc(p.kode||"-")}</td><td><b>${esc(p.nama)}</b></td><td>${esc(p.supplier||"-")}</td><td class="num">${p.stok.toLocaleString("id-ID")}</td><td class="num">${p.terjual.toLocaleString("id-ID")}</td><td class="num"><b>${p.sisa.toLocaleString("id-ID")}</b></td><td>${status}</td></tr>`}).join("")||'<tr><td colspan="8" class="empty">Tidak ada produk yang cocok.</td></tr>';calculateSalesDetail()}
 window.render=render;window.loadAll=loadAll;
-window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Stok Spreadsheet","Terjual Firestore","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
+window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Stok Spreadsheet","Keluar (Jual + Servis)","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
 async function initFixzySession(user){
  const parentSession=(()=>{try{return window.parent!==window ? (window.parent.fixzySession||null) : null}catch(e){return null}})();
  const session=parentSession && parentSession.uid ? parentSession : null;
@@ -89,7 +109,7 @@ async function initFixzySession(user){
  if(!activeUser){
   $("accountInfo").textContent="Sesi login belum aktif";
   $("status").textContent="⚠️ Sesi belum tersedia. Buka halaman dari menu FIXZY setelah login.";
-  products=[];sales=[];render();return;
+  products=[];sales=[];services=[];render();return;
  }
  try{
   // Prioritas: sesi autentikasi yang sudah divalidasi oleh index.html FIXZY.
@@ -113,7 +133,7 @@ async function initFixzySession(user){
   if(exp){const d=typeof exp.toDate==="function"?exp.toDate():exp.seconds!==undefined?new Date(exp.seconds*1000):new Date(exp);if(!isNaN(d.getTime()))expText=d.toLocaleDateString("id-ID");}
   $("accountInfo").textContent=`Akun: ${displayName} • ${role.toUpperCase()||"AKUN FIXZY"} • Exp: ${expText}`;
   await loadAll();
- }catch(e){console.error("FIXZY LOGIN/ACCESS:",e);$("accountInfo").textContent="Profil sesi FIXZY gagal dibaca";$("status").textContent="🔒 "+(e.message||"Akses ditolak.");products=[];sales=[];render();}
+ }catch(e){console.error("FIXZY LOGIN/ACCESS:",e);$("accountInfo").textContent="Profil sesi FIXZY gagal dibaca";$("status").textContent="🔒 "+(e.message||"Akses ditolak.");products=[];sales=[];services=[];render();}
 }
 // Pola sesi mengikuti tampil-stock.html: tunggu status autentikasi Firebase,
 // lalu baca users/{uid}. Jika callback tidak berjalan, tampilkan pesan jelas.

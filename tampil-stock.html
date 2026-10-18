@@ -78,11 +78,17 @@ $("status").textContent=`✅ ${products.length} baris produk • ${sales.length}
 render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];services=[];render()}}
 function serviceIsCancelled(s){const st=clean(s?.status||s?.statusServis||"");return ["batal","dibatalkan","cancel","canceled"].includes(st)}
 function serviceItems(s){
- const p=s?.penggunaanProduk||s?.produkDigunakanObj||s?.produkDipakai||s?.sparepartObj;
- if(p && typeof p==="object" && (p.nama||p.namaProduk||p.name||p.produk||p.kode||p.code||p.sku)) return [{it:p,name:p.nama||p.namaProduk||p.name||p.produk||p.productName||"",code:p.kode||p.code||p.sku||p.productCode||"",qty:Math.max(0,num(p.qty??p.jumlah??p.quantity??1))}];
- const arr=[...(Array.isArray(s?.items)?s.items:[]),...(Array.isArray(s?.produkList)?s.produkList:[]),...(Array.isArray(s?.spareparts)?s.spareparts:[])];
- const it=arr.find(x=>x&&typeof x==="object"&&(x.nama||x.namaProduk||x.name||x.produk||x.kode||x.code||x.sku));
- return it?[{it,name:it.nama||it.namaProduk||it.name||it.produk||it.productName||"",code:it.kode||it.code||it.sku||it.productCode||"",qty:Math.max(0,num(it.qty??it.jumlah??it.quantity??1))}]:[];
+ const nameOf=o=>o?.nama||o?.namaProduk||o?.namaBarang||o?.name||o?.productName||o?.itemName||o?.produk||o?.barang||o?.deskripsiProduk||"";
+ const codeOf=o=>o?.kode||o?.kodeProduk||o?.code||o?.sku||o?.barcode||o?.productCode||o?.idProduk||"";
+ const qtyOf=o=>Math.max(0,num(o?.qty??o?.jumlah??o?.quantity??o?.jumlahProduk??1));
+ const candidates=[];
+ for(const k of ["penggunaanProduk","produkDigunakanObj","produkDipakai","sparepartObj","produkTerpakai","sparepartDipakai"]){const v=s?.[k];if(v&&typeof v==="object"&&!Array.isArray(v))candidates.push(v)}
+ for(const k of ["items","produkList","spareparts","daftarProduk","produkDigunakanList"]){if(Array.isArray(s?.[k]))candidates.push(...s[k].filter(v=>v&&typeof v==="object"))}
+ const out=[];const seen=new Set();
+ for(const it of candidates){const name=nameOf(it),code=codeOf(it);if(!name&&!code)continue;const key=(clean(code)||clean(name))+"|"+qtyOf(it);if(seen.has(key))continue;seen.add(key);out.push({it,name,code,qty:qtyOf(it)})}
+ // Older service records sometimes saved the product name as plain text.
+ if(!out.length){const textName=String(s?.produkDigunakan||s?.produk||s?.sparepart||"").trim();if(textName)out.push({it:{},name:textName,code:"",qty:Math.max(0,num(s?.qtyProduk??s?.jumlahProduk??1))})}
+ return out;
 }
 function calculate(){const byCode=new Map(),byName=new Map();
  for(const s of sales){if(saleIsCancelled(s))continue;for(const it of(Array.isArray(s.items)?s.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));const code=clean(it.kode||it.code||it.sku||it.productCode||"");const name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");if(code)byCode.set(code,(byCode.get(code)||0)+qty);else if(name)byName.set(name,(byName.get(name)||0)+qty)}}

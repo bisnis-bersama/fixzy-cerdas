@@ -72,7 +72,11 @@ if(!all.length)throw Error(errors.join(" • ")||"Produk tidak ditemukan di Spre
 // Jangan gabungkan produk bernama sama dari sheet berbeda secara otomatis.
 products=all;
 sales=await ownedDocs("penjualan");
-services=await ownedDocs("servis");
+// Input Servisan terbaru menyimpan ke "servis". Baca juga "servisan"
+// untuk data lama yang pernah tersimpan memakai nama koleksi tersebut.
+const serviceRows=await Promise.all([ownedDocs("servis"),ownedDocs("servisan")]);
+const serviceMap=new Map();serviceRows.flat().forEach(row=>serviceMap.set(row.id,{...row}));
+services=[...serviceMap.values()];
 const qty=sales.filter(s=>!saleIsCancelled(s)).reduce((sum,s)=>sum+(Array.isArray(s.items)?s.items.reduce((n,it)=>n+Math.max(0,num(it.qty??it.jumlah??it.quantity??1)),0):0),0);
 $("status").textContent=`✅ ${products.length} baris produk • ${sales.length} penjualan • ${services.length} data servis dibaca`+(errors.length?` • Peringatan: ${errors.join(" | ")}`:"");
 render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];services=[];render()}}
@@ -87,7 +91,7 @@ function serviceItems(s){
 function calculate(){const byCode=new Map(),byName=new Map();
  for(const s of sales){if(saleIsCancelled(s))continue;for(const it of(Array.isArray(s.items)?s.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));const code=clean(it.kode||it.code||it.sku||it.productCode||"");const name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");if(code)byCode.set(code,(byCode.get(code)||0)+qty);else if(name)byName.set(name,(byName.get(name)||0)+qty)}}
  for(const serv of services){if(serviceIsCancelled(serv))continue;for(const x of serviceItems(serv)){if(!x.qty)continue;const code=clean(x.code),name=clean(x.name);if(code)byCode.set(code,(byCode.get(code)||0)+x.qty);else if(name)byName.set(name,(byName.get(name)||0)+x.qty)}}
- return products.map(p=>{const code=clean(p.kode),name=clean(p.nama);const used=code&&byCode.has(code)?byCode.get(code):(name?byName.get(name)||0:0);return {...p,terjual:used,sisa:p.stok-used}})}
+ return products.map(p=>{const code=clean(p.kode),name=clean(p.nama);const used=(code&&byCode.has(code))?byCode.get(code):(name?byName.get(name)||0:0);return {...p,terjual:used,sisa:p.stok-used}})}
 function calculateSalesDetail(){let qtyTotal=0,modalTotal=0,revenueTotal=0,incomplete=0,serviceModalTotal=0,serviceMissing=0;
  const byCode=new Map(),byName=new Map();products.forEach(p=>{const c=clean(p.kode),n=clean(p.nama);if(c&&!byCode.has(c))byCode.set(c,p);if(n&&!byName.has(n))byName.set(n,p)});
  const val=(obj,keys)=>{for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null};

@@ -72,15 +72,15 @@ if(!all.length)throw Error(errors.join(" • ")||"Produk tidak ditemukan di Spre
 // Jangan gabungkan produk bernama sama dari sheet berbeda secara otomatis.
 products=all;
 sales=await ownedDocs("penjualan");
-services=await ownedDocs("servisan");
+services=await ownedDocs("servis");
 const qty=sales.filter(s=>!saleIsCancelled(s)).reduce((sum,s)=>sum+(Array.isArray(s.items)?s.items.reduce((n,it)=>n+Math.max(0,num(it.qty??it.jumlah??it.quantity??1)),0):0),0);
 $("status").textContent=`✅ ${products.length} baris produk • ${sales.length} penjualan • ${services.length} data servis dibaca`+(errors.length?` • Peringatan: ${errors.join(" | ")}`:"");
 render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];services=[];render()}}
 function serviceIsCancelled(s){const st=clean(s?.status||s?.statusServis||"");return ["batal","dibatalkan","cancel","canceled"].includes(st)}
 function serviceItems(s){
- const p=s?.penggunaanProduk;
+ const p=s?.penggunaanProduk||s?.produkDigunakanObj||s?.produkDipakai||s?.sparepartObj;
  if(p && typeof p==="object" && (p.nama||p.namaProduk||p.name||p.produk||p.kode||p.code||p.sku)) return [{it:p,name:p.nama||p.namaProduk||p.name||p.produk||p.productName||"",code:p.kode||p.code||p.sku||p.productCode||"",qty:Math.max(0,num(p.qty??p.jumlah??p.quantity??1))}];
- const arr=[...(Array.isArray(s?.items)?s.items:[]),...(Array.isArray(s?.produkList)?s.produkList:[])];
+ const arr=[...(Array.isArray(s?.items)?s.items:[]),...(Array.isArray(s?.produkList)?s.produkList:[]),...(Array.isArray(s?.spareparts)?s.spareparts:[])];
  const it=arr.find(x=>x&&typeof x==="object"&&(x.nama||x.namaProduk||x.name||x.produk||x.kode||x.code||x.sku));
  return it?[{it,name:it.nama||it.namaProduk||it.name||it.produk||it.productName||"",code:it.kode||it.code||it.sku||it.productCode||"",qty:Math.max(0,num(it.qty??it.jumlah??it.quantity??1))}]:[];
 }

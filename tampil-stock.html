@@ -111,14 +111,16 @@ function calculateSalesDetail(){
   salesQty+=qty;if(m===null||j===null){incomplete++;continue}salesModal+=m*qty;salesRevenue+=j*qty;
  }}
  for(const serv of services){if(serviceIsCancelled(serv))continue;
-  // Hasil servis diambil dari nilai tagihan/biaya servis, bukan modal sparepart.
-  const rev=val(serv,["totalTagihan","totalBiaya","total","grandTotal","biayaServis","biayaJasa","hargaServis","jumlahBayar","totalServis"]);
-  if(rev!==null)serviceRevenue+=num(rev);
+  // Hasil servis pada panel ini adalah HARGA JUAL PRODUK yang dipakai,
+  // bukan total tagihan servis (yang bisa mencakup jasa teknisi).
   for(const x of serviceItems(serv)){if(!x.qty)continue;serviceQty+=x.qty;
    const code=clean(x.code),name=clean(x.name),p=(code&&byCode.get(code))||(name&&byName.get(name));
    const mv=val(x.it,["modalSatuan","hargaModal","harga_modal","modal","hargaBeli","harga_beli","hpp","costPrice"]),totalMv=val(x.it,["totalModal","total_modal"]);
    const m=mv!==null?num(mv):(totalMv!==null?num(totalMv)/x.qty:(p?p.modal:null));
-   if(m===null){serviceMissing++;continue}serviceModal+=m*x.qty;
+   if(m===null){serviceMissing++;}else{serviceModal+=m*x.qty;}
+   const jv=val(x.it,["hargaJualSatuan","hargaJual","harga_jual","jual","harga","price","unitPrice"]),totalJv=val(x.it,["totalHargaProduk","totalHargaJual","totalJual"]);
+   const j=jv!==null?num(jv):(totalJv!==null?num(totalJv)/x.qty:(p?p.jual:null));
+   if(j!==null)serviceRevenue+=j*x.qty;
   }
  }
  const totalQty=salesQty+serviceQty,totalModal=salesModal+serviceModal,totalRevenue=salesRevenue+serviceRevenue,totalProfit=totalRevenue-totalModal;

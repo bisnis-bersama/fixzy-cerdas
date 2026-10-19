@@ -160,6 +160,14 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 @media(max-width:480px){.qr-ticket{padding:7px;border-width:3px;border-radius:22px}.qr-ticket-head{padding:11px;gap:7px;min-height:92px;border-radius:14px}.qr-brand strong{font-size:27px}.qr-brand span{font-size:11px;letter-spacing:4px}.qr-brand small{font-size:6px;line-height:1.2;max-width:145px}.qr-head-title strong{font-size:18px}.qr-head-title span{font-size:7px}.qr-main{padding:12px 5px 7px;margin-top:12px;border-width:3px;border-radius:18px}.qr-frame{padding:12px 7px 8px;border-width:3px;border-radius:20px}.qr-code-wrap{width:min(390px,100%);padding:7px}.qr-code-wrap:before,.qr-code-wrap:after,.qr-corners-bottom:before,.qr-corners-bottom:after{width:24px;height:24px;border-width:4px}.qr-number{min-height:65px;padding:8px 5px;border-radius:20px}.qr-number span{font-size:11px}.qr-number strong{font-size:clamp(26px,8vw,40px);letter-spacing:3px}.qr-caption{font-size:13px}.qr-actions button{font-size:11px;padding:11px 5px}.ticket-section-title{font-size:12px;padding:8px}.ticket-table{padding:5px 7px}.ticket-table>div{grid-template-columns:39% 1fr;font-size:11px;padding:5px 1px}.ticket-footer strong{font-size:22px}}
 
 
+/* BARCODE CODE 128: garis horizontal memanjang seperti contoh nota */
+.barcode-wrap{width:100%!important;max-width:560px!important;padding:2px 8px!important;border:0!important;border-radius:0!important;background:#fff!important}
+.barcode-wrap:before,.barcode-wrap:after,.barcode-wrap .qr-corners-bottom{display:none!important}
+.barcode-wrap canvas{display:block!important;width:100%!important;height:92px!important;max-width:100%!important;image-rendering:auto!important}
+.barcode-number{background:#fff!important;color:#111!important;border-radius:0!important;min-height:0!important;max-width:100%!important;margin:2px auto 0!important;padding:0!important}
+.barcode-number span{color:#374151!important;font-size:9px!important;letter-spacing:1px!important}
+.barcode-number strong{color:#111!important;font-size:clamp(13px,3.6vw,20px)!important;letter-spacing:2px!important;font-weight:500!important;white-space:normal!important;overflow-wrap:anywhere!important}
+
 /* PENYESUAIAN TAMPILAN MOBILE: kartu lebih ringkas, data tetap lengkap */
 @media(max-width:650px){
  .popup{padding:5px;align-items:center}
@@ -236,44 +244,6 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 }
 
 </style>
-
-<style>
-/* Nota JPG: samakan dengan contoh nota putih sederhana, bukan desain hitam-kuning lama */
-#qrPopup{background:rgba(0,0,0,.65)!important;align-items:flex-start!important;overflow:auto!important;padding:12px!important}
-#qrPopup .qr-ticket{width:100%!important;max-width:500px!important;max-height:none!important;overflow:visible!important;background:#fff!important;color:#111!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:18px!important;font-family:Arial,sans-serif!important}
-#qrPopup .qr-ticket-head{display:block!important;text-align:center!important;background:#fff!important;color:#111!important;border-radius:0!important;border-bottom:2px solid #9ca3af!important;padding:4px 0 12px!important;min-height:0!important;margin-bottom:12px!important}
-#qrPopup .qr-brand{display:block!important;line-height:1.15!important}
-#qrPopup .qr-brand strong{display:block!important;font-size:30px!important;font-style:normal!important;color:#111!important;letter-spacing:0!important}
-#qrPopup .qr-brand span,#qrPopup .qr-brand small{display:none!important}
-#qrPopup .qr-head-title{text-align:center!important;display:block!important;margin-top:4px!important}
-#qrPopup .qr-head-title strong{font-size:22px!important;color:#111!important;white-space:normal!important}
-#qrPopup .qr-head-title span{display:none!important}
-#qrPopup .qr-main{border:0!important;border-radius:0!important;margin:0!important;padding:0!important;text-align:left!important;background:#fff!important}
-#qrPopup .qr-frame{width:100%!important;border:0!important;border-radius:0!important;padding:0!important;margin:0!important;background:#fff!important}
-#qrPopup .qr-code-wrap{width:100%!important;max-width:none!important;padding:0!important;margin:12px auto 0!important}
-#qrPopup .qr-code-wrap:before,#qrPopup .qr-code-wrap:after,#qrPopup .qr-corners-bottom{display:none!important}
-#qrPopup .qr-frame canvas{width:100%!important;height:82px!important;image-rendering:auto!important}
-#qrPopup .qr-number{background:#fff!important;color:#111!important;border-radius:0!important;min-height:0!important;max-width:none!important;padding:0!important;margin:2px auto 8px!important}
-#qrPopup .qr-number span{display:none!important}
-#qrPopup .qr-number strong{font-size:15px!important;letter-spacing:2px!important;color:#111!important;font-weight:500!important}
-#qrPopup .qr-caption{display:none!important}
-#qrPopup .ticket-section{border:0!important;border-radius:0!important;margin:0!important;overflow:visible!important}
-#qrPopup .ticket-section-title{display:none!important}
-#qrPopup .ticket-table{padding:0!important}
-#qrPopup .ticket-table>div{display:flex!important;flex-direction:column!important;gap:1px!important;padding:6px 2px!important;border:0!important;font-size:15px!important;line-height:1.15!important}
-#qrPopup .ticket-table span{font-size:13px!important;color:#4b5563!important}
-#qrPopup .ticket-table b{font-size:16px!important;color:#111!important;font-weight:700!important;text-align:left!important}
-#qrPopup .ticket-section:nth-of-type(3) .ticket-table>div:nth-child(2),#qrPopup .ticket-section:nth-of-type(3) .ticket-table>div:nth-child(3),#qrPopup .ticket-section:nth-of-type(3) .ticket-table>div:nth-child(5){display:none!important}
-#qrPopup .ticket-section:nth-of-type(4) .ticket-table>div:nth-child(2),#qrPopup .ticket-section:nth-of-type(4) .ticket-table>div:nth-child(3),#qrPopup .ticket-section:nth-of-type(4) .ticket-table>div:nth-child(5){display:none!important}
-#qrPopup .ticket-section:nth-of-type(4) .ticket-table>div:nth-child(1){border-top:2px solid #9ca3af!important;padding-top:10px!important}
-#qrPopup .ticket-section:nth-of-type(4) .ticket-table>div:nth-child(4) b,#qrPopup .ticket-section:nth-of-type(4) .ticket-table>div:nth-child(5) b{font-weight:500!important}
-#qrPopup .ticket-footer{background:#fff!important;color:#4b5563!important;border-top:2px solid #9ca3af!important;border-radius:0!important;margin-top:10px!important;padding:10px 2px!important;font-style:normal!important;font-size:13px!important}
-#qrPopup .ticket-footer strong{display:none!important}
-#qrPopup .qr-status{display:none!important}
-#qrPopup .qr-actions{margin-top:10px!important}
-@media(max-width:480px){#qrPopup .qr-ticket{padding:14px!important}#qrPopup .qr-brand strong{font-size:28px!important}#qrPopup .ticket-table>div{font-size:14px!important;padding:5px 1px!important}#qrPopup .ticket-table b{font-size:15px!important}}
-</style>
-
 </head>
 
 <body>
@@ -428,17 +398,16 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  <div class="qr-ticket">
   <div class="qr-ticket-head">
    <div class="qr-brand"><strong id="qrNamaKonter">FIXZY</strong><span>SOFTWARE HARDWARE SOLUTION</span><small id="qrAlamatKonter">NOTA SERVIS DIGITAL</small></div>
-   <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>BUKTI SERVIS PELANGGAN</span></div>
+   <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>SCAN QR UNTUK MELIHAT DETAIL SERVIS</span></div>
   </div>
   <div class="qr-main">
    <div class="qr-frame">
-    <div class="qr-code-wrap">
-     <canvas id="qrCanvas" width="560" height="560"></canvas>
-     <span class="qr-corners-bottom" aria-hidden="true"></span>
+    <div class="qr-code-wrap barcode-wrap">
+     <canvas id="qrCanvas" width="900" height="180" aria-label="Barcode nomor nota"></canvas>
     </div>
-    <div class="qr-number"><span>NO. NOTA SERVIS</span><strong id="qrNotaNumber">----</strong></div>
+    <div class="qr-number barcode-number"><span>NOMOR NOTA</span><strong id="qrNotaNumber">----</strong></div>
    </div>
-   <p class="qr-caption"></p>
+   <p class="qr-caption">Scan QR ini untuk melihat detail servis<br>secara online tanpa perlu login.</p>
   </div>
   <div class="ticket-section">
    <div class="ticket-section-title">● DATA PELANGGAN</div>
@@ -480,7 +449,6 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script>
 /* QR generator memakai pola QRCodeJS yang telah dipakai halaman registrasi. */
 window.fixzyLoadQrLibrary = function(){
@@ -1116,32 +1084,41 @@ function isiKartuServis(d){
  set("ticketSisa",rupiah(d.sisa??pay.sisa??0));
 }
 
+async function loadJsBarcode(){
+ if(window.JsBarcode)return;
+ await new Promise((resolve,reject)=>{
+  const urls=['https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js','https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'];
+  let i=0;
+  const next=()=>{
+   if(window.JsBarcode){resolve();return;}
+   if(i>=urls.length){reject(new Error('Pustaka barcode tidak berhasil dimuat. Periksa koneksi internet.'));return;}
+   const script=document.createElement('script');script.src=urls[i++];script.async=true;
+   script.onload=()=>window.JsBarcode?resolve():next();script.onerror=next;document.head.appendChild(script);
+  };next();
+ });
+}
 async function showQR(d){
  qrCurrentData=d;
  updateQrBrand(d.namaKonter||getNamaKonter());
  isiKartuServis(d);
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
- $('qrNotaNumber').textContent=String(d.nomorNota||'');
- $('qrStatus').textContent='Membuat barcode...';
+ const nomorLengkap=String(d.nomorNota||'').trim();
+ $('qrNotaNumber').textContent=nomorLengkap;
+ $('qrStatus').textContent='Membuat barcode nomor nota...';
  $('qrPopup').classList.add('show');
  const canvas=$('qrCanvas'),ctx=canvas.getContext('2d');
- canvas.width=900;canvas.height=120;
+ canvas.width=900;canvas.height=180;
  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
  try{
-  if(typeof window.JsBarcode!=='function') throw new Error('Pustaka barcode tidak berhasil dimuat. Periksa koneksi internet.');
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  window.JsBarcode(svg,String(d.nomorNota||''),{format:'CODE128',lineColor:'#000',background:'#fff',width:2,height:82,displayValue:false,margin:8});
-  const xml=new XMLSerializer().serializeToString(svg);
-  const img=new Image();
-  await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Barcode gagal dirender.'));img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);});
-  ctx.drawImage(img,0,0,900,120);
-  $('qrStatus').textContent='Barcode nomor nota siap.';
+  await loadJsBarcode();
+  window.JsBarcode(canvas,nomorLengkap,{format:'CODE128',lineColor:'#000000',background:'#ffffff',width:2.2,height:125,displayValue:false,margin:10});
+  $('qrStatus').textContent=qrPublicSaved?'Barcode nomor nota siap dipindai.':'Barcode terbentuk, tetapi data cek publik belum berhasil disimpan. Periksa izin cek publik.';
  }catch(e){
   console.error('Barcode gagal dibuat:',e);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
   $('qrStatus').textContent='Barcode gagal dibuat: '+e.message;
  }
 }
-
 let notaJpgSiap=false;
 let notaJpgBlob=null;
 let notaJpgFile=null;

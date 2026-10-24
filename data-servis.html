@@ -17,7 +17,7 @@ main{max-width:1280px;margin:auto;padding:88px 14px 14px;position:relative;z-ind
 .mini{border:2px solid #111827;border-radius:9px;padding:6px 9px;font-weight:900;cursor:pointer;box-shadow:2px 2px 0 #111827;font-size:11px;background:#fff;color:#111827}.barcode{font-family:monospace;font-size:10px;background:#111827;color:#ffc107;padding:3px 6px;border-radius:6px;display:inline-block;margin-top:4px}.prod-chip{display:inline-block;background:#fef9c3;border:1px solid #ffc107;padding:3px 6px;border-radius:6px;margin:2px;font-size:10px;font-weight:700;color:#111827}
 .cards{display:none;gap:10px}.servis-card{background:#fff;border:2px solid #111827;border-radius:14px;box-shadow:4px 4px 0 #111827;padding:12px;color:#111827}.servis-card .top{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}.servis-card .row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed #e5e7eb;font-size:11px}.servis-card .row span{color:#4b5563}.servis-card .row b{max-width:60%;text-align:right;color:#111827}.servis-card .foot{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .popup{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:2000;padding:12px}.popup.show{display:flex}.popup-box{width:min(760px,calc(100% - 10px));max-height:92vh;overflow:auto;background:#fff;border:3px solid #111827;border-radius:16px;box-shadow:8px 8px 0 #111827;padding:17px;color:#111827}.popup-box h3{background:#111827;color:#fff;margin:-17px -17px 14px;padding:13px 15px;border-radius:12px 12px 0 0}
-.wa-box{margin-top:10px;padding:11px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;color:#111827}#reader{width:100%;max-height:38vh;border-radius:12px;overflow:hidden;border:2px solid #111827}#reader video{max-height:38vh!important;object-fit:cover!important}#scanPopup .popup-box{max-height:90dvh;overflow-y:auto;overscroll-behavior:contain}
+.wa-box{margin-top:10px;padding:11px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;color:#111827}#reader{width:100%;border-radius:12px;overflow:hidden;border:2px solid #111827}
 .btn{border:0;border-radius:9px;padding:10px 13px;font-weight:900;cursor:pointer;box-shadow:3px 3px 0 #111827}.scan{background:#ffc107;color:#111827}.secondary{background:#e5e7eb;color:#111827}
 .import-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.import-help{font-size:10px;color:#64748b;line-height:1.5;margin-top:8px}.preview-wrap{overflow:auto;border:2px solid #334155;border-radius:10px;margin-top:10px;max-height:330px}.preview-wrap table{min-width:850px;font-size:10px}.preview-wrap th{position:sticky;top:0}.import-progress{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:10px}.import-progress i{display:block;height:100%;width:0;background:#ffc107;transition:.2s}
 body.dark{background:#0b0f14!important;color:#e5e7eb!important}body.dark .card{background:#1f2937!important;color:#e5e7eb!important;border-color:#334155!important}body.dark .card-title{color:#fff!important;border-color:#334155!important}body.dark .table-wrap{background:#1f2937!important;border-color:#334155!important}body.dark th{background:#0b0f14!important;color:#fff!important}body.dark td{color:#e5e7eb!important;border-color:#334155!important;background:#1f2937!important}body.dark tr:hover td{background:#111827!important}body.dark .servis-card{background:#1f2937!important;color:#e5e7eb!important;border-color:#334155!important}body.dark .servis-card .row span{color:#9ca3af!important}body.dark .servis-card .row b{color:#fff!important}body.dark label{color:#9ca3af!important}body.dark input,body.dark select{background:#0b0f14!important;color:#fff!important;border-color:#334155!important}body.dark .popup-box{background:#1f2937!important;color:#e5e7eb!important;border-color:#334155!important}body.dark .wa-box{background:#0b0f14!important;color:#e5e7eb!important;border-color:#334155!important}body.dark .mini{background:#0b0f14!important;color:#fff!important;border-color:#334155!important}body.dark .prod-chip{background:#1f2937!important;color:#fde68a!important;border-color:#f59e0b!important}body.dark .summary{background:#0b0f14!important;border-color:#334155!important}body.dark .import-help{color:#9ca3af!important}body.dark .preview-wrap{border-color:#475569}
@@ -55,7 +55,14 @@ body.dark{background:#0b0f14!important;color:#e5e7eb!important}body.dark .card{b
 <div style="display:flex;gap:7px;justify-content:flex-end;margin-top:12px"><button class="btn secondary" onclick="tutupImport()">Tutup</button><button class="btn" id="importButton" onclick="jalankanImport()" disabled style="background:#ffc107;color:#111827">☁️ Import ke Firebase</button></div>
 </div></div>
 
-<div class="popup" id="scanPopup"><div class="popup-box"><h3>📷 Scan Barcode Nota</h3><div style="font-size:11px;color:#64748b;margin-bottom:10px">Scan menggunakan kamera atau pilih gambar barcode dari galeri HP. Data tidak diubah, hanya mencari.</div><div style="margin:10px 0;padding:12px;border:2px solid #00a85a;border-radius:12px;background:#ecfdf5;color:#064e3b"><label for="barcodeImage" style="font-size:13px;color:#065f46;margin-bottom:7px">🖼️ PILIH FOTO BARCODE DARI GALERI HP</label><input id="barcodeImage" type="file" accept="image/*" style="display:block;width:100%;min-height:48px;border:2px solid #059669;border-radius:8px;padding:8px;background:#fff;color:#111827;font-size:14px"><div style="font-size:11px;margin-top:6px">Tekan tombol di atas, lalu pilih Galeri/Foto. Barcode harus terlihat jelas.</div></div><div id="reader"></div><div id="scanResult" style="margin-top:10px;font-size:11px;color:#047857;font-weight:900;overflow-wrap:anywhere"></div><div style="display:flex;gap:7px;justify-content:flex-end;margin-top:12px"><button class="btn secondary" onclick="tutupScan()">Tutup</button></div></div></div>
+<div class="popup" id="scanPopup"><div class="popup-box"><h3>📷 Scan Barcode Nota</h3>
+<div style="font-size:12px;color:#64748b;margin-bottom:10px">Pilih foto dari galeri atau gunakan kamera. Sistem mengambil 4 digit angka terakhir dari nomor nota lalu mengisinya ke kolom pencarian.</div>
+<div style="border:2px solid #059669;background:#ecfdf5;border-radius:12px;padding:12px;margin-bottom:12px">
+<label for="barcodeImage" style="font-size:14px;color:#065f46">🖼️ PILIH FOTO BARCODE DARI GALERI HP</label>
+<input id="barcodeImage" type="file" accept="image/*" style="display:block;width:100%;min-height:48px;border:2px solid #059669;border-radius:9px;background:#fff;padding:8px;font-size:14px">
+<div style="font-size:11px;color:#065f46;margin-top:7px">Pilih foto yang barcode/QR-nya terlihat utuh dan jelas.</div>
+</div><div id="reader" style="max-height:260px;min-height:0"></div><div id="scanResult" role="status" style="margin-top:10px;font-size:12px;color:#047857;font-weight:900;overflow-wrap:anywhere"></div>
+<div style="display:flex;gap:7px;justify-content:flex-end;margin-top:12px"><button class="btn secondary" onclick="tutupScan()">Tutup</button></div></div></div>
 <div class="popup" id="editPopup"><div class="popup-box"><h3 id="editTitle">Edit Status Servis</h3><div id="editBody" style="font-size:12px;line-height:1.6"></div><div style="margin:8px 0"><label>UBAH STATUS</label><select id="newStatus"><option value="masuk">Masuk</option><option value="nunggu_sparepart">Nunggu Sparepart</option><option value="proses">Proses</option><option value="selesai">Selesai</option><option value="diambil">Diambil</option><option value="batal">Batal</option></select></div><div style="display:flex;gap:7px;justify-content:flex-end;margin-top:12px"><button class="btn secondary" onclick="closeEdit()">Batal</button><button class="btn" style="background:#111827;color:#fff" onclick="simpanStatus()">💾 Simpan & Kirim WA</button></div></div></div>
 <div class="popup" id="waPopup"><div class="popup-box"><h3>📲 Konfirmasi WA Pelanggan</h3><div id="waInfo" style="font-size:12px;line-height:1.5"></div><div class="wa-box" id="waText"></div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:12px"><button id="waLinkBtn" type="button" style="flex:1;text-align:center;padding:11px;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-weight:900;border:2px solid #111827;cursor:pointer">📲 Buka WhatsApp</button><button class="mini" onclick="salinWA()">📋 Salin</button><button class="mini" onclick="tutupWA()">Tutup</button></div></div></div>
 
@@ -130,7 +137,7 @@ async function getOwnedServis(){
   }
 }
 async function muatSemua(){if(!uid)return;$("statusMsg").textContent="⏳ Membaca data servis...";try{allRows=await getOwnedServis();render();const totalNilai=allRows.reduce((s,r)=>s+getTotal(r),0),totalPendapatan=allRows.reduce((s,r)=>s+getPendapatan(r),0);$("dataStats").innerHTML=`💰 <b>${allRows.length}</b> data servis • Total nilai <b>${money(totalNilai)}</b> • Pendapatan <span class="income">${money(totalPendapatan)}</span> • Konter: ${esc(konterName())} • Produk kosong: ${allRows.filter(r=>!parseProduk(r).has).length}`;$("statusMsg").textContent=`✅ ${allRows.length} servis`}catch(e){$("statusMsg").textContent="❌ "+e.message}}
-function filteredRows(){const q=($("q").value||"").toLowerCase().trim(),st=($("fStatus").value||"").toLowerCase().trim(),tg=$("fTanggal").value||"";return allRows.filter(r=>{if(q){if(scanSuffixOnly&&/^\d{4}$/.test(q)){const digitNota=String(getNota(r)||"").replace(/\D/g,"");if(!digitNota.endsWith(q))return false}else{const hay=[getNota(r),getNama(r),getWa(r),getTipe(r),getKerusakan(r),getProdukText(r)].join(" ").toLowerCase();if(!hay.includes(q))return false}}if(st&&getStatus(r)!==st)return false;if(tg&&!dateVal(r).startsWith(tg))return false;return true}).sort((a,b)=>{if(scanSuffixOnly&&/^\d{4}$/.test(q)){const ak=String(getNota(a)||"").replace(/\D/g,"").endsWith(q)?1:0;const bk=String(getNota(b)||"").replace(/\D/g,"").endsWith(q)?1:0;return bk-ak}return 0})}
+function filteredRows(){const q=($("q").value||"").toLowerCase().trim(),st=($("fStatus").value||"").toLowerCase().trim(),tg=$("fTanggal").value||"";return allRows.filter(r=>{if(q){const hay=[getNota(r),getNama(r),getWa(r),getTipe(r),getKerusakan(r),getProdukText(r)].join(" ").toLowerCase();if(!hay.includes(q))return false}if(st&&getStatus(r)!==st)return false;if(tg&&!dateVal(r).startsWith(tg))return false;return true})}
 
 // Membuat nota servis sebagai gambar JPG rasio 5x8 cm (500x800 px).
 window.simpanNotaJPG = function(id){
@@ -390,11 +397,11 @@ window.simpanStatus=async()=>{
 window.kirimWALangsung=id=>{const r=allRows.find(x=>x.id===id);if(!r)return;const waNomor=nomorWA(getWa(r));if(!waNomor){alert("No WA kosong");return}const pesan=buildPesanWA(r,getStatus(r));siapkanTombolWA(waNomor,pesan);$("waInfo").innerHTML=`Kirim WA manual - Nota <b>${esc(getNota(r))}</b> Status <b>${esc(getStatus(r))}</b>`;$("waText").textContent=pesan;$("waPopup").classList.add("show")}
 window.tutupWA=()=>{$("waPopup").classList.remove("show");pendingWA=null;$("waLinkBtn").onclick=null}
 window.salinWA=async()=>{if(!pendingWA)return;try{await navigator.clipboard.writeText(pendingWA.message);alert("Pesan disalin ✅")}catch{const range=document.createRange();range.selectNode($("waText"));window.getSelection().removeAllRanges();window.getSelection().addRange(range);document.execCommand("copy");alert("Pesan disalin ✅")}}
-window.editDataServis=editDataServis;window.hapusServis=hapusServis;function normalisasiHasilScan(raw){
+window.editDataServis=editDataServis;window.hapusServis=hapusServis;
+function normalisasiHasilScan(raw){
  let value=String(raw||"").trim();
  if(!value)return "";
- // QR pelanggan biasanya berisi URL scan-barcode.html?nota=5648.
- // Ambil nilai parameternya, jangan masukkan URL lengkap ke kotak pencarian.
+ // Bila QR berisi URL, dahulukan nilai nomor nota pada parameter URL.
  try{
   if(/^https?:\/\//i.test(value)){
    const u=new URL(value);
@@ -402,96 +409,69 @@ window.editDataServis=editDataServis;window.hapusServis=hapusServis;function nor
    if(param)value=param.trim();
   }
  }catch(_){ }
- // Untuk URL atau kode yang tetap berbentuk SRV panjang, cari dengan nota lengkap.
- // Untuk nomor pendek 4 digit, pertahankan nol di depan.
- const clean=value.replace(/^FX-/i,"").trim();
- if(/^\d{1,4}$/.test(clean))return clean.padStart(4,"0");
- return clean;
+ // Ambil empat digit terakhir dari angka pada isi barcode/nomor nota.
+ // Contoh SRV-20261024-171450288 menjadi 0288; nol di depan tetap dipertahankan.
+ const digits=String(value).match(/\d/g);
+ if(!digits||digits.length<4)return "";
+ return digits.join("").slice(-4);
 }
-// Ambil tepat 4 digit terakhir dari nomor nota hasil scan.
-// Mendukung teks nota biasa maupun QR yang berisi URL dengan parameter nota.
-function ambil4DigitAkhir(raw){
- let nilai=String(raw||"").trim();
- if(!nilai)return "";
- try{
-  if(/^https?:\/\//i.test(nilai)){
-   const u=new URL(nilai);
-   const param=u.searchParams.get("nota")||u.searchParams.get("nomorNota")||u.searchParams.get("no")||u.searchParams.get("barcode");
-   if(param)nilai=param.trim();
-  }
- }catch(_){ }
- const digit=nilai.replace(/\D/g,"");
- return digit.length ? digit.slice(-4).padStart(4,"0") : "";
-}
-// Satu alur untuk kamera dan galeri: isi kolom pencarian, lalu tampilkan hasilnya.
-function terapkanHasilScan(raw){
- const hasil=ambil4DigitAkhir(raw);
+function terapkanHasilScan(raw, sumber="barcode"){
+ const hasil=normalisasiHasilScan(raw);
  if(!hasil){
-  $("scanResult").textContent="❌ Nomor nota tidak memiliki angka yang bisa dibaca.";
+  $("scanResult").textContent="❌ Kode terbaca, tetapi tidak ditemukan 4 digit angka. Pastikan barcode berisi nomor nota.";
   return false;
  }
- scanSuffixOnly=true;
  $("q").value=hasil;
+ // Reset filter status/tanggal agar hasil scan tidak tersaring oleh filter lama.
+ $("fStatus").value="";
+ $("fTanggal").value="";
  render();
  const cocok=filteredRows().length>0;
- $("scanResult").textContent=cocok
-  ?"✅ 4 digit akhir nota: "+hasil+". Sudah dimasukkan ke kolom pencarian."
-  :"⚠️ 4 digit akhir nota: "+hasil+". Sudah dimasukkan ke kolom pencarian, tetapi nota tidak ditemukan.";
- return cocok;
+ $("scanResult").textContent=cocok?"✅ "+sumber+" terbaca. Kolom pencarian diisi: "+hasil+". Nota ditemukan.":"✅ "+sumber+" terbaca. Kolom pencarian diisi: "+hasil+", tetapi data servis dengan akhiran nota ini tidak ditemukan.";
+ return true;
 }
-let scanSuffixOnly=false;
 window.bukaScan=()=>{
-  if(typeof Html5Qrcode==="undefined"){
-   $("scanResult").textContent="❌ Fitur scanner belum termuat. Periksa koneksi internet lalu refresh.";
-   $("scanPopup").classList.add("show");
-   return;
-  }
-  $("scanPopup").classList.add("show");
-  $("scanResult").textContent="Menyalakan kamera...";
-  $("barcodeImage").value="";
-  html5Qr=new Html5Qrcode("reader");
-  html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},decodedText=>{
-   const cocok=terapkanHasilScan(decodedText);
-   if(cocok)setTimeout(tutupScan,1200);
-  },err=>{}).catch(e=>$("scanResult").textContent="❌ Gagal buka kamera: "+(e?.message||e));
-};
-
-// Membaca barcode/QR dari gambar yang dipilih lewat galeri HP atau komputer.
-$("barcodeImage").addEventListener("change",async e=>{
- const file=e.target.files?.[0];
- if(!file)return;
+ $("scanPopup").classList.add("show");
+ $("scanResult").textContent="Pilih foto dari galeri atau tunggu kamera menyala.";
  if(typeof Html5Qrcode==="undefined"){
-  $("scanResult").textContent="❌ Mesin pembaca barcode belum termuat. Periksa koneksi internet lalu refresh.";
+  $("scanResult").textContent="⚠️ Scanner belum termuat. Pilihan galeri tetap tersedia; refresh halaman untuk memakai kamera.";
   return;
  }
- $("scanResult").textContent="⏳ Membaca barcode dari gambar...";
- try{
-  if(html5Qr){
-   try{await html5Qr.stop()}catch(_){ }
-   try{html5Qr.clear()}catch(_){ }
-   html5Qr=null;
-  }
-  const reader=$("reader");
-  reader.innerHTML="";
-  const imageScanner=new Html5Qrcode("reader");
-  const decodedText=await imageScanner.scanFile(file,true);
-  try{imageScanner.clear()}catch(_){ }
-  const cocok=terapkanHasilScan(decodedText);
-  if(!cocok && !$("q").value)throw new Error("Nomor nota tidak memiliki angka yang bisa dibaca.");
-  if(cocok)setTimeout(tutupScan,1200);
- }catch(err){
-  $("scanResult").textContent="❌ Barcode tidak terbaca dari gambar. Coba foto yang lebih jelas, lurus, dan seluruh barcode terlihat. Detail: "+(err?.message||err);
- }finally{
-  // Izinkan memilih ulang gambar yang sama jika pemindaian gagal.
-  e.target.value="";
- }
-});
-
-window.tutupScan=()=>{
- $("scanPopup").classList.remove("show");
- if(html5Qr){html5Qr.stop().then(()=>{html5Qr.clear();html5Qr=null}).catch(()=>{html5Qr=null})}
+ if(html5Qr)return;
+ html5Qr=new Html5Qrcode("reader");
+ html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:220,height:160}},decodedText=>{
+  const ok=terapkanHasilScan(decodedText,"Kamera");
+  if(ok)setTimeout(()=>window.tutupScan(),900);
+ },()=>{}).catch(e=>{
+  $("scanResult").textContent="Kamera tidak tersedia. A Yudi tetap bisa memilih foto dari galeri di atas.";
+ });
 };
-$("q").addEventListener("input",()=>{scanSuffixOnly=false;render()});$("fStatus").addEventListener("change",render);$("fTanggal").addEventListener("change",render);
+$("barcodeImage").addEventListener("change",async function(){
+ const file=this.files&&this.files[0];
+ if(!file)return;
+ if(typeof Html5Qrcode==="undefined"){
+  $("scanResult").textContent="❌ Pembaca barcode belum termuat. Periksa koneksi internet, lalu refresh halaman.";
+  return;
+ }
+ $("scanResult").textContent="Membaca barcode dari foto galeri...";
+ try{
+  if(html5Qr){try{await html5Qr.stop()}catch(_){}try{html5Qr.clear()}catch(_){}html5Qr=null;}
+  const reader=$("reader");reader.innerHTML="";
+  const imageScanner=new Html5Qrcode("reader");
+  const decoded=await imageScanner.scanFile(file,true);
+  try{imageScanner.clear()}catch(_){}
+  const ok=terapkanHasilScan(decoded,"Foto galeri");
+  if(ok)setTimeout(()=>window.tutupScan(),1100);
+ }catch(e){
+  $("scanResult").textContent="❌ Barcode tidak terbaca dari foto. Coba foto lebih jelas, lurus, dan seluruh barcode terlihat.";
+ }finally{this.value="";}
+});
+window.tutupScan=async()=>{
+ $("scanPopup").classList.remove("show");
+ if(html5Qr){try{await html5Qr.stop()}catch(_){}try{html5Qr.clear()}catch(_){}html5Qr=null;}
+ $("reader").innerHTML="";
+};
+$("q").addEventListener("input",render);$("fStatus").addEventListener("change",render);$("fTanggal").addEventListener("change",render);
 
 /* =========================
    IMPORT EXCEL / GOOGLE SHEET

@@ -408,12 +408,36 @@ window.editDataServis=editDataServis;window.hapusServis=hapusServis;function nor
  if(/^\d{1,4}$/.test(clean))return clean.padStart(4,"0");
  return clean;
 }
-// Saat scan, gunakan 4 digit paling akhir dari nomor nota.
+// Ambil tepat 4 digit terakhir dari nomor nota hasil scan.
+// Mendukung teks nota biasa maupun QR yang berisi URL dengan parameter nota.
 function ambil4DigitAkhir(raw){
- const nilai=normalisasiHasilScan(raw);
- const digit=String(nilai||"").replace(/\D/g,"");
- if(!digit)return "";
- return digit.slice(-4).padStart(4,"0");
+ let nilai=String(raw||"").trim();
+ if(!nilai)return "";
+ try{
+  if(/^https?:\/\//i.test(nilai)){
+   const u=new URL(nilai);
+   const param=u.searchParams.get("nota")||u.searchParams.get("nomorNota")||u.searchParams.get("no")||u.searchParams.get("barcode");
+   if(param)nilai=param.trim();
+  }
+ }catch(_){ }
+ const digit=nilai.replace(/\D/g,"");
+ return digit.length ? digit.slice(-4).padStart(4,"0") : "";
+}
+// Satu alur untuk kamera dan galeri: isi kolom pencarian, lalu tampilkan hasilnya.
+function terapkanHasilScan(raw){
+ const hasil=ambil4DigitAkhir(raw);
+ if(!hasil){
+  $("scanResult").textContent="❌ Nomor nota tidak memiliki angka yang bisa dibaca.";
+  return false;
+ }
+ scanSuffixOnly=true;
+ $("q").value=hasil;
+ render();
+ const cocok=filteredRows().length>0;
+ $("scanResult").textContent=cocok
+  ?"✅ 4 digit akhir nota: "+hasil+". Sudah dimasukkan ke kolom pencarian."
+  :"⚠️ 4 digit akhir nota: "+hasil+". Sudah dimasukkan ke kolom pencarian, tetapi nota tidak ditemukan.";
+ return cocok;
 }
 let scanSuffixOnly=false;
 window.bukaScan=()=>{
@@ -427,13 +451,7 @@ window.bukaScan=()=>{
   $("barcodeImage").value="";
   html5Qr=new Html5Qrcode("reader");
   html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},decodedText=>{
-   const hasil=ambil4DigitAkhir(decodedText);
-   if(!hasil){$("scanResult").textContent="❌ Nomor nota tidak memiliki angka yang bisa dibaca.";return;}
-   scanSuffixOnly=true;
-   $("q").value=hasil;
-   render();
-   const cocok=filteredRows().length>0;
-   $("scanResult").textContent=cocok?"✅ 4 digit akhir nota terbaca: "+hasil+". Data servis ditampilkan paling atas.":"⚠️ 4 digit akhir terbaca: "+hasil+" — nota tidak ditemukan.";
+   const cocok=terapkanHasilScan(decodedText);
    if(cocok)setTimeout(tutupScan,1200);
   },err=>{}).catch(e=>$("scanResult").textContent="❌ Gagal buka kamera: "+(e?.message||e));
 };
@@ -458,15 +476,8 @@ $("barcodeImage").addEventListener("change",async e=>{
   const imageScanner=new Html5Qrcode("reader");
   const decodedText=await imageScanner.scanFile(file,true);
   try{imageScanner.clear()}catch(_){ }
-  const hasil=ambil4DigitAkhir(decodedText);
-  if(!hasil)throw new Error("Nomor nota tidak memiliki angka yang bisa dibaca.");
-  scanSuffixOnly=true;
-  $("q").value=hasil;
-  render();
-  const cocok=filteredRows().length>0;
-  $("scanResult").textContent=cocok
-   ?"✅ 4 digit akhir nota terbaca: "+hasil+". Data servis ditampilkan paling atas."
-   :"⚠️ 4 digit akhir terbaca: "+hasil+" — nota tidak ditemukan.";
+  const cocok=terapkanHasilScan(decodedText);
+  if(!cocok && !$("q").value)throw new Error("Nomor nota tidak memiliki angka yang bisa dibaca.");
   if(cocok)setTimeout(tutupScan,1200);
  }catch(err){
   $("scanResult").textContent="❌ Barcode tidak terbaca dari gambar. Coba foto yang lebih jelas, lurus, dan seluruh barcode terlihat. Detail: "+(err?.message||err);

@@ -130,7 +130,7 @@ async function getOwnedServis(){
   }
 }
 async function muatSemua(){if(!uid)return;$("statusMsg").textContent="⏳ Membaca data servis...";try{allRows=await getOwnedServis();render();const totalNilai=allRows.reduce((s,r)=>s+getTotal(r),0),totalPendapatan=allRows.reduce((s,r)=>s+getPendapatan(r),0);$("dataStats").innerHTML=`💰 <b>${allRows.length}</b> data servis • Total nilai <b>${money(totalNilai)}</b> • Pendapatan <span class="income">${money(totalPendapatan)}</span> • Konter: ${esc(konterName())} • Produk kosong: ${allRows.filter(r=>!parseProduk(r).has).length}`;$("statusMsg").textContent=`✅ ${allRows.length} servis`}catch(e){$("statusMsg").textContent="❌ "+e.message}}
-function filteredRows(){const q=($("q").value||"").toLowerCase().trim(),st=($("fStatus").value||"").toLowerCase().trim(),tg=$("fTanggal").value||"";return allRows.filter(r=>{if(q){const hay=[getNota(r),getNama(r),getWa(r),getTipe(r),getKerusakan(r),getProdukText(r)].join(" ").toLowerCase();if(!hay.includes(q))return false}if(st&&getStatus(r)!==st)return false;if(tg&&!dateVal(r).startsWith(tg))return false;return true})}
+function filteredRows(){const q=($("q").value||"").toLowerCase().trim(),st=($("fStatus").value||"").toLowerCase().trim(),tg=$("fTanggal").value||"";return allRows.filter(r=>{if(q){if(scanSuffixOnly&&/^\\d{4}$/.test(q)){const digitNota=String(getNota(r)||"").replace(/\\D/g,"");if(!digitNota.endsWith(q))return false}else{const hay=[getNota(r),getNama(r),getWa(r),getTipe(r),getKerusakan(r),getProdukText(r)].join(" ").toLowerCase();if(!hay.includes(q))return false}}if(st&&getStatus(r)!==st)return false;if(tg&&!dateVal(r).startsWith(tg))return false;return true}).sort((a,b)=>{if(scanSuffixOnly&&/^\\d{4}$/.test(q)){const ak=String(getNota(a)||"").replace(/\\D/g,"").endsWith(q)?1:0;const bk=String(getNota(b)||"").replace(/\\D/g,"").endsWith(q)?1:0;return bk-ak}return 0})}
 
 // Membuat nota servis sebagai gambar JPG rasio 5x8 cm (500x800 px).
 window.simpanNotaJPG = function(id){
@@ -408,6 +408,14 @@ window.editDataServis=editDataServis;window.hapusServis=hapusServis;function nor
  if(/^\d{1,4}$/.test(clean))return clean.padStart(4,"0");
  return clean;
 }
+// Saat scan, gunakan 4 digit paling akhir dari nomor nota.
+function ambil4DigitAkhir(raw){
+ const nilai=normalisasiHasilScan(raw);
+ const digit=String(nilai||"").replace(/\\D/g,"");
+ if(!digit)return "";
+ return digit.slice(-4).padStart(4,"0");
+}
+let scanSuffixOnly=false;
 window.bukaScan=()=>{
   if(typeof Html5Qrcode==="undefined"){
    $("scanResult").textContent="❌ Fitur scanner belum termuat. Periksa koneksi internet lalu refresh.";
@@ -419,12 +427,14 @@ window.bukaScan=()=>{
   $("barcodeImage").value="";
   html5Qr=new Html5Qrcode("reader");
   html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:250,height:250}},decodedText=>{
-   const hasil=normalisasiHasilScan(decodedText);
+   const hasil=ambil4DigitAkhir(decodedText);
+   if(!hasil){$("scanResult").textContent="❌ Nomor nota tidak memiliki angka yang bisa dibaca.";return;}
+   scanSuffixOnly=true;
    $("q").value=hasil;
    render();
    const cocok=filteredRows().length>0;
-   $("scanResult").textContent=cocok?"✅ Nota ditemukan: "+hasil:"⚠️ Kode terbaca: "+hasil+" — data servis tidak ditemukan. Coba scan barcode nota yang tercetak.";
-   if(cocok)setTimeout(tutupScan,900);
+   $("scanResult").textContent=cocok?"✅ 4 digit akhir nota terbaca: "+hasil+". Data servis ditampilkan paling atas.":"⚠️ 4 digit akhir terbaca: "+hasil+" — nota tidak ditemukan.";
+   if(cocok)setTimeout(tutupScan,1200);
   },err=>{}).catch(e=>$("scanResult").textContent="❌ Gagal buka kamera: "+(e?.message||e));
 };
 
@@ -448,14 +458,15 @@ $("barcodeImage").addEventListener("change",async e=>{
   const imageScanner=new Html5Qrcode("reader");
   const decodedText=await imageScanner.scanFile(file,true);
   try{imageScanner.clear()}catch(_){ }
-  const hasil=normalisasiHasilScan(decodedText);
-  if(!hasil)throw new Error("Nomor nota tidak terbaca dari gambar.");
+  const hasil=ambil4DigitAkhir(decodedText);
+  if(!hasil)throw new Error("Nomor nota tidak memiliki angka yang bisa dibaca.");
+  scanSuffixOnly=true;
   $("q").value=hasil;
   render();
   const cocok=filteredRows().length>0;
   $("scanResult").textContent=cocok
-   ?"✅ Barcode terbaca dan nota ditemukan: "+hasil
-   :"⚠️ Barcode terbaca: "+hasil+" — data servis tidak ditemukan. Pastikan gambar sesuai nota servis ini.";
+   ?"✅ 4 digit akhir nota terbaca: "+hasil+". Data servis ditampilkan paling atas."
+   :"⚠️ 4 digit akhir terbaca: "+hasil+" — nota tidak ditemukan.";
   if(cocok)setTimeout(tutupScan,1200);
  }catch(err){
   $("scanResult").textContent="❌ Barcode tidak terbaca dari gambar. Coba foto yang lebih jelas, lurus, dan seluruh barcode terlihat. Detail: "+(err?.message||err);
@@ -469,7 +480,7 @@ window.tutupScan=()=>{
  $("scanPopup").classList.remove("show");
  if(html5Qr){html5Qr.stop().then(()=>{html5Qr.clear();html5Qr=null}).catch(()=>{html5Qr=null})}
 };
-$("q").addEventListener("input",render);$("fStatus").addEventListener("change",render);$("fTanggal").addEventListener("change",render);
+$("q").addEventListener("input",()=>{scanSuffixOnly=false;render()});$("fStatus").addEventListener("change",render);$("fTanggal").addEventListener("change",render);
 
 /* =========================
    IMPORT EXCEL / GOOGLE SHEET

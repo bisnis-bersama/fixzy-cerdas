@@ -242,7 +242,69 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  #qrPopup .ticket-table>div{font-size:8px!important}
  #qrPopup .qr-brand small{max-width:90px!important}
 }
+/* QR NOTA SERVIS — gaya seperti nota penjualan */
+#qrPopup .qr-frame {
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+  padding: 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fff;
+}
 
+#qrPopup .qr-code-wrap {
+  width: 240px;
+  max-width: 100%;
+  margin: auto;
+  padding: 8px;
+  border: 4px solid #ffc107;
+  border-radius: 18px;
+  background: #fff;
+}
+
+#qrPopup .qr-code-wrap img,
+#qrPopup .qr-code-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  image-rendering: pixelated;
+}
+
+#qrPopup .barcode-number {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 0;
+  text-align: center;
+}
+
+#qrPopup .barcode-number span {
+  display: block;
+  margin-bottom: 7px;
+  color: #64748b;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+#qrPopup .barcode-number strong {
+  display: block;
+  color: #111827;
+  font-size: clamp(14px, 4vw, 20px);
+  font-weight: 900;
+  letter-spacing: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#qrPopup .qr-caption {
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
 </style>
 </head>
 

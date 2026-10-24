@@ -438,7 +438,19 @@ window.bukaScan=()=>{
   return;
  }
  if(html5Qr)return;
- html5Qr=new Html5Qrcode("reader");
+ html5Qr=new Html5Qrcode("reader", {formatsToSupport:[
+  Html5QrcodeSupportedFormats.QR_CODE,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.CODE_93,
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.ITF,
+  Html5QrcodeSupportedFormats.CODABAR,
+  Html5QrcodeSupportedFormats.DATA_MATRIX
+ ]});
  html5Qr.start({facingMode:"environment"},{fps:10,qrbox:{width:220,height:160}},decodedText=>{
   const ok=terapkanHasilScan(decodedText,"Kamera");
   if(ok)setTimeout(()=>window.tutupScan(),900);
@@ -457,13 +469,48 @@ $("barcodeImage").addEventListener("change",async function(){
  try{
   if(html5Qr){try{await html5Qr.stop()}catch(_){}try{html5Qr.clear()}catch(_){}html5Qr=null;}
   const reader=$("reader");reader.innerHTML="";
-  const imageScanner=new Html5Qrcode("reader");
+  const imageScanner=new Html5Qrcode("reader", {formatsToSupport:[
+   Html5QrcodeSupportedFormats.QR_CODE,
+   Html5QrcodeSupportedFormats.CODE_128,
+   Html5QrcodeSupportedFormats.CODE_39,
+   Html5QrcodeSupportedFormats.CODE_93,
+   Html5QrcodeSupportedFormats.EAN_13,
+   Html5QrcodeSupportedFormats.EAN_8,
+   Html5QrcodeSupportedFormats.UPC_A,
+   Html5QrcodeSupportedFormats.UPC_E,
+   Html5QrcodeSupportedFormats.ITF,
+   Html5QrcodeSupportedFormats.CODABAR,
+   Html5QrcodeSupportedFormats.DATA_MATRIX
+  ]});
   const decoded=await imageScanner.scanFile(file,true);
   try{imageScanner.clear()}catch(_){}
   const ok=terapkanHasilScan(decoded,"Foto galeri");
   if(ok)setTimeout(()=>window.tutupScan(),1100);
  }catch(e){
-  $("scanResult").textContent="❌ Barcode tidak terbaca dari foto. Coba foto lebih jelas, lurus, dan seluruh barcode terlihat.";
+  // Fallback: nota menampilkan nomor dalam teks cetak (SRV-YYYYMMDD-XXXXXXXXX).
+  // Jika pembaca barcode gagal, OCR membaca teks nomor nota pada foto.
+  $("scanResult").textContent="Barcode belum terbaca. Mencoba membaca teks nomor nota dari foto...";
+  try{
+   if(!window.Tesseract){
+    await new Promise((resolve,reject)=>{
+     const sc=document.createElement("script");
+     sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+     sc.onload=resolve;sc.onerror=()=>reject(new Error("OCR tidak termuat"));
+     document.head.appendChild(sc);
+    });
+   }
+   const ocr=await Tesseract.recognize(file,"eng");
+   const txt=String(ocr.data?.text||"").toUpperCase().replace(/\\s+/g," ");
+   const m=txt.match(/SRV[\\s-]*((?:[0-9][\\s-]*){10,})/i);
+   if(m){
+    const raw="SRV-"+m[1].replace(/[^0-9]/g,"");
+    const ok=terapkanHasilScan(raw,"OCR foto nota");
+    if(ok){setTimeout(()=>window.tutupScan(),1100);return;}
+   }
+   $("scanResult").textContent="❌ Nomor nota belum terbaca. Pastikan foto menampilkan tulisan nomor nota lengkap (contoh SRV-20261024-171450288), bukan hanya bagian barcode.";
+  }catch(ocrErr){
+   $("scanResult").textContent="❌ Barcode tidak terbaca dan pembaca teks foto gagal dimuat. Periksa internet, lalu coba foto nomor nota lebih dekat dan jelas.";
+  }
  }finally{this.value="";}
 });
 window.tutupScan=async()=>{

@@ -143,10 +143,20 @@ function isKasbon(x){const j=norm(x.jenis||x.type||"");return j.includes("kasbon
 function kasbonAmount(x){return Number(x.nominal||x.jumlah||x.amount||0)||0;}
 function kasbonName(x){return String(x.namaKaryawan||x.nama||x.karyawan||"");}
 function sameEmployee(x,a){
- const id=x.userId||x.uid||x.karyawanUid||x.employeeUid||"";
- if(id&&String(id)===String(a.id))return true;
- const an=norm(nama(a)),xn=norm(x.nama||x.namaKaryawan||x.namaTeknisi||"");
- return !!an&&!!xn&&(an===xn||an.includes(xn)||xn.includes(an));
+ // UID khusus karyawan jika tersedia.
+ const ids=[x.userId,x.karyawanUid,x.employeeUid,x.idKaryawan,x.karyawanId,x.employeeId,x.uidKaryawan,x.uid]
+   .filter(v=>v!==undefined&&v!==null&&String(v).trim()!=="")
+   .map(v=>String(v).trim());
+ if(ids.includes(String(a.id)))return true;
+
+ // Data lama kadang hanya menyimpan nama, bukan UID karyawan.
+ const employeeNames=[
+   x.namaKaryawan,x.namaTeknisi,x.karyawan,x.namaPegawai,x.namaEmployee,
+   x.nama,x.pegawai,x.employeeName,x.nama_karyawan
+ ].map(norm).filter(Boolean);
+ const accountNames=[nama(a),a.namaKaryawan,a.namaLengkap,a.displayName,a.email]
+   .map(norm).filter(Boolean);
+ return accountNames.some(an=>employeeNames.some(xn=>an===xn));
 }
 function roleOf(p){return norm(p.role||p.userRole||p.jenisAkun||p.tipeAkun);}
 function isOwnerRole(r){return ["owner","superadmin"].includes(r);}
@@ -190,13 +200,7 @@ async function ownedCollection(name){
  }
  let rows=[...map.values()];
  if(employeeMode){
-   const ownName=norm(nama(profile));
-   rows=rows.filter(x=>{
-    const id=String(x.userId||x.uid||x.karyawanUid||x.employeeUid||"");
-    if(id)return id===uid;
-    const n=norm(x.namaKaryawan||x.nama||x.namaTeknisi||x.karyawan||"");
-    return !!ownName&&n===ownName;
-   });
+   rows=rows.filter(x=>sameEmployee(x,profile));
  }
  return rows;
 }

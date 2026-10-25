@@ -1,6 +1,27 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#081326">
@@ -41,6 +62,7 @@ td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:mi
 .empty{text-align:center;color:var(--muted);padding:25px}
 .notice{padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);font-size:11px;color:var(--muted);margin-top:9px}
 .notice.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.notice.employee{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
 .popup{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:100;padding:12px}
 .popup.show{display:flex}.popup-box{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:15px;padding:17px}
 .popup-box h3{margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
@@ -83,25 +105,25 @@ td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:mi
 <body>
 <header class="header">
   <img src="logo.png" class="logo" alt="FIXZY">
-  <div class="brand"><h1>RINGKASAN GAJI</h1><p id="brandSub">Per karyawan • kalender • absensi</p></div>
+  <div class="brand"><h1 id="brandTitle">RINGKASAN GAJI KARYAWAN</h1><p id="brandSub">Per karyawan • kalender • absensi</p></div>
   <div class="owner"><b id="ownerName">Memuat...</b><span id="ownerEmail">Firebase</span></div>
   <button class="refresh" id="refreshBtn" title="Refresh">↻</button>
 </header>
 <main class="wrap">
   <div class="page-nav" id="pageNav">
     <a class="active" href="data-karyawan.html">📄 Ringkasan Gaji</a>
-    <a href="absensi-karyawan.html">📅 Absensi</a>
-    <a href="izin-akses.html">⚙️ Setting Upah</a>
+    <a href="absensi-karyawan.html" id="navAbsensi">📅 Absensi</a>
+    <a href="izin-akses.html" id="navSetting">⚙️ Setting Upah</a>
   </div>
-  <section class="card"><div id="status" class="status">Memeriksa sesi Firebase...</div></section>
-  <section class="card">
+  <section class="card"><div id="status" class="status">Memeriksa sesi Firebase...</div><div id="employeeNotice" class="notice employee" style="display:none"></div></section>
+  <section class="card" id="toolbarCard">
     <div class="toolbar">
       <div class="field"><label>PERIODE UPAH</label><select id="periode"><option value="bulan">Bulan ini</option><option value="hari">Hari ini</option><option value="tahun">Tahun ini</option></select></div>
       <div class="field"><label>TANGGAL / BULAN</label><input id="periodeTanggal" type="month"></div>
       <div class="field"><label>CARI KARYAWAN</label><input id="cari" placeholder="Nama, jabatan, role..."></div>
       <button class="btn dark" id="refresh2">↻ Refresh</button>
     </div>
-    <div class="notice"><b>Perhitungan:</b> Harian berdasarkan HADIR. Bulanan memakai gaji bulanan dan hari libur tidak otomatis memotong. Persentase mengikuti basis yang tersedia pada data.</div>
+    <div class="notice" id="calcNotice"><b>Perhitungan:</b> Harian berdasarkan HADIR. Bulanan memakai gaji bulanan dan hari libur tidak otomatis memotong. Persentase mengikuti basis yang tersedia pada data.</div>
   </section>
   <section class="kpis">
     <div class="kpi k1"><small>KARYAWAN</small><b id="karyawan">0</b></div>
@@ -111,7 +133,7 @@ td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:mi
     <div class="kpi k5"><small>SISA UPAH</small><b id="net">Rp 0</b></div>
   </section>
   <section class="card">
-    <h2 class="card-title">📄 Ringkasan Gaji Masing-Masing Karyawan</h2>
+    <h2 class="card-title" id="listTitle">📄 Ringkasan Gaji Masing-Masing Karyawan</h2>
     <div id="salarySummary" class="salary-summary"><div class="empty">Memuat...</div></div>
   </section>
 </main>
@@ -123,7 +145,7 @@ import {getFirestore,doc,getDoc,collection,query,where,getDocsFromServer} from "
 const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);
-let uid="",ownerUid="",profile={},accounts=[],absensi=[],pengeluaran=[];
+let uid="",ownerUid="",profile={},accounts=[],absensi=[],pengeluaran=[],currentRole="",isEmployeeView=false;
 
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function money(n){return "Rp "+(Number(n)||0).toLocaleString("id-ID");}
@@ -142,81 +164,138 @@ function isLibur(x){return norm(x.status)==="libur";}
 function isKasbon(x){const j=norm(x.jenis||x.type||"");return j.includes("kasbon")||j.includes("bon");}
 function kasbonAmount(x){return Number(x.nominal||x.jumlah||x.amount||0)||0;}
 function kasbonName(x){return String(x.namaKaryawan||x.nama||x.karyawan||"");}
-function sameEmployee(x,a){
- // UID khusus karyawan jika tersedia.
- const ids=[x.userId,x.karyawanUid,x.employeeUid,x.idKaryawan,x.karyawanId,x.employeeId,x.uidKaryawan,x.uid]
-   .filter(v=>v!==undefined&&v!==null&&String(v).trim()!=="")
-   .map(v=>String(v).trim());
- if(ids.includes(String(a.id)))return true;
-
- // Data lama kadang hanya menyimpan nama, bukan UID karyawan.
- const employeeNames=[
-   x.namaKaryawan,x.namaTeknisi,x.karyawan,x.namaPegawai,x.namaEmployee,
-   x.nama,x.pegawai,x.employeeName,x.nama_karyawan
- ].map(norm).filter(Boolean);
- const accountNames=[nama(a),a.namaKaryawan,a.namaLengkap,a.displayName,a.email]
-   .map(norm).filter(Boolean);
- return accountNames.some(an=>employeeNames.some(xn=>an===xn));
+function isEmployeeRole(r){
+  const roles=["employee","karyawan","kasir","kurir","teknisi","staff","user","pegawai"];
+  return roles.includes(norm(r));
 }
-function roleOf(p){return norm(p.role||p.userRole||p.jenisAkun||p.tipeAkun);}
-function isOwnerRole(r){return ["owner","superadmin"].includes(r);}
-function isEmployeeRole(r){return ["employee","employe","karyawan","kasir","kurir","teknisi","staff"].includes(r);}
-let employeeMode=false;
+function isOwnerRole(r){
+  return ["owner","superadmin","admin","pemilik"].includes(norm(r));
+}
+function sameEmployee(x,a){
+ const id=x.userId||x.uid||x.karyawanUid||x.employeeUid||x.karyawanId||"";
+ if(id&&String(id)===String(a.id))return true;
+ const an=norm(nama(a)),xn=norm(x.nama||x.namaKaryawan||x.namaTeknisi||"");
+ return !!an&&!!xn&&(an===xn||an.includes(xn)||xn.includes(an));
+}
 async function loadProfile(user){
  const s=await getDoc(doc(db,"users",user.uid));
- if(!s.exists())throw new Error("Profil users tidak ditemukan.");
- profile={id:user.uid,...(s.data()||{})};
- const r=roleOf(profile);
- if(!isOwnerRole(r)&&!isEmployeeRole(r))throw new Error("Akun ini belum memiliki role owner atau karyawan yang dikenali.");
- employeeMode=!isOwnerRole(r);
- ownerUid=r==="owner"?user.uid:String(profile.ownerUid||profile.ownerId||profile.pemilikUid||user.uid);
- if(employeeMode){
-   accounts=[profile];
-   $("brandSub").textContent="Rincian upah pribadi";
-   $("cari").closest(".field").style.display="none";
-   document.querySelectorAll("#pageNav a").forEach((link,index)=>{if(index>0)link.style.display="none";});
-   $("karyawan").closest(".kpis").style.display="none";
-   $("ownerName").textContent=nama(profile)||user.displayName||"Karyawan";
-   $("ownerEmail").textContent=user.email||"Akun Karyawan";
- }else{
-   $("brandSub").textContent="Per karyawan • kalender • absensi";
+ if(!s.exists())throw new Error("Profil users/"+user.uid+" tidak ditemukan. Hubungi Owner untuk dibuatkan akun.");
+ profile=s.data()||{};
+ currentRole=norm(profile.role);
+ if(!currentRole) throw new Error("Role belum diisi pada profil kamu. Minta Owner untuk set role karyawan/owner.");
+
+ // --- PERBAIKAN UTAMA: Izinkan karyawan ---
+ if(isOwnerRole(currentRole)){
+   // Owner / Superadmin
+   ownerUid = currentRole==="owner" || currentRole==="pemilik" ? user.uid : (profile.ownerUid||profile.ownerId||user.uid);
+   isEmployeeView=false;
+ } else if(isEmployeeRole(currentRole)){
+   // Karyawan: ownerUid diambil dari profilnya sendiri
+   ownerUid = profile.ownerUid||profile.ownerId||profile.ownerKonterUid||user.uid;
+   isEmployeeView=true;
+ } else {
+   throw new Error("Role '"+profile.role+"' tidak diizinkan mengakses halaman ini. Role valid: owner, superadmin, employee/karyawan/kasir/kurir/teknisi.");
  }
 }
+
 async function ownedUsers(){
- if(employeeMode)return [profile];
  const map=new Map();
+
+ if(isEmployeeView){
+   // KARYAWAN: hanya data diri sendiri, tidak query semua user (hindari permission denied)
+   try{
+     const selfDoc = await getDoc(doc(db,"users",uid));
+     if(selfDoc.exists()){
+       map.set(uid,{id:uid,...selfDoc.data()});
+     } else {
+       // fallback pakai profile yang sudah dimuat
+       map.set(uid,{id:uid,...profile});
+     }
+   }catch(e){ 
+     console.warn("ownedUsers employee self fallback", e.message);
+     map.set(uid,{id:uid,...profile});
+   }
+   return [...map.values()];
+ }
+
+ // OWNER / SUPERADMIN: ambil semua karyawan dengan ownerUid yang sama
  for(const field of ["ownerUid","ownerId"]){
   try{const s=await getDocsFromServer(query(collection(db,"users"),where(field,"==",ownerUid)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn("users",field,e.message);}
  }
  try{const s=await getDoc(doc(db,"users",uid));if(s.exists())map.set(uid,{id:uid,...s.data()});}catch{}
- return [...map.values()].filter(x=>{const r=roleOf(x);return isEmployeeRole(r)||upahHarian(x)>0||upahBulanan(x)>0||persen(x)>0;}).sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
+
+ // Filter hanya yang dianggap karyawan (atau punya upah)
+ return [...map.values()].filter(x=>{
+   const r=norm(x.role);
+   return ["employee","karyawan","kasir","kurir","teknisi","staff","pegawai"].includes(r) || upahHarian(x)>0 || upahBulanan(x)>0 || persen(x)>0;
+ }).sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
 }
+
 async function ownedCollection(name){
  const map=new Map();
- const fields=employeeMode?["userId","uid","karyawanUid","employeeUid","ownerUid","ownerId"]:["ownerUid","ownerId","uid"];
- const values=employeeMode?[uid,uid,uid,uid,ownerUid,ownerUid]:[ownerUid,ownerUid,ownerUid];
- for(let i=0;i<fields.length;i++){
-  try{const s=await getDocsFromServer(query(collection(db,name),where(fields[i],"==",values[i])));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn(name,fields[i],e.message);}
+ const tryQueries = [];
+
+ if(isEmployeeView){
+   // Karyawan: coba query berdasarkan uid dia sendiri (lebih ramah Firestore Rules)
+   const employeeIdFields=["userId","uid","karyawanUid","employeeUid","karyawanId","employeeId","karyawanUid","ownerUid","ownerId"];
+   // Prioritas: cari data milik dia saja
+   for(const field of ["userId","uid","karyawanUid","employeeUid","karyawanId","employeeId"]){
+     try{
+       const s=await getDocsFromServer(query(collection(db,name),where(field,"==",uid)));
+       s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));
+     }catch(e){ console.warn(name, "employee field", field, e.message); }
+   }
+   // Jika tetap kosong karena data disimpan dengan ownerUid + filter nama, coba ambil by ownerUid lalu filter di client
+   if(map.size===0){
+     for(const field of ["ownerUid","ownerId"]){
+       try{
+         const s=await getDocsFromServer(query(collection(db,name),where(field,"==",ownerUid)));
+         s.docs.forEach(d=>{
+           const data=d.data();
+           if(sameEmployee(data,{id:uid,nama:nama(profile)})){
+             map.set(d.id,{id:d.id,...data});
+           }
+         });
+       }catch(e){ console.warn(name, "owner fallback", field, e.message); }
+     }
+   }
+ } else {
+   // Owner: ambil semua data milik ownerUid ini
+   for(const field of ["ownerUid","ownerId","uid"]){
+    try{const s=await getDocsFromServer(query(collection(db,name),where(field,"==",ownerUid)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn(name,field,e.message);}
+   }
  }
- let rows=[...map.values()];
- if(employeeMode){
-   rows=rows.filter(x=>sameEmployee(x,profile));
- }
- return rows;
+ return [...map.values()];
 }
-async function loadAll(){
- if(employeeMode){
-   accounts=[profile];
-   [absensi,pengeluaran]=await Promise.all([ownedCollection("absensi"),ownedCollection("pengeluaran")]);
- }else{
-   [accounts,absensi,pengeluaran]=await Promise.all([ownedUsers(),ownedCollection("absensi"),ownedCollection("pengeluaran")]);
+
+async function loadAll(){[accounts,absensi,pengeluaran]=await Promise.all([ownedUsers(),ownedCollection("absensi"),ownedCollection("pengeluaran")]);}
+
+function setupHeader(user){
+ $("ownerName").textContent=profile.namaKonter||profile.nama||profile.namaKaryawan||user.displayName||"Akun FIXZY";
+ $("ownerEmail").textContent= (isEmployeeView ? (profile.role+" • "+(user.email||"")) : (user.email||"Firebase") );
+
+ if(isEmployeeView){
+   $("brandTitle").textContent="GAJI SAYA";
+   $("brandSub").textContent="Rincian gaji pribadi • "+nama(profile);
+   $("listTitle").textContent="💰 Rincian Gaji Saya";
+   $("employeeNotice").style.display="block";
+   $("employeeNotice").innerHTML=`👋 Halo <b>${esc(nama(profile))}</b>! Kamu login sebagai <b>${esc(currentRole)}</b>. Di halaman ini kamu hanya bisa melihat <b>data gaji pribadimu</b>. Data karyawan lain tidak akan muncul demi privasi.`;
+   // Sembunyikan setting upah untuk karyawan
+   const navSet=$("navSetting"); if(navSet) navSet.style.display="none";
+   const cariField=$("cari"); if(cariField){ cariField.placeholder="Filter periode..."; cariField.parentElement.style.display="none"; }
+   const calcNotice=$("calcNotice"); if(calcNotice) calcNotice.textContent="Mode karyawan aktif: Perhitungan hanya untuk data pribadimu.";
+ } else {
+   $("brandTitle").textContent="RINGKASAN GAJI KARYAWAN";
+   $("brandSub").textContent="Per karyawan • kalender • absensi";
+   $("employeeNotice").style.display="none";
  }
 }
-function setupHeader(user){$("ownerName").textContent=employeeMode?(nama(profile)||user.displayName||"Karyawan"):(profile.namaKonter||profile.nama||user.displayName||"Akun FIXZY");$("ownerEmail").textContent=employeeMode?"Akun Karyawan":(user.email||"Firebase");}
-async function boot(loadFn){onAuthStateChanged(auth,async user=>{if(!user){$("status").innerHTML='<span class="err">❌ Sesi login tidak ditemukan.</span>';return;}uid=user.uid;try{await loadProfile(user);setupHeader(user);await loadFn();}catch(e){$("status").innerHTML='<span class="err">🔒 '+esc(e.message||e)+'</span>';}});}
+
+async function boot(loadFn){onAuthStateChanged(auth,async user=>{if(!user){$("status").innerHTML='<span class="err">❌ Sesi login tidak ditemukan. Silakan login dulu.</span>';return;}uid=user.uid;try{await loadProfile(user);setupHeader(user);await loadFn();}catch(e){$("status").innerHTML='<span class="err">🔒 '+esc(e.message||e)+'</span>'; console.error(e);}});}
+
 function periodKey(){const p=$("periode").value,v=$("periodeTanggal").value;if(p==="hari")return v||today();if(p==="tahun")return(v||monthNow()).slice(0,4);return v||monthNow();}
 function matchPeriod(x){const d=dateOf(x),k=periodKey();if(!d||!k)return false;if(k.length===10)return d===k;if(k.length===7)return d.startsWith(k);return d.startsWith(k);}
-function kasbonFor(a){return pengeluaran.filter(x=>matchPeriod(x)&&isKasbon(x)&&sameEmployee(x,a));}
+function kasbonFor(a){return pengeluaran.filter(x=>matchPeriod(x)&&isKasbon(x)&&sameEmployee(x,{id:"",nama:kasbonName(x)}));}
 function calculate(a){
  const rows=absensi.filter(x=>matchPeriod(x)&&sameEmployee(x,a));
  const hadir=rows.filter(isHadir).length,libur=rows.filter(isLibur).length,tidak=rows.filter(x=>!isHadir(x)&&!isLibur(x)).length;
@@ -240,18 +319,23 @@ function salaryMessage(a,c){
  return lines.join("\n");
 }
 function render(){
- const q=employeeMode?"":norm($("cari").value),all=accounts.map(a=>({a,c:calculate(a)})),rows=all.filter(r=>!q||[nama(r.a),r.a.jabatan,r.a.posisi,r.a.role,r.a.email].join(" ").toLowerCase().includes(q));
+ const q=norm($("cari").value),all=accounts.map(a=>({a,c:calculate(a)})),rows=isEmployeeView ? all : all.filter(r=>!q||[nama(r.a),r.a.jabatan,r.a.posisi,r.a.role,r.a.email].join(" ").toLowerCase().includes(q));
  $("karyawan").textContent=all.length;$("hadir").textContent=all.reduce((s,r)=>s+r.c.hadir,0);$("gross").textContent=money(all.reduce((s,r)=>s+r.c.gross,0));$("kasbon").textContent=money(all.reduce((s,r)=>s+r.c.kb,0));$("net").textContent=money(all.reduce((s,r)=>s+r.c.net,0));
- if(employeeMode){$("salarySummary").previousElementSibling.textContent="💰 Rincian Upah Saya";}
  $("salarySummary").innerHTML=rows.map(r=>{
   const phone=waNumber(employeePhone(r.a));
-  const wa=phone?`<button class="btn wa-btn" type="button" onclick="sendSalaryWA('${esc(r.a.id)}')">📲 Kirim Info Gaji via WhatsApp</button>`:`<button class="btn light" type="button" disabled title="Isi nomor WhatsApp di data akun karyawan">📵 Nomor WhatsApp belum diisi</button>`;
+  // Karyawan tidak perlu tombol WA ke diri sendiri
+  let waBtn="";
+  if(!isEmployeeView){
+    waBtn = phone?`<button class="btn wa-btn" type="button" onclick="sendSalaryWA('${esc(r.a.id)}')">📲 Kirim Info Gaji via WhatsApp</button>`:`<button class="btn light" type="button" disabled title="Isi nomor WhatsApp di data akun karyawan">📵 Nomor WhatsApp belum diisi</button>`;
+  } else {
+    waBtn = `<div class="notice">Ini adalah rincian gaji pribadimu untuk periode <b>${esc(periodKey())}</b>. Jika ada selisih, hubungi Owner.</div>`;
+  }
   return `<div class="salary-card"><div class="salary-head"><div><b>${esc(nama(r.a))}</b><small>${esc(r.a.jabatan||r.a.posisi||"-")} • ${esc(jenisLabel(r.c.jenis))}</small></div><span class="status-pill ${r.c.hadir?"status-hadir":"status-tidak"}">${r.c.hadir?"Ada Kehadiran":"Belum Hadir"}</span></div><div class="salary-body"><div class="salary-grid">
  <div class="salary-item"><small>HARI KALENDER</small><b>${r.c.kalender} hari</b></div><div class="salary-item"><small>HADIR</small><b>${r.c.hadir} hari</b></div><div class="salary-item"><small>LIBUR</small><b>${r.c.libur} hari</b></div><div class="salary-item"><small>TIDAK HADIR</small><b>${r.c.tidak} hari</b></div><div class="salary-item"><small>TARIF</small><b>${esc(tarifLabel(r.c))}</b></div><div class="salary-item"><small>KASBON</small><b>${money(r.c.kb)}</b></div></div>
  <div class="salary-total"><div class="salary-gross"><small>UPAH KOTOR </small><b>${money(r.c.gross)}</b></div><div class="salary-net"><small>SISA DITERIMA </small><b>${money(r.c.net)}</b></div></div>
  <div class="salary-note">${r.c.jenis==="bulanan"||r.c.jenis==="bulanan_persentase"?"Gaji bulanan tidak otomatis dipotong karena hari libur.":"Upah harian dihitung berdasarkan hari HADIR."}</div>
- <div class="salary-actions">${employeeMode?"":wa}</div></div></div>`;
- }).join("")||'<div class="empty">Belum ada karyawan.</div>';
+ <div class="salary-actions">${waBtn}</div></div></div>`;
+ }).join("")||'<div class="empty">Belum ada data karyawan. Jika kamu karyawan, pastikan data user kamu sudah memiliki field <b>ownerUid</b> yang terhubung ke owner.</div>';
 }
 window.sendSalaryWA=function(employeeId){
  const a=accounts.find(x=>String(x.id)===String(employeeId));
@@ -261,11 +345,21 @@ window.sendSalaryWA=function(employeeId){
  const c=calculate(a),url="https://wa.me/"+phone+"?text="+encodeURIComponent(salaryMessage(a,c));
  window.open(url,"_blank","noopener,noreferrer");
 };
-async function refresh(){$("status").textContent="⏳ Membaca data Firebase...";try{await loadAll();render();$("status").innerHTML=employeeMode?`<span class="ok">✓ Menampilkan rincian upah akun Anda • Absensi terbaca ${absensi.length}</span>`:`<span class="ok">✓ ${accounts.length} karyawan • Absensi ${absensi.length} • Pengeluaran ${pengeluaran.length} • Isolasi aktif</span>`;}catch(e){$("status").innerHTML='<span class="err">❌ '+esc(e.message||e)+'</span>';}}
+async function refresh(){
+ $("status").textContent="⏳ Membaca data Firebase...";
+ try{
+   await loadAll();
+   render();
+   const mode=isEmployeeView ? "Mode Karyawan (Pribadi)" : "Mode Owner";
+   $("status").innerHTML=`<span class="ok">✓ ${accounts.length} karyawan • Absensi ${absensi.length} • Pengeluaran ${pengeluaran.length} • ${mode} • Isolasi aktif</span>`;
+ }catch(e){
+   $("status").innerHTML='<span class="err">❌ '+esc(e.message||e)+'</span>';
+ }
+}
 $("refreshBtn").onclick=refresh;$("refresh2").onclick=refresh;$("cari").oninput=render;
 $("periode").onchange=()=>{const p=$("periode").value,f=$("periodeTanggal");f.type=p==="hari"?"date":"month";f.value=p==="hari"?today():monthNow();refresh();};
 $("periodeTanggal").onchange=refresh;$("periodeTanggal").value=monthNow();
 boot(refresh);
 </script>
-</body>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
 </html>

@@ -25,7 +25,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#081326">
-<title>RINGKASAN GAJI KARYAWAN</title>
+<title>RINGKASAN GAJI KARYAWAN - FIX V2</title>
 <style>
 *{box-sizing:border-box}
 :root{--navy:#081326;--navy2:#101d33;--yellow:#ffc107;--bg:#f2f5f9;--card:#fff;--line:#dbe3ed;--text:#172033;--muted:#64748b;--green:#16a34a;--red:#dc2626;--blue:#2563eb;--orange:#f59e0b}
@@ -47,31 +47,6 @@ input:focus,select:focus{border-color:var(--yellow);box-shadow:0 0 0 3px #ffc107
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
 .kpi{padding:13px;border-radius:14px;color:#fff}.kpi small{display:block;font-size:10px;font-weight:900;opacity:.9}.kpi b{display:block;font-size:20px;margin-top:6px}
 .k1{background:linear-gradient(135deg,#2563eb,#1d4ed8)}.k2{background:linear-gradient(135deg,#16a34a,#059669)}.k3{background:linear-gradient(135deg,#7c3aed,#4f46e5)}.k4{background:linear-gradient(135deg,#ef4444,#dc2626)}.k5{background:linear-gradient(135deg,#f59e0b,#d97706)}
-.section-title{font-size:17px;font-weight:900;margin:0 0 10px}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}
-table{width:100%;border-collapse:collapse;min-width:1120px}
-th{background:var(--navy2);color:#fff;text-align:left;padding:10px;font-size:11px}
-td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:middle}
-.num{text-align:right;white-space:nowrap}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:900}
-.badge.green{background:#dcfce7;color:#166534}.badge.red{background:#fee2e2;color:#991b1b}.badge.blue{background:#dbeafe;color:#1d4ed8}.badge.orange{background:#fef3c7;color:#92400e}.badge.gray{background:#e2e8f0;color:#475569}
-.employee-card{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr 1fr;gap:8px;align-items:end}
-.info{border:1px solid var(--line);border-radius:10px;padding:9px;background:#f8fafc}
-.info small{display:block;font-size:9px;color:var(--muted);font-weight:900}.info b{display:block;margin-top:4px;font-size:12px}
-.edit{height:36px;border:0;border-radius:9px;background:#fef3c7;color:#92400e;font-weight:900;padding:0 11px}
-.empty{text-align:center;color:var(--muted);padding:25px}
-.notice{padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);font-size:11px;color:var(--muted);margin-top:9px}
-.notice.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
-.notice.employee{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
-.popup{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:100;padding:12px}
-.popup.show{display:flex}.popup-box{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:15px;padding:17px}
-.popup-box h3{margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}
-.popup-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
-.calendar-box{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.day-info{padding:11px;border:1px solid var(--line);border-radius:10px;background:#f8fafc}
-.day-info small{font-size:9px;color:var(--muted);font-weight:900}.day-info b{display:block;margin-top:4px;font-size:14px}
-.action-row{display:flex;gap:6px;flex-wrap:wrap}.mini{height:34px;padding:0 9px;border:0;border-radius:8px;font-size:10px;font-weight:900}
-.hadir{background:#dcfce7;color:#166534}.tidak{background:#fee2e2;color:#991b1b}.libur{background:#e2e8f0;color:#475569}
 .salary-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .salary-card{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
 .salary-head{padding:12px 13px;background:var(--navy2);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -92,13 +67,14 @@ td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:mi
 .card-title{font-size:17px;font-weight:900;margin:0 0 10px}
 .status-pill{display:inline-block;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900}
 .status-hadir{background:#dcfce7;color:#166534}.status-tidak{background:#fee2e2;color:#991b1b}.status-libur{background:#e2e8f0;color:#475569}
-@media(max-width:1050px){.kpis{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:1fr 1fr}.employee-card{grid-template-columns:1fr 1fr 1fr}}
+.notice{padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);font-size:11px;color:var(--muted);margin-top:9px}
+.notice.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.notice.employee{background:#eff6ff;border-color:#bfdbfe;color:#1e40af}
+.notice.debug{background:#fefce8;border-color:#fde68a;color:#92400e;white-space:pre-wrap;font-family:monospace;font-size:10px}
+.empty{text-align:center;color:var(--muted);padding:25px}
 @media(max-width:700px){
 .header{min-height:64px;padding:8px 10px;gap:8px}.logo{width:42px;height:42px}.brand h1{font-size:14px}.brand p{font-size:9px}.owner{display:none}
-.wrap{padding:9px 8px}.card{padding:10px;border-radius:14px}.toolbar{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.kpi{padding:10px}.kpi b{font-size:16px}
-.employee-card{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.full{grid-column:auto}
-.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}table{min-width:1120px}.calendar-box{grid-template-columns:1fr}
-.salary-summary{grid-template-columns:1fr}.salary-actions{flex-direction:column}.salary-actions .btn{width:100%}
+.wrap{padding:9px 8px}.card{padding:10px;border-radius:14px}.toolbar{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.salary-summary{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -115,15 +91,18 @@ td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:mi
     <a href="absensi-karyawan.html" id="navAbsensi">📅 Absensi</a>
     <a href="izin-akses.html" id="navSetting">⚙️ Setting Upah</a>
   </div>
-  <section class="card"><div id="status" class="status">Memeriksa sesi Firebase...</div><div id="employeeNotice" class="notice employee" style="display:none"></div></section>
+  <section class="card">
+    <div id="status" class="status">Memeriksa sesi Firebase...</div>
+    <div id="employeeNotice" class="notice employee" style="display:none"></div>
+    <div id="debugBox" class="notice debug" style="display:none"></div>
+  </section>
   <section class="card" id="toolbarCard">
     <div class="toolbar">
       <div class="field"><label>PERIODE UPAH</label><select id="periode"><option value="bulan">Bulan ini</option><option value="hari">Hari ini</option><option value="tahun">Tahun ini</option></select></div>
       <div class="field"><label>TANGGAL / BULAN</label><input id="periodeTanggal" type="month"></div>
-      <div class="field"><label>CARI KARYAWAN</label><input id="cari" placeholder="Nama, jabatan, role..."></div>
+      <div class="field"><label id="searchLabel">CARI KARYAWAN</label><input id="cari" placeholder="Nama, jabatan, role..."></div>
       <button class="btn dark" id="refresh2">↻ Refresh</button>
     </div>
-    <div class="notice" id="calcNotice"><b>Perhitungan:</b> Harian berdasarkan HADIR. Bulanan memakai gaji bulanan dan hari libur tidak otomatis memotong. Persentase mengikuti basis yang tersedia pada data.</div>
   </section>
   <section class="kpis">
     <div class="kpi k1"><small>KARYAWAN</small><b id="karyawan">0</b></div>
@@ -133,7 +112,7 @@ td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:mi
     <div class="kpi k5"><small>SISA UPAH</small><b id="net">Rp 0</b></div>
   </section>
   <section class="card">
-    <h2 class="card-title" id="listTitle">📄 Ringkasan Gaji Masing-Masing Karyawan</h2>
+    <h2 class="card-title" id="listTitle">📄 Ringkasan Gaji</h2>
     <div id="salarySummary" class="salary-summary"><div class="empty">Memuat...</div></div>
   </section>
 </main>
@@ -146,152 +125,190 @@ const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-up
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);
 let uid="",ownerUid="",profile={},accounts=[],absensi=[],pengeluaran=[],currentRole="",isEmployeeView=false;
+let debugLog=[];
 
+function logD(msg){ debugLog.push(msg); console.log("[DEBUG]",msg); $("debugBox").style.display="block"; $("debugBox").textContent=debugLog.join("\n"); }
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function money(n){return "Rp "+(Number(n)||0).toLocaleString("id-ID");}
 function norm(v){return String(v??"").trim().toLowerCase();}
 function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function monthNow(){return today().slice(0,7);}
 function daysInMonth(ym){const [y,m]=ym.split("-").map(Number);return new Date(y,m,0).getDate();}
-function dateOf(x){return String(x.tanggal||x.date||x.tanggalAbsen||"").slice(0,10);}
+function dateOf(x){return String(x.tanggal||x.date||x.tanggalAbsen||x.tanggalAbsensi||x.tgl||"").slice(0,10);}
 function nama(a){return String(a.nama||a.namaKaryawan||a.namaLengkap||a.displayName||a.email||"").trim();}
 function upahHarian(a){return Number(a.upahHarian??a.upah??a.gajiHarian??0)||0;}
 function upahBulanan(a){return Number(a.upahBulanan??a.gajiBulanan??a.gaji??0)||0;}
 function persen(a){return Number(a.persentase??a.persen??a.bonusPersen??0)||0;}
 function jenisUpah(a){return norm(a.jenisUpah||a.sistemUpah||a.tipeUpah||"harian")||"harian";}
-function isHadir(x){return norm(x.status)==="hadir"||!!(x.jamMasuk||x.masuk||x.hadir===true);}
+function isHadir(x){const st=norm(x.status); return st==="hadir"||st==="masuk"||!!(x.jamMasuk||x.masuk||x.hadir===true||x.isHadir===true);}
 function isLibur(x){return norm(x.status)==="libur";}
-function isKasbon(x){const j=norm(x.jenis||x.type||"");return j.includes("kasbon")||j.includes("bon");}
-function kasbonAmount(x){return Number(x.nominal||x.jumlah||x.amount||0)||0;}
-function kasbonName(x){return String(x.namaKaryawan||x.nama||x.karyawan||"");}
-function isEmployeeRole(r){
-  const roles=["employee","karyawan","kasir","kurir","teknisi","staff","user","pegawai"];
-  return roles.includes(norm(r));
-}
-function isOwnerRole(r){
-  return ["owner","superadmin","admin","pemilik"].includes(norm(r));
-}
+function isKasbon(x){const j=norm(x.jenis||x.type||x.kategori||"");return j.includes("kasbon")||j.includes("bon")||j.includes("pinjam");}
+function kasbonAmount(x){return Number(x.nominal||x.jumlah||x.amount||x.nilai||0)||0;}
+function kasbonName(x){return String(x.namaKaryawan||x.nama||x.karyawan||x.penerima||"");}
+function isEmployeeRole(r){return ["employee","karyawan","kasir","kurir","teknisi","staff","user","pegawai"].includes(norm(r));}
+function isOwnerRole(r){return ["owner","superadmin","admin","pemilik"].includes(norm(r));}
+
 function sameEmployee(x,a){
- const id=x.userId||x.uid||x.karyawanUid||x.employeeUid||x.karyawanId||"";
- if(id&&String(id)===String(a.id))return true;
- const an=norm(nama(a)),xn=norm(x.nama||x.namaKaryawan||x.namaTeknisi||"");
- return !!an&&!!xn&&(an===xn||an.includes(xn)||xn.includes(an));
+ const idFields=["userId","uid","karyawanUid","employeeUid","karyawanId","employeeId","karyawan_uid","user_id"];
+ for(const f of idFields){
+   if(x[f] && String(x[f])===String(a.id)) return true;
+ }
+ const an=norm(nama(a));
+ const xn=norm(x.nama||x.namaKaryawan||x.namaTeknisi||x.karyawan||x.namaKaryawan||x.namaPegawai||"");
+ if(!an||!xn) return false;
+ // toleransi typo Jhilu vs Jhulu: cek jika 3 huruf awal sama atau salah satu mengandung yang lain
+ return an===xn||an.includes(xn)||xn.includes(an)||an.slice(0,3)===xn.slice(0,3);
 }
+
 async function loadProfile(user){
  const s=await getDoc(doc(db,"users",user.uid));
- if(!s.exists())throw new Error("Profil users/"+user.uid+" tidak ditemukan. Hubungi Owner untuk dibuatkan akun.");
+ if(!s.exists())throw new Error("Profil users/"+user.uid+" tidak ditemukan.");
  profile=s.data()||{};
  currentRole=norm(profile.role);
- if(!currentRole) throw new Error("Role belum diisi pada profil kamu. Minta Owner untuk set role karyawan/owner.");
+ logD(`Login UID=${user.uid} role=${profile.role} nama=${nama(profile)} ownerUid=${profile.ownerUid||profile.ownerId||"-"}`);
 
- // --- PERBAIKAN UTAMA: Izinkan karyawan ---
  if(isOwnerRole(currentRole)){
-   // Owner / Superadmin
-   ownerUid = currentRole==="owner" || currentRole==="pemilik" ? user.uid : (profile.ownerUid||profile.ownerId||user.uid);
+   ownerUid = (currentRole==="owner"||currentRole==="pemilik") ? user.uid : (profile.ownerUid||profile.ownerId||user.uid);
    isEmployeeView=false;
  } else if(isEmployeeRole(currentRole)){
-   // Karyawan: ownerUid diambil dari profilnya sendiri
-   ownerUid = profile.ownerUid||profile.ownerId||profile.ownerKonterUid||user.uid;
+   ownerUid = profile.ownerUid||profile.ownerId||profile.ownerKonterUid||profile.konterUid||user.uid;
    isEmployeeView=true;
+   if(!profile.ownerUid && !profile.ownerId){
+     logD("⚠️ Karyawan tidak punya ownerUid di profil! Akan susah baca data owner. Segera isi ownerUid di Firestore users.");
+   }
  } else {
-   throw new Error("Role '"+profile.role+"' tidak diizinkan mengakses halaman ini. Role valid: owner, superadmin, employee/karyawan/kasir/kurir/teknisi.");
+   throw new Error("Role '"+profile.role+"' tidak diizinkan.");
  }
 }
 
 async function ownedUsers(){
  const map=new Map();
-
  if(isEmployeeView){
-   // KARYAWAN: hanya data diri sendiri, tidak query semua user (hindari permission denied)
    try{
      const selfDoc = await getDoc(doc(db,"users",uid));
-     if(selfDoc.exists()){
-       map.set(uid,{id:uid,...selfDoc.data()});
-     } else {
-       // fallback pakai profile yang sudah dimuat
-       map.set(uid,{id:uid,...profile});
-     }
-   }catch(e){ 
-     console.warn("ownedUsers employee self fallback", e.message);
-     map.set(uid,{id:uid,...profile});
-   }
+     if(selfDoc.exists()) map.set(uid,{id:uid,...selfDoc.data()});
+     else map.set(uid,{id:uid,...profile});
+   }catch(e){ map.set(uid,{id:uid,...profile}); }
+   logD(`ownedUsers (employee mode) = ${map.size} data`);
    return [...map.values()];
  }
-
- // OWNER / SUPERADMIN: ambil semua karyawan dengan ownerUid yang sama
  for(const field of ["ownerUid","ownerId"]){
-  try{const s=await getDocsFromServer(query(collection(db,"users"),where(field,"==",ownerUid)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn("users",field,e.message);}
+  try{const s=await getDocsFromServer(query(collection(db,"users"),where(field,"==",ownerUid)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){logD(`users query ${field} gagal: ${e.message}`);}
  }
  try{const s=await getDoc(doc(db,"users",uid));if(s.exists())map.set(uid,{id:uid,...s.data()});}catch{}
-
- // Filter hanya yang dianggap karyawan (atau punya upah)
- return [...map.values()].filter(x=>{
+ const filtered=[...map.values()].filter(x=>{
    const r=norm(x.role);
-   return ["employee","karyawan","kasir","kurir","teknisi","staff","pegawai"].includes(r) || upahHarian(x)>0 || upahBulanan(x)>0 || persen(x)>0;
- }).sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
+   return ["employee","karyawan","kasir","kurir","teknisi","staff","pegawai"].includes(r) || upahHarian(x)>0 || upahBulanan(x)>0;
+ });
+ logD(`ownedUsers (owner mode) total=${map.size} filtered karyawan=${filtered.length}`);
+ return filtered.sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
 }
 
+// === FIX UTAMA DISINI ===
 async function ownedCollection(name){
  const map=new Map();
- const tryQueries = [];
+ const namaSaya = nama(profile);
+ const attempts=[];
 
  if(isEmployeeView){
-   // Karyawan: coba query berdasarkan uid dia sendiri (lebih ramah Firestore Rules)
-   const employeeIdFields=["userId","uid","karyawanUid","employeeUid","karyawanId","employeeId","karyawanUid","ownerUid","ownerId"];
-   // Prioritas: cari data milik dia saja
-   for(const field of ["userId","uid","karyawanUid","employeeUid","karyawanId","employeeId"]){
+   // Coba SEMUA kemungkinan field agar absensi ketemu
+   const queriesToTry = [
+     {field:"ownerUid", value:ownerUid},
+     {field:"ownerId", value:ownerUid},
+     {field:"userId", value:uid},
+     {field:"uid", value:uid},
+     {field:"karyawanUid", value:uid},
+     {field:"employeeUid", value:uid},
+     {field:"karyawanId", value:uid},
+     {field:"employeeId", value:uid},
+     // By nama (jika rules izinkan baca by nama tanpa ownerUid)
+     {field:"namaKaryawan", value:namaSaya},
+     {field:"nama", value:namaSaya},
+     {field:"karyawan", value:namaSaya},
+   ];
+
+   for(const q of queriesToTry){
+     if(!q.value) continue;
      try{
-       const s=await getDocsFromServer(query(collection(db,name),where(field,"==",uid)));
+       const s=await getDocsFromServer(query(collection(db,name),where(q.field,"==",q.value)));
+       const before=map.size;
        s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));
-     }catch(e){ console.warn(name, "employee field", field, e.message); }
+       const added=map.size-before;
+       if(added>0) logD(`${name}: query ${q.field}==${q.value} -> +${added} docs`);
+       attempts.push(`${q.field}:${added}`);
+     }catch(e){
+       logD(`${name}: query ${q.field}==${q.value} GAGAL: ${e.message}`);
+     }
    }
-   // Jika tetap kosong karena data disimpan dengan ownerUid + filter nama, coba ambil by ownerUid lalu filter di client
+
+   // Jika masih kosong, coba tanpa filter ownerUid tapi filter manual by sameEmployee (butuh rules allow read all where ownerUid sama)
+   // Kita coba ambil 50 docs terakhir dari ownerUid jika diizinkan
    if(map.size===0){
+     logD(`${name}: masih 0, coba fallback ambil semua dengan ownerUid=${ownerUid} lalu filter manual`);
      for(const field of ["ownerUid","ownerId"]){
        try{
          const s=await getDocsFromServer(query(collection(db,name),where(field,"==",ownerUid)));
+         let matched=0;
          s.docs.forEach(d=>{
            const data=d.data();
-           if(sameEmployee(data,{id:uid,nama:nama(profile)})){
+           // Untuk absensi: kalau employee view, anggap semua yang ownerUid sama dan nama mirip adalah milik dia
+           if(name==="absensi"||name==="pengeluaran"){
+             if(sameEmployee(data,{id:uid,nama:namaSaya})){
+               if(!map.has(d.id)){ map.set(d.id,{id:d.id,...data}); matched++; }
+             }
+           } else {
              map.set(d.id,{id:d.id,...data});
            }
          });
-       }catch(e){ console.warn(name, "owner fallback", field, e.message); }
+         if(matched>0) logD(`${name}: fallback ${field} manual filter +${matched}`);
+       }catch(e){ logD(`${name}: fallback ${field} gagal ${e.message}`); }
      }
    }
+
  } else {
-   // Owner: ambil semua data milik ownerUid ini
+   // OWNER MODE - sama seperti sebelumnya
    for(const field of ["ownerUid","ownerId","uid"]){
-    try{const s=await getDocsFromServer(query(collection(db,name),where(field,"==",ownerUid)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn(name,field,e.message);}
+    try{
+      const s=await getDocsFromServer(query(collection(db,name),where(field,"==",ownerUid)));
+      s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));
+    }catch(e){logD(`${name} owner query ${field} gagal ${e.message}`);}
    }
  }
+
+ logD(`${name} FINAL total docs=${map.size} attempts=${attempts.join(",")}`);
  return [...map.values()];
 }
 
-async function loadAll(){[accounts,absensi,pengeluaran]=await Promise.all([ownedUsers(),ownedCollection("absensi"),ownedCollection("pengeluaran")]);}
+async function loadAll(){
+ debugLog=[];
+ $("debugBox").style.display="none";
+ $("debugBox").textContent="";
+ logD(`Memulai loadAll... period=${periodKey()} uid=${uid} ownerUid=${ownerUid} isEmployee=${isEmployeeView}`);
+ [accounts,absensi,pengeluaran]=await Promise.all([ownedUsers(),ownedCollection("absensi"),ownedCollection("pengeluaran")]);
+ logD(`Selesai load: accounts=${accounts.length} absensi=${absensi.length} pengeluaran=${pengeluaran.length}`);
+ if(isEmployeeView && absensi.length===0){
+   logD("❌ ABSENSI 0! Penyebab umum: 1) Absensi tidak punya field userId/karyawanUid=UID karyawan, 2) Firestore Rules tidak izinkan karyawan baca absensi by ownerUid, 3) Nama di absensi beda dengan nama profil (Jhilu vs Jhulu)");
+ }
+}
 
 function setupHeader(user){
  $("ownerName").textContent=profile.namaKonter||profile.nama||profile.namaKaryawan||user.displayName||"Akun FIXZY";
- $("ownerEmail").textContent= (isEmployeeView ? (profile.role+" • "+(user.email||"")) : (user.email||"Firebase") );
-
+ $("ownerEmail").textContent= isEmployeeView ? `${profile.role} • ${user.email||""}` : (user.email||"Firebase");
  if(isEmployeeView){
    $("brandTitle").textContent="GAJI SAYA";
    $("brandSub").textContent="Rincian gaji pribadi • "+nama(profile);
    $("listTitle").textContent="💰 Rincian Gaji Saya";
    $("employeeNotice").style.display="block";
-   $("employeeNotice").innerHTML=`👋 Halo <b>${esc(nama(profile))}</b>! Kamu login sebagai <b>${esc(currentRole)}</b>. Di halaman ini kamu hanya bisa melihat <b>data gaji pribadimu</b>. Data karyawan lain tidak akan muncul demi privasi.`;
-   // Sembunyikan setting upah untuk karyawan
+   $("employeeNotice").innerHTML=`👋 Halo <b>${esc(nama(profile))}</b>! Mode karyawan aktif. Kamu hanya lihat data pribadimu. Jika 0 hadir padahal sudah absen, laporkan ke owner agar field <b>userId</b> di absensi diisi UID kamu.`;
    const navSet=$("navSetting"); if(navSet) navSet.style.display="none";
-   const cariField=$("cari"); if(cariField){ cariField.placeholder="Filter periode..."; cariField.parentElement.style.display="none"; }
-   const calcNotice=$("calcNotice"); if(calcNotice) calcNotice.textContent="Mode karyawan aktif: Perhitungan hanya untuk data pribadimu.";
+   $("searchLabel").textContent="FILTER PERIODE";
+   $("cari").placeholder="Cari...";
  } else {
-   $("brandTitle").textContent="RINGKASAN GAJI KARYAWAN";
-   $("brandSub").textContent="Per karyawan • kalender • absensi";
    $("employeeNotice").style.display="none";
  }
 }
 
-async function boot(loadFn){onAuthStateChanged(auth,async user=>{if(!user){$("status").innerHTML='<span class="err">❌ Sesi login tidak ditemukan. Silakan login dulu.</span>';return;}uid=user.uid;try{await loadProfile(user);setupHeader(user);await loadFn();}catch(e){$("status").innerHTML='<span class="err">🔒 '+esc(e.message||e)+'</span>'; console.error(e);}});}
+async function boot(loadFn){onAuthStateChanged(auth,async user=>{if(!user){$("status").innerHTML='<span class="err">❌ Sesi login tidak ditemukan.</span>';return;}uid=user.uid;try{await loadProfile(user);setupHeader(user);await loadFn();}catch(e){$("status").innerHTML='<span class="err">🔒 '+esc(e.message||e)+'</span>'; logD("BOOT ERROR: "+e.message);}});}
 
 function periodKey(){const p=$("periode").value,v=$("periodeTanggal").value;if(p==="hari")return v||today();if(p==="tahun")return(v||monthNow()).slice(0,4);return v||monthNow();}
 function matchPeriod(x){const d=dateOf(x),k=periodKey();if(!d||!k)return false;if(k.length===10)return d===k;if(k.length===7)return d.startsWith(k);return d.startsWith(k);}
@@ -307,43 +324,45 @@ function calculate(a){
  else if(jenis==="harian_persentase")base=hadir*hd;
  else if(jenis==="bulanan_persentase")base=bm;
  const gross=base+percentPay,kb=kasbonFor(a).reduce((s,x)=>s+kasbonAmount(x),0);
- return {kalender,hadir,libur,tidak,gross,kb,net:Math.max(0,gross-kb),jenis,hd,bm,ps};
+ return {kalender,hadir,libur,tidak,gross,kb,net:Math.max(0,gross-kb),jenis,hd,bm,ps, _debugRows:rows};
 }
 function jenisLabel(j){return({harian:"Harian",bulanan:"Bulanan",persentase:"Persentase",harian_persentase:"Harian + %",bulanan_persentase:"Bulanan + %"})[j]||"Harian";}
 function tarifLabel(c){if(c.jenis==="harian")return money(c.hd)+"/hari";if(c.jenis==="bulanan")return money(c.bm)+"/bulan";if(c.jenis==="persentase")return c.ps+"%";if(c.jenis==="harian_persentase")return money(c.hd)+" + "+c.ps+"%";return money(c.bm)+" + "+c.ps+"%";}
 function employeePhone(a){return String(a.whatsapp||a.noWhatsapp||a.nomorWa||a.noWa||a.noHp||a.telepon||a.phone||a.teleponKaryawan||"").trim();}
 function waNumber(value){let n=String(value||"").replace(/\D/g,"");if(n.startsWith("0"))n="62"+n.slice(1);else if(n.startsWith("8"))n="62"+n;return n;}
-function salaryMessage(a,c){
- const p=periodKey(),periodText=p.length===10?new Date(p+"T12:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):p.length===4?p: new Date(p+"-01T12:00:00").toLocaleDateString("id-ID",{month:"long",year:"numeric"});
- const lines=[`Halo Kak ${nama(a)}, berikut rincian gaji kamu dari ${profile.namaKonter||profile.namaToko||profile.namaUsaha||profile.namaKonterUsaha||profile.nama||"Pemilik Konter"}.`,`Periode: ${periodText}`,"",`Jabatan: ${a.jabatan||a.posisi||a.role||"-"}`,`Sistem upah: ${jenisLabel(c.jenis)}`,`Hari hadir: ${c.hadir} hari`,`Hari libur: ${c.libur} hari`,`Tidak hadir: ${c.tidak} hari`,`Tarif: ${tarifLabel(c)}`,`TOTAL UPAH: ${money(c.gross)}`,`Kasbon: ${money(c.kb)}`,`SISA UPAH DITERIMA: ${money(c.net)}`,"","Mohon periksa rincian ini. Jika ada yang tidak sesuai, silakan kabari. Terima kasih."];
- return lines.join("\n");
-}
+
 function render(){
- const q=norm($("cari").value),all=accounts.map(a=>({a,c:calculate(a)})),rows=isEmployeeView ? all : all.filter(r=>!q||[nama(r.a),r.a.jabatan,r.a.posisi,r.a.role,r.a.email].join(" ").toLowerCase().includes(q));
+ const q=norm($("cari").value),all=accounts.map(a=>({a,c:calculate(a)})),rows=isEmployeeView ? all : all.filter(r=>!q||[nama(r.a),r.a.jabatan,r.a.posisi,r.a.role].join(" ").toLowerCase().includes(q));
  $("karyawan").textContent=all.length;$("hadir").textContent=all.reduce((s,r)=>s+r.c.hadir,0);$("gross").textContent=money(all.reduce((s,r)=>s+r.c.gross,0));$("kasbon").textContent=money(all.reduce((s,r)=>s+r.c.kb,0));$("net").textContent=money(all.reduce((s,r)=>s+r.c.net,0));
+
+ if(isEmployeeView && all.length>0){
+   const c=all[0].c;
+   logD(`RENDER Karyawan ${nama(all[0].a)}: period=${periodKey()} rows matched=${c._debugRows.length} hadir=${c.hadir} gross=${c.gross}`);
+   if(c._debugRows.length>0) logD(`Contoh absensi match: ${JSON.stringify(c._debugRows[0]).slice(0,300)}`);
+ }
+
  $("salarySummary").innerHTML=rows.map(r=>{
-  const phone=waNumber(employeePhone(r.a));
-  // Karyawan tidak perlu tombol WA ke diri sendiri
   let waBtn="";
   if(!isEmployeeView){
-    waBtn = phone?`<button class="btn wa-btn" type="button" onclick="sendSalaryWA('${esc(r.a.id)}')">📲 Kirim Info Gaji via WhatsApp</button>`:`<button class="btn light" type="button" disabled title="Isi nomor WhatsApp di data akun karyawan">📵 Nomor WhatsApp belum diisi</button>`;
+    const phone=waNumber(employeePhone(r.a));
+    waBtn = phone?`<button class="btn wa-btn" type="button" onclick="sendSalaryWA('${esc(r.a.id)}')">📲 Kirim Info Gaji via WhatsApp</button>`:`<button class="btn light" type="button" disabled>📵 Nomor WA belum diisi</button>`;
   } else {
-    waBtn = `<div class="notice">Ini adalah rincian gaji pribadimu untuk periode <b>${esc(periodKey())}</b>. Jika ada selisih, hubungi Owner.</div>`;
+    waBtn = `<div class="notice">Periode <b>${esc(periodKey())}</b> • ${r.c.hadir} hadir dari ${r.c.kalender} hari kalender. Jika 0 padahal sudah absen, minta owner cek data absensi.</div>`;
   }
-  return `<div class="salary-card"><div class="salary-head"><div><b>${esc(nama(r.a))}</b><small>${esc(r.a.jabatan||r.a.posisi||"-")} • ${esc(jenisLabel(r.c.jenis))}</small></div><span class="status-pill ${r.c.hadir?"status-hadir":"status-tidak"}">${r.c.hadir?"Ada Kehadiran":"Belum Hadir"}</span></div><div class="salary-body"><div class="salary-grid">
+  return `<div class="salary-card"><div class="salary-head"><div><b>${esc(nama(r.a))}</b><small>${esc(r.a.jabatan||r.a.posisi||"-")} • ${esc(jenisLabel(r.c.jenis))}</small></div><span class="status-pill ${r.c.hadir?"status-hadir":"status-tidak"}">${r.c.hadir?r.c.hadir+" Hadir":"Belum Hadir"}</span></div><div class="salary-body"><div class="salary-grid">
  <div class="salary-item"><small>HARI KALENDER</small><b>${r.c.kalender} hari</b></div><div class="salary-item"><small>HADIR</small><b>${r.c.hadir} hari</b></div><div class="salary-item"><small>LIBUR</small><b>${r.c.libur} hari</b></div><div class="salary-item"><small>TIDAK HADIR</small><b>${r.c.tidak} hari</b></div><div class="salary-item"><small>TARIF</small><b>${esc(tarifLabel(r.c))}</b></div><div class="salary-item"><small>KASBON</small><b>${money(r.c.kb)}</b></div></div>
  <div class="salary-total"><div class="salary-gross"><small>UPAH KOTOR </small><b>${money(r.c.gross)}</b></div><div class="salary-net"><small>SISA DITERIMA </small><b>${money(r.c.net)}</b></div></div>
- <div class="salary-note">${r.c.jenis==="bulanan"||r.c.jenis==="bulanan_persentase"?"Gaji bulanan tidak otomatis dipotong karena hari libur.":"Upah harian dihitung berdasarkan hari HADIR."}</div>
  <div class="salary-actions">${waBtn}</div></div></div>`;
- }).join("")||'<div class="empty">Belum ada data karyawan. Jika kamu karyawan, pastikan data user kamu sudah memiliki field <b>ownerUid</b> yang terhubung ke owner.</div>';
+ }).join("")||'<div class="empty">Belum ada data.</div>';
 }
 window.sendSalaryWA=function(employeeId){
  const a=accounts.find(x=>String(x.id)===String(employeeId));
  if(!a){alert("Data karyawan tidak ditemukan.");return;}
  const phone=waNumber(employeePhone(a));
- if(!phone){alert("Nomor WhatsApp belum diisi. Isi kolom WhatsApp/No HP pada data akun karyawan, lalu refresh.");return;}
- const c=calculate(a),url="https://wa.me/"+phone+"?text="+encodeURIComponent(salaryMessage(a,c));
- window.open(url,"_blank","noopener,noreferrer");
+ if(!phone){alert("Nomor WhatsApp belum diisi.");return;}
+ const c=calculate(a),p=periodKey(),periodText=p.length===10?new Date(p+"T12:00:00").toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):p.length===4?p: new Date(p+"-01T12:00:00").toLocaleDateString("id-ID",{month:"long",year:"numeric"});
+ const msg=[`Halo Kak ${nama(a)}, berikut rincian gaji kamu dari ${profile.namaKonter||profile.nama||"Pemilik"}.`,`Periode: ${periodText}`,`Hadir: ${c.hadir} hari`,`Tarif: ${tarifLabel(c)}`,`TOTAL UPAH: ${money(c.gross)}`,`Kasbon: ${money(c.kb)}`,`SISA DITERIMA: ${money(c.net)}`].join("\n");
+ window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
 };
 async function refresh(){
  $("status").textContent="⏳ Membaca data Firebase...";
@@ -352,9 +371,7 @@ async function refresh(){
    render();
    const mode=isEmployeeView ? "Mode Karyawan (Pribadi)" : "Mode Owner";
    $("status").innerHTML=`<span class="ok">✓ ${accounts.length} karyawan • Absensi ${absensi.length} • Pengeluaran ${pengeluaran.length} • ${mode} • Isolasi aktif</span>`;
- }catch(e){
-   $("status").innerHTML='<span class="err">❌ '+esc(e.message||e)+'</span>';
- }
+ }catch(e){$("status").innerHTML='<span class="err">❌ '+esc(e.message||e)+'</span>'; logD("Refresh error: "+e.message);}
 }
 $("refreshBtn").onclick=refresh;$("refresh2").onclick=refresh;$("cari").oninput=render;
 $("periode").onchange=()=>{const p=$("periode").value,f=$("periodeTanggal");f.type=p==="hari"?"date":"month";f.value=p==="hari"?today():monthNow();refresh();};

@@ -83,12 +83,12 @@ td{padding:10px;border-bottom:1px solid #edf1f5;font-size:11px;vertical-align:mi
 <body>
 <header class="header">
   <img src="logo.png" class="logo" alt="FIXZY">
-  <div class="brand"><h1>RINGKASAN GAJI KARYAWAN</h1><p>Per karyawan • kalender • absensi</p></div>
+  <div class="brand"><h1>RINGKASAN GAJI</h1><p id="brandSub">Per karyawan • kalender • absensi</p></div>
   <div class="owner"><b id="ownerName">Memuat...</b><span id="ownerEmail">Firebase</span></div>
   <button class="refresh" id="refreshBtn" title="Refresh">↻</button>
 </header>
 <main class="wrap">
-  <div class="page-nav">
+  <div class="page-nav" id="pageNav">
     <a class="active" href="data-karyawan.html">📄 Ringkasan Gaji</a>
     <a href="absensi-karyawan.html">📅 Absensi</a>
     <a href="izin-akses.html">⚙️ Setting Upah</a>
@@ -148,35 +148,71 @@ function sameEmployee(x,a){
  const an=norm(nama(a)),xn=norm(x.nama||x.namaKaryawan||x.namaTeknisi||"");
  return !!an&&!!xn&&(an===xn||an.includes(xn)||xn.includes(an));
 }
+function roleOf(p){return norm(p.role||p.userRole||p.jenisAkun||p.tipeAkun);}
+function isOwnerRole(r){return ["owner","superadmin"].includes(r);}
+function isEmployeeRole(r){return ["employee","employe","karyawan","kasir","kurir","teknisi","staff"].includes(r);}
+let employeeMode=false;
 async function loadProfile(user){
  const s=await getDoc(doc(db,"users",user.uid));
  if(!s.exists())throw new Error("Profil users tidak ditemukan.");
- profile=s.data()||{};
- const r=norm(profile.role);
- if(!["owner","superadmin"].includes(r))throw new Error("Halaman ini hanya untuk OWNER dan SUPERADMIN.");
- ownerUid=r==="owner"?user.uid:(profile.ownerUid||profile.ownerId||user.uid);
+ profile={id:user.uid,...(s.data()||{})};
+ const r=roleOf(profile);
+ if(!isOwnerRole(r)&&!isEmployeeRole(r))throw new Error("Akun ini belum memiliki role owner atau karyawan yang dikenali.");
+ employeeMode=!isOwnerRole(r);
+ ownerUid=r==="owner"?user.uid:String(profile.ownerUid||profile.ownerId||profile.pemilikUid||user.uid);
+ if(employeeMode){
+   accounts=[profile];
+   $("brandSub").textContent="Rincian upah pribadi";
+   $("cari").closest(".field").style.display="none";
+   document.querySelectorAll("#pageNav a").forEach((link,index)=>{if(index>0)link.style.display="none";});
+   $("karyawan").closest(".kpis").style.display="none";
+   $("ownerName").textContent=nama(profile)||user.displayName||"Karyawan";
+   $("ownerEmail").textContent=user.email||"Akun Karyawan";
+ }else{
+   $("brandSub").textContent="Per karyawan • kalender • absensi";
+ }
 }
 async function ownedUsers(){
+ if(employeeMode)return [profile];
  const map=new Map();
  for(const field of ["ownerUid","ownerId"]){
   try{const s=await getDocsFromServer(query(collection(db,"users"),where(field,"==",ownerUid)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn("users",field,e.message);}
  }
  try{const s=await getDoc(doc(db,"users",uid));if(s.exists())map.set(uid,{id:uid,...s.data()});}catch{}
- return [...map.values()].filter(x=>{const r=norm(x.role);return ["employee","karyawan","kasir","kurir","teknisi"].includes(r)||upahHarian(x)>0||upahBulanan(x)>0||persen(x)>0;}).sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
+ return [...map.values()].filter(x=>{const r=roleOf(x);return isEmployeeRole(r)||upahHarian(x)>0||upahBulanan(x)>0||persen(x)>0;}).sort((a,b)=>nama(a).localeCompare(nama(b),"id"));
 }
 async function ownedCollection(name){
  const map=new Map();
- for(const field of ["ownerUid","ownerId","uid"]){
-  try{const s=await getDocsFromServer(query(collection(db,name),where(field,"==",ownerUid)));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn(name,field,e.message);}
+ const fields=employeeMode?["userId","uid","karyawanUid","employeeUid","ownerUid","ownerId"]:["ownerUid","ownerId","uid"];
+ const values=employeeMode?[uid,uid,uid,uid,ownerUid,ownerUid]:[ownerUid,ownerUid,ownerUid];
+ for(let i=0;i<fields.length;i++){
+  try{const s=await getDocsFromServer(query(collection(db,name),where(fields[i],"==",values[i])));s.docs.forEach(d=>map.set(d.id,{id:d.id,...d.data()}));}catch(e){console.warn(name,fields[i],e.message);}
  }
- return [...map.values()];
+ let rows=[...map.values()];
+ if(employeeMode){
+   const ownName=norm(nama(profile));
+   rows=rows.filter(x=>{
+    const id=String(x.userId||x.uid||x.karyawanUid||x.employeeUid||"");
+    if(id)return id===uid;
+    const n=norm(x.namaKaryawan||x.nama||x.namaTeknisi||x.karyawan||"");
+    return !!ownName&&n===ownName;
+   });
+ }
+ return rows;
 }
-async function loadAll(){[accounts,absensi,pengeluaran]=await Promise.all([ownedUsers(),ownedCollection("absensi"),ownedCollection("pengeluaran")]);}
-function setupHeader(user){$("ownerName").textContent=profile.namaKonter||profile.nama||user.displayName||"Akun FIXZY";$("ownerEmail").textContent=user.email||"Firebase";}
+async function loadAll(){
+ if(employeeMode){
+   accounts=[profile];
+   [absensi,pengeluaran]=await Promise.all([ownedCollection("absensi"),ownedCollection("pengeluaran")]);
+ }else{
+   [accounts,absensi,pengeluaran]=await Promise.all([ownedUsers(),ownedCollection("absensi"),ownedCollection("pengeluaran")]);
+ }
+}
+function setupHeader(user){$("ownerName").textContent=employeeMode?(nama(profile)||user.displayName||"Karyawan"):(profile.namaKonter||profile.nama||user.displayName||"Akun FIXZY");$("ownerEmail").textContent=employeeMode?"Akun Karyawan":(user.email||"Firebase");}
 async function boot(loadFn){onAuthStateChanged(auth,async user=>{if(!user){$("status").innerHTML='<span class="err">❌ Sesi login tidak ditemukan.</span>';return;}uid=user.uid;try{await loadProfile(user);setupHeader(user);await loadFn();}catch(e){$("status").innerHTML='<span class="err">🔒 '+esc(e.message||e)+'</span>';}});}
 function periodKey(){const p=$("periode").value,v=$("periodeTanggal").value;if(p==="hari")return v||today();if(p==="tahun")return(v||monthNow()).slice(0,4);return v||monthNow();}
 function matchPeriod(x){const d=dateOf(x),k=periodKey();if(!d||!k)return false;if(k.length===10)return d===k;if(k.length===7)return d.startsWith(k);return d.startsWith(k);}
-function kasbonFor(a){return pengeluaran.filter(x=>matchPeriod(x)&&isKasbon(x)&&sameEmployee(x,{id:"",nama:kasbonName(x)}));}
+function kasbonFor(a){return pengeluaran.filter(x=>matchPeriod(x)&&isKasbon(x)&&sameEmployee(x,a));}
 function calculate(a){
  const rows=absensi.filter(x=>matchPeriod(x)&&sameEmployee(x,a));
  const hadir=rows.filter(isHadir).length,libur=rows.filter(isLibur).length,tidak=rows.filter(x=>!isHadir(x)&&!isLibur(x)).length;
@@ -200,8 +236,9 @@ function salaryMessage(a,c){
  return lines.join("\n");
 }
 function render(){
- const q=norm($("cari").value),all=accounts.map(a=>({a,c:calculate(a)})),rows=all.filter(r=>!q||[nama(r.a),r.a.jabatan,r.a.posisi,r.a.role,r.a.email].join(" ").toLowerCase().includes(q));
+ const q=employeeMode?"":norm($("cari").value),all=accounts.map(a=>({a,c:calculate(a)})),rows=all.filter(r=>!q||[nama(r.a),r.a.jabatan,r.a.posisi,r.a.role,r.a.email].join(" ").toLowerCase().includes(q));
  $("karyawan").textContent=all.length;$("hadir").textContent=all.reduce((s,r)=>s+r.c.hadir,0);$("gross").textContent=money(all.reduce((s,r)=>s+r.c.gross,0));$("kasbon").textContent=money(all.reduce((s,r)=>s+r.c.kb,0));$("net").textContent=money(all.reduce((s,r)=>s+r.c.net,0));
+ if(employeeMode){$("salarySummary").previousElementSibling.textContent="💰 Rincian Upah Saya";}
  $("salarySummary").innerHTML=rows.map(r=>{
   const phone=waNumber(employeePhone(r.a));
   const wa=phone?`<button class="btn wa-btn" type="button" onclick="sendSalaryWA('${esc(r.a.id)}')">📲 Kirim Info Gaji via WhatsApp</button>`:`<button class="btn light" type="button" disabled title="Isi nomor WhatsApp di data akun karyawan">📵 Nomor WhatsApp belum diisi</button>`;
@@ -209,7 +246,7 @@ function render(){
  <div class="salary-item"><small>HARI KALENDER</small><b>${r.c.kalender} hari</b></div><div class="salary-item"><small>HADIR</small><b>${r.c.hadir} hari</b></div><div class="salary-item"><small>LIBUR</small><b>${r.c.libur} hari</b></div><div class="salary-item"><small>TIDAK HADIR</small><b>${r.c.tidak} hari</b></div><div class="salary-item"><small>TARIF</small><b>${esc(tarifLabel(r.c))}</b></div><div class="salary-item"><small>KASBON</small><b>${money(r.c.kb)}</b></div></div>
  <div class="salary-total"><div class="salary-gross"><small>UPAH KOTOR </small><b>${money(r.c.gross)}</b></div><div class="salary-net"><small>SISA DITERIMA </small><b>${money(r.c.net)}</b></div></div>
  <div class="salary-note">${r.c.jenis==="bulanan"||r.c.jenis==="bulanan_persentase"?"Gaji bulanan tidak otomatis dipotong karena hari libur.":"Upah harian dihitung berdasarkan hari HADIR."}</div>
- <div class="salary-actions">${wa}</div></div></div>`;
+ <div class="salary-actions">${employeeMode?"":wa}</div></div></div>`;
  }).join("")||'<div class="empty">Belum ada karyawan.</div>';
 }
 window.sendSalaryWA=function(employeeId){
@@ -220,7 +257,7 @@ window.sendSalaryWA=function(employeeId){
  const c=calculate(a),url="https://wa.me/"+phone+"?text="+encodeURIComponent(salaryMessage(a,c));
  window.open(url,"_blank","noopener,noreferrer");
 };
-async function refresh(){$("status").textContent="⏳ Membaca data Firebase...";try{await loadAll();render();$("status").innerHTML=`<span class="ok">✓ ${accounts.length} karyawan • Absensi ${absensi.length} • Pengeluaran ${pengeluaran.length} • Isolasi aktif</span>`;}catch(e){$("status").innerHTML='<span class="err">❌ '+esc(e.message||e)+'</span>';}}
+async function refresh(){$("status").textContent="⏳ Membaca data Firebase...";try{await loadAll();render();$("status").innerHTML=employeeMode?`<span class="ok">✓ Menampilkan rincian upah akun Anda • Absensi terbaca ${absensi.length}</span>`:`<span class="ok">✓ ${accounts.length} karyawan • Absensi ${absensi.length} • Pengeluaran ${pengeluaran.length} • Isolasi aktif</span>`;}catch(e){$("status").innerHTML='<span class="err">❌ '+esc(e.message||e)+'</span>';}}
 $("refreshBtn").onclick=refresh;$("refresh2").onclick=refresh;$("cari").oninput=render;
 $("periode").onchange=()=>{const p=$("periode").value,f=$("periodeTanggal");f.type=p==="hari"?"date":"month";f.value=p==="hari"?today():monthNow();refresh();};
 $("periodeTanggal").onchange=refresh;$("periodeTanggal").value=monthNow();

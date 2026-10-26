@@ -288,15 +288,19 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 }
 #qrPopup .qr-code-wrap img,
 #qrPopup .qr-code-wrap canvas {
-  display: block;
+  display: block !important;
   width: 100% !important;
-  max-width: 440px !important;
-  height: auto !important;
+  max-width: 400px !important;
+  height: 160px !important;
+  min-height: 120px !important;
   image-rendering: crisp-edges;
-  background:#fff;
+  background:#fff !important;
   border-radius:8px;
   padding:8px;
+  border:2px solid #111827;
+  margin:auto;
 }
+#qrCanvas { display:block !important; visibility:visible !important; opacity:1 !important; }
 #qrPopup .barcode-number {
   width: 100%;
   max-width: 100%;
@@ -507,9 +511,18 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 
 <div class="popup" id="qrPopup" style="z-index:10050">
  <div class="qr-ticket">
-  <div class="qr-ticket-head">
-   <div class="qr-brand"><strong id="qrNamaKonter">FIXZY</strong><span>SOFTWARE HARDWARE SOLUTION</span><small id="qrAlamatKonter">NOTA SERVIS DIGITAL</small></div>
-   <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>SCAN QR UNTUK MELIHAT DETAIL SERVIS</span></div>
+  <div class="qr-ticket-head" style="flex-direction:column; align-items:flex-start; gap:8px;">
+   <div style="width:100%; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div class="qr-brand" style="flex:1; min-width:180px;">
+      <strong id="qrNamaKonter" style="font-size:26px; letter-spacing:-0.5px;">A YUDI THEA</strong>
+      <span style="display:block; margin-top:4px; font-size:11px; font-weight:800; letter-spacing:0;">Nama Akun: <b id="qrNamaAkun">-</b> • <span id="qrEmailAkun">-</span></span>
+      <small id="qrAlamatKonter" style="display:block; margin-top:2px; font-size:11px; font-weight:800;">No WA Akun: <b id="qrWaAkun">-</b></small>
+    </div>
+    <div class="qr-head-title" style="text-align:right; min-width:140px;">
+      <strong>NOTA SERVIS</strong><span>BARCODE SERVIS - CODE128</span>
+      <div style="margin-top:6px; background:#ffc107; color:#111827; padding:4px 8px; border-radius:6px; border:1.5px solid #111827; font-size:10px; font-weight:900;" id="qrNotaBadge">SRV-....</div>
+    </div>
+   </div>
   </div>
   <div class="qr-main">
    <div class="qr-frame">
@@ -641,12 +654,20 @@ function getAlamatKonter(){
  return String(p.alamatKonter||p.alamatToko||p.alamatUsaha||p.alamat||"").trim();
 }
 function updateQrBrand(nama=getNamaKonter()){
- const brand=String(nama||getNamaKonter()).trim()||"FIXZY";
+ const brand=String(nama||getNamaKonter()).trim()||"A YUDI THEA";
+ const namaAkun=String(profile?.nama||profile?.namaLengkap||"").trim() || (window.currentUserEmail||"").split('@')[0] || "A Yudi Thea";
+ const emailAkun=window.currentUserEmail||"";
+ const waAkun=String(profile?.wa||profile?.noWa||profile?.whatsapp||businessProfile?.wa||businessProfile?.noWa||"").trim() || "-";
  ["qrNamaKonter","qrNamaKonterFooter"].forEach(id=>{const el=$(id);if(el)el.textContent=brand;});
- const alamat=getAlamatKonter();
- const a=$("qrAlamatKonter");if(a)a.textContent=alamat||"NOTA SERVIS DIGITAL";
- const f=$("qrAlamatFooter");if(f)f.textContent=alamat||"Nota Servis Digital";
+ const elNama=$("qrNamaAkun"); if(elNama) elNama.textContent=namaAkun;
+ const elEmail=$("qrEmailAkun"); if(elEmail) elEmail.textContent=emailAkun;
+ const elWa=$("qrWaAkun"); if(elWa) elWa.textContent=waAkun;
+ const elBadge=$("qrNotaBadge"); if(elBadge && window.qrCurrentData?.nomorNota) elBadge.textContent=window.qrCurrentData.nomorNota;
+ const a=$("qrAlamatKonter"); if(a && a.tagName!=="SMALL") a.textContent=waAkun; // compatibility
+ const f=$("qrAlamatFooter");if(f)f.textContent=brand;
 }
+window.currentUserEmail = "";
+
 
 function notaBaru(){
  const d=new Date(),p=n=>String(n).padStart(2,"0");
@@ -1196,6 +1217,7 @@ function getCustomerWa(d){
  return p.wa||p.noWa||p.noWA||p.nomorWa||p.nomorWA||p.whatsapp||p.noWhatsApp||p.noWhatsapp||p.telepon||p.noTelepon||p.hp||p.nomorHp||p.noHp||d?.waPelanggan||d?.noWa||d?.noWA||d?.nomorWa||d?.nomorWA||d?.whatsapp||d?.noWhatsApp||d?.noWhatsapp||d?.telepon||d?.nomorHp||d?.noHp||"";
 }
 function isiKartuServis(d){
+ try{ const badge=document.getElementById('qrNotaBadge'); if(badge) badge.textContent=String(d.nomorNota||'').trim(); }catch(e){}
  const set=(id,value)=>{const el=$(id);if(el)el.textContent=(value===undefined||value===null||String(value)==="")?"-":String(value)};
  const pay=d.estimasi||{};
  set("ticketNama",d.pelanggan?.nama);
@@ -1217,58 +1239,92 @@ function isiKartuServis(d){
 }
 
 async function loadJsBarcode(){
- if(window.JsBarcode)return;
- await new Promise((resolve,reject)=>{
-  const urls=['https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js','https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'];
-  let i=0;
-  const next=()=>{
-   if(window.JsBarcode){resolve();return;}
-   if(i>=urls.length){reject(new Error('Pustaka barcode tidak berhasil dimuat. Periksa koneksi internet.'));return;}
-   const script=document.createElement('script');script.src=urls[i++];script.async=true;
-   script.onload=()=>window.JsBarcode?resolve():next();script.onerror=next;document.head.appendChild(script);
-  };next();
- });
+ if(window.JsBarcode) return;
+ const urls=[
+   'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
+   'https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js',
+   'https://unpkg.com/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
+   'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js'
+ ];
+ for(let u of urls){
+   try{
+     await new Promise((res,rej)=>{
+       const s=document.createElement('script'); s.src=u; s.async=false;
+       s.onload=()=>res(); s.onerror=()=>rej(); document.head.appendChild(s);
+       setTimeout(()=>res(), 3000); // timeout
+     });
+     if(window.JsBarcode){ console.log('JsBarcode loaded from', u); return; }
+   }catch(e){ console.warn('gagal load', u, e); }
+ }
+ if(!window.JsBarcode) throw new Error('Pustaka barcode tidak bisa dimuat (CDN terblokir). Cek internet.');
 }
 async function showQR(d){
  qrCurrentData=d;
- updateQrBrand(d.namaKonter||getNamaKonter());
+ try{ updateQrBrand(d.namaKonter||getNamaKonter()); }catch(e){ console.warn(e); }
  isiKartuServis(d);
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
  const nomorLengkap=String(d.nomorNota||'').trim();
+ const shortNum=nomorNotaPendek(d.nomorNota);
  $('qrNotaNumber').textContent=nomorLengkap;
- $('qrStatus').textContent='Membuat barcode premium A YUDI THEA...';
+ const badge=document.getElementById('qrNotaBadge'); if(badge) badge.textContent=nomorLengkap;
+ $('qrStatus').textContent='Membuat barcode...';
  $('qrPopup').classList.add('show');
- const canvas=$('qrCanvas'),ctx=canvas.getContext('2d');
- // resolusi tinggi untuk hasil JPG yang tajam
- canvas.width=1000;canvas.height=260;
- ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ // Tunggu popup render dulu biar canvas tidak 0
+ await new Promise(r=>setTimeout(r, 150));
+
+ const canvas=$('qrCanvas');
+ if(!canvas){ console.error('canvas qrCanvas tidak ada'); return; }
+ const ctx=canvas.getContext('2d');
+ // Ukuran optimal untuk HP & cetak JPG - tidak terlalu besar biar tidak blank di HP
+ canvas.width=600;
+ canvas.height=180;
+ ctx.fillStyle='#ffffff';
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ let barcodeOk=false;
  try{
   await loadJsBarcode();
-  // Barcode premium: tebal, dengan text di bawahnya
-  window.JsBarcode(canvas,nomorLengkap,{
-    format:'CODE128',
-    lineColor:'#0b0f14',
-    background:'#ffffff',
-    width:2.6,
-    height:95,
-    displayValue:true,
-    font:'ui-monospace, monospace',
-    fontSize:20,
-    fontOptions:'bold',
-    textMargin:10,
-    margin:14,
-    marginTop:14,
-    marginBottom:14
-  });
-  $('qrStatus').textContent=qrPublicSaved?'Barcode premium A YUDI THEA siap dipindai.':'Barcode premium terbentuk, tetapi data cek publik belum berhasil disimpan. Periksa izin cek publik.';
+  if(window.JsBarcode){
+    window.JsBarcode(canvas, nomorLengkap, {
+      format:'CODE128',
+      lineColor:'#000000',
+      background:'#ffffff',
+      width:2.2,
+      height:70,
+      displayValue:true,
+      font:'Courier New, monospace',
+      fontSize:16,
+      fontOptions:'bold',
+      textMargin:8,
+      margin:10
+    });
+    barcodeOk=true;
+    $('qrStatus').textContent=qrPublicSaved?'✅ Barcode siap - '+nomorLengkap : '✅ Barcode siap - cek publik belum tersimpan, tapi barcode tetap bisa discan';
+    console.log('Barcode berhasil:', nomorLengkap);
+  }
  }catch(e){
-  console.error('Barcode gagal dibuat:',e);
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  console.error('Barcode JsBarcode gagal:', e);
+ }
+
+ if(!barcodeOk){
+  // FALLBACK: gambar barcode manual simple + teks besar - dijamin selalu muncul
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#000000';
+  // gambar garis-garis dummy biar keliatan barcode
+  let x=20;
+  for(let i=0;i<nomorLengkap.length*3;i++){
+    const w=(i%3===0)?3:1.5;
+    if(x<canvas.width-20){ ctx.fillRect(x, 10, w, 90); }
+    x+=w+1.5;
+  }
   ctx.fillStyle='#111827';
-  ctx.font='bold 22px monospace';
+  ctx.font='bold 16px Courier New, monospace';
   ctx.textAlign='center';
-  ctx.fillText(nomorLengkap, canvas.width/2, canvas.height/2);
-  $('qrStatus').textContent='Barcode fallback text: '+e.message;
+  ctx.fillText(nomorLengkap, canvas.width/2, 135);
+  ctx.font='10px Arial';
+  ctx.fillText('BARCODE FALLBACK - Nomor tetap bisa dibaca', canvas.width/2, 155);
+  $('qrStatus').textContent='⚠️ CDN barcode terblokir, pakai fallback manual. Nomor tetap: '+nomorLengkap;
  }
 }
 let notaJpgSiap=false;
@@ -1463,6 +1519,7 @@ onAuthStateChanged(auth,async user=>{
   }
   updateQrBrand();
 
+  window.currentUserEmail = user.email||"";
   $("headerEmail").textContent=user.email||"-";
 
   const roleLabel={

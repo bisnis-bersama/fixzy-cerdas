@@ -342,7 +342,17 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  <div class="card">
   <div class="title">Data Pelanggan</div>
   <div class="grid">
-   <div><label>NAMA PELANGGAN *</label><input id="namaPelanggan"></div>
+   <div>
+    <label>NAMA PELANGGAN *</label>
+    <div class="product-search">
+     <input id="namaPelanggan" list="listPelangganStatic" autocomplete="off" placeholder="Ketik nama pelanggan baru">
+     <datalist id="listPelangganStatic">
+       <option value="Pelanggan"></option>
+     </datalist>
+     <div id="hasilPelanggan" class="results" style="display:none"></div>
+    </div>
+    <div style="font-size:10px;color:#64748b;margin-top:4px;font-weight:700">Bisa pilih "Pelanggan" atau ketik manual nama pelanggan baru</div>
+   </div>
    <div>
      <label>NO. WA *</label>
      <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">

@@ -327,8 +327,8 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   text-align: center;
 }
 
-/* === BARCODE SAMA DENGAN NOTA PENJUALAN - HANYA INI YANG DIGANTI === */
-.ticket-qr{display:flex;align-items:center;gap:14px;margin:0 17px 16px;padding:13px;border:1px solid #e5e7eb;border-radius:12px;min-width:0;background:#fff;max-width:560px;margin-left:auto;margin-right:auto}
+/* BARCODE QR SAMA KAYAK PENJUALAN */
+.ticket-qr{display:flex;align-items:center;gap:14px;margin:0 auto 16px;padding:13px;border:1px solid #e5e7eb;border-radius:12px;min-width:0;background:#fff;max-width:560px}
 .ticket-qr-frame{flex:0 0 148px;width:148px;height:148px;border:2px solid #ffc107;border-radius:10px;padding:6px;background:#fff}
 .ticket-qr-frame img{display:block;width:100%;height:100%;object-fit:contain}
 .ticket-qr-copy{min-width:0;overflow-wrap:anywhere;text-align:left}
@@ -370,17 +370,10 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   </div>
  </div>
 
-   <div class="card">
-  <div class="title">Data Pelanggan - Nama Saja (Pelanggan Baru Ketik Manual)</div>
+  <div class="card">
+  <div class="title">Data Pelanggan</div>
   <div class="grid">
-   <div class="full">
-    <label>NAMA PELANGGAN BARU / CARI NAMA PELANGGAN *</label>
-    <div class="product-search">
-     <input id="namaPelanggan" placeholder="Ketik nama pelanggan baru atau pilih dari daftar">
-     <div id="hasilPelanggan" class="results"></div>
-    </div>
-    <div id="pelangganTerpilih" class="selected empty">Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada</div>
-   </div>
+   <div><label>NAMA PELANGGAN *</label><input id="namaPelanggan" placeholder="Nama pelanggan baru"></div>
    <div>
      <label>NO. WA *</label>
      <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
@@ -388,24 +381,6 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
    <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat pelanggan"></textarea></div>
   </div>
  </div>
-    <div id="pelangganTerpilih" class="selected empty">Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada</div>
-   </div>
-   <div>
-     <label>NO. WA *</label>
-     <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
-    </div>
-   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat pelanggan"></textarea></div>
-  </div>
- </div>
-    <div id="pelangganTerpilih" class="selected empty">Belum memilih - ketik manual di bawah atau pilih dari daftar</div>
-   </div>
-   <div><label>NAMA PELANGGAN *</label><input id="namaPelanggan" placeholder="Ketik manual atau pilih di atas"></div>
-   <div>
-     <label>NO. WA *</label>
-     <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
-    </div>
-   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat (otomatis terisi jika pilih pelanggan)"></textarea></div>
-  </div>
  </div>
 
  <div class="card">
@@ -490,8 +465,8 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   </div>
  </div>
 
- <div class="card">
-  <div class="title">Teknisi & Status Servis - Otomatis Akun Login</div>
+  <div class="card">
+  <div class="title">Teknisi & Status Servis</div>
   <div id="infoAkunLogin" class="selected" style="background:#111827;color:#fff;border:2px solid #111827;box-shadow:3px 3px 0 #ffc107;margin-bottom:10px">Memuat akun login...</div>
   <div class="grid">
    <div><label>TEKNISI * (Otomatis Akun Login)</label><select id="teknisi"><option value="">-- Memuat akun login --</option></select></div>
@@ -503,6 +478,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
     <option value="diambil">Diambil</option>
    </select></div>
   </div>
+ </div>
  </div>
 
  <div class="card">
@@ -527,10 +503,11 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
     </div>
     <div class="ticket-qr-copy">
      <strong>SCAN QR NOTA</strong>
-     <p>Scan untuk membuka halaman pemeriksaan nota servis. Pelanggan bisa cek status tanpa login.</p>
+     <p>Scan untuk membuka halaman pemeriksaan nota servis.</p>
      <code id="qrNotaNumber">SRV-....</code>
     </div>
    </div>
+  </div>
    <p class="qr-caption" style="font-size:11px;color:#64748b;text-align:center;margin-top:6px">Barcode sama persis dengan nota penjualan</p>
   </div>
   <div class="ticket-section">
@@ -616,7 +593,7 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 
 let uid=null,businessUid=null,profile={},businessProfile={},role="";
-let products=[],employees=[],pelangganList=[],selectedPelanggan=null,selectedProduct=null,pendingData=null;
+let products=[],employees=[],selectedProduct=null,pendingData=null;
 let selectedTemplate=2,pageReady=false;
 let polaUrutan=[];
 
@@ -717,101 +694,16 @@ function hitung(){
  $(id).addEventListener("input",hitung);
 });
 
-
-async function loadPelanggan(){
- pelangganList=[];
- try{
-  // Coba beberapa kemungkinan koleksi pelanggan
-  const collectionsToTry = ["pelanggan","customers","customer","pelanggan_list"];
-  for(const colName of collectionsToTry){
-   try{
-    const q = query(collection(db,colName), where("ownerUid","==",businessUid));
-    const snap = await getDocs(q);
-    if(!snap.empty){
-     pelangganList = snap.docs.map(d=>({id:d.id, ...d.data()}));
-     if(pelangganList.length>0) break;
-    }
-   }catch(e){}
-  }
-  // Fallback: coba tanpa filter ownerUid, filter di client
-  if(pelangganList.length===0){
-   try{
-    const q2 = query(collection(db,"pelanggan"));
-    const snap2 = await getDocs(q2);
-    const all = snap2.docs.map(d=>({id:d.id, ...d.data()}));
-    pelangganList = all.filter(p=>{
-     const owner = String(p.ownerUid||p.ownerId||p.uid||"");
-     return !owner || owner===businessUid;
-    }).slice(0,100);
-   }catch(e){}
-  }
- }catch(e){
-  console.warn("Gagal load pelanggan:",e);
- }
-}
-
-function filterPelanggan(q=""){
- const box=$("hasilPelanggan");
- const key=String(q).trim().toLowerCase();
- if(!key){
-  box.classList.remove("show");
-  return;
- }
- const list=pelangganList.filter(p=>{
-  const nama=String(p.nama||p.namaPelanggan||"").toLowerCase();
-  return nama.includes(key);
- }).slice(0,30);
-
- if(!list.length){
-  box.innerHTML='<div class="result">Pelanggan baru - ketik nama saja, akan disimpan sebagai pelanggan baru</div>';
- }else{
-  box.innerHTML=list.map(p=>`
-   <button type="button" class="result" data-id="${p.id}">
-    <div class="pname">${esc(p.nama||p.namaPelanggan||"-")}</div>
-    <div class="pmeta">Nama pelanggan saja - klik untuk pakai nama ini</div>
-   </button>`).join("");
- }
- box.classList.add("show");
-}
-
-function pilihPelangganById(id){
- const p=pelangganList.find(x=>x.id===id);
- if(!p)return;
- selectedPelanggan=p;
- // HANYA NAMA SAJA - sesuai request, jangan sama WA nya
- $("namaPelanggan").value=String(p.nama||p.namaPelanggan||"");
- $("pelangganTerpilih").className="selected";
- $("pelangganTerpilih").innerHTML=`<b>${esc(p.nama||"-")}</b> • Dipilih - pelanggan baru cukup nama saja`;
- $("hasilPelanggan").classList.remove("show");
-}
-
-
-function pilihPelangganById(id){
- const p=pelangganList.find(x=>x.id===id);
- if(!p)return;
- selectedPelanggan=p;
- $("namaPelanggan").value=String(p.nama||p.namaPelanggan||"");
- $("waPelanggan").value=String(p.wa||p.noWa||p.telepon||p.hp||"");
- $("alamatPelanggan").value=String(p.alamat||"");
- $("pelangganTerpilih").className="selected";
- $("pelangganTerpilih").innerHTML=`<b>${esc(p.nama||"-")}</b> • ${esc(p.wa||"-")} • Dipilih dari daftar`;
- $("hasilPelanggan").classList.remove("show");
- $("namaPelanggan").value=p.nama||"";
-}
-
-
 async function loadEmployees(){
- // TEKNISI SESUAI AKUN LOGIN - sesuai request user
+ // TIDAK NYARI KEMANA-MANA - TEKNISI SESUAI AKUN LOGIN
  employees=[];
- const namaAkun = String(profile.nama||profile.displayName||profile.name||uid||"").trim();
- const emailAkun = String(profile.email||"").trim();
- const display = namaAkun || emailAkun || "Akun Login";
- 
- $("teknisi").innerHTML=`<option value="${uid}" selected>✅ ${esc(display)} (Akun Login)</option>`;
- 
+ const namaAkun = String(profile.nama||profile.displayName||profile.name||"").trim() || String(profile.email||"").split("@")[0] || "Akun Login";
+ const uidVal = String(uid||"").trim();
+ $("teknisi").innerHTML=`<option value="${uidVal}" selected>✅ ${esc(namaAkun)} (Akun Login)</option>`;
  const infoEl=$("infoAkunLogin");
  if(infoEl){
-  infoEl.innerHTML=`Login sebagai: <b>${esc(display)}</b> • Teknisi otomatis akun ini • Owner: <b>${esc(businessUid)}</b>`;
+  infoEl.innerHTML=`Login: <b>${esc(namaAkun)}</b> • Teknisi otomatis akun ini`;
+  infoEl.className="selected";
  }
 }
 
@@ -943,38 +835,6 @@ function filterProduk(q=""){
 $("cariProduk").addEventListener("input",e=>filterProduk(e.target.value));
 $("cariProduk").addEventListener("focus",e=>filterProduk(e.target.value));
 
-
-$("namaPelanggan").addEventListener("input",e=>{
- const val=e.target.value.trim();
- filterPelanggan(val);
- if(val && selectedPelanggan && val!==String(selectedPelanggan.nama||selectedPelanggan.namaPelanggan||"")){
-  selectedPelanggan=null;
-  $("pelangganTerpilih").className="selected empty";
-  $("pelangganTerpilih").textContent="Pelanggan baru: "+val+" - cukup nama saja";
- }else if(!val){
-  selectedPelanggan=null;
-  $("pelangganTerpilih").className="selected empty";
-  $("pelangganTerpilih").textContent="Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada";
- }
-});
-$("namaPelanggan").addEventListener("focus",e=>filterPelanggan(e.target.value));
-$("hasilPelanggan").addEventListener("click",e=>{
- const b=e.target.closest(".result[data-id]");
- if(!b)return;
- pilihPelangganById(b.dataset.id);
-});
-
-document.addEventListener("click",e=>{
- const w1=document.querySelectorAll(".product-search");
- w1.forEach(w=>{
-  if(!w.contains(e.target)){
-   const res=w.querySelector(".results");
-   if(res)res.classList.remove("show");
-  }
- });
-});
-
-
 $("hasilProduk").addEventListener("click",e=>{
  const b=e.target.closest(".result[data-id]");
  if(!b)return;
@@ -997,26 +857,6 @@ $("produkManual").addEventListener("input",()=>{
   $("produkTerpilih").className="selected";
   $("produkTerpilih").textContent="Manual: "+$("produkManual").value;
  }
-});
-
-$("namaPelanggan").addEventListener("input",e=>{
- const val=e.target.value.trim();
- filterPelanggan(val);
- if(val && selectedPelanggan && val!==String(selectedPelanggan.nama||selectedPelanggan.namaPelanggan||"")){
-  selectedPelanggan=null;
-  $("pelangganTerpilih").className="selected empty";
-  $("pelangganTerpilih").textContent="Pelanggan baru: "+val+" - cukup nama saja";
- }else if(!val){
-  selectedPelanggan=null;
-  $("pelangganTerpilih").className="selected empty";
-  $("pelangganTerpilih").textContent="Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada";
- }
-});
-$("namaPelanggan").addEventListener("focus",e=>filterPelanggan(e.target.value));
-$("hasilPelanggan").addEventListener("click",e=>{
- const b=e.target.closest(".result[data-id]");
- if(!b)return;
- pilihPelangganById(b.dataset.id);
 });
 
 document.addEventListener("click",e=>{
@@ -1362,14 +1202,13 @@ async function showQR(d){
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
  const nomorLengkap=String(d.nomorNota||'').trim();
  $('qrPopup').classList.add('show');
- // BARCODE SAMA DENGAN NOTA PENJUALAN - QR api.qrserver.com
  const scanUrl = getPublicCheckUrl(nomorLengkap);
  const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=560x560&margin=2&color=111111&bgcolor=FFFFFF&data='+encodeURIComponent(scanUrl);
  const img=$('qrCanvas');
  img.crossOrigin='anonymous';
  img.src=qrUrl;
  $('qrNotaNumber').textContent=nomorLengkap;
- $('qrStatus').textContent='✅ Barcode sama kayak nota penjualan - '+nomorLengkap;
+ $('qrStatus').textContent='✅ QR sama kayak penjualan - '+nomorLengkap;
 }
 let notaJpgSiap=false;
 let notaJpgBlob=null;
@@ -1585,13 +1424,12 @@ onAuthStateChanged(auth,async user=>{
   setInfo();
 
   await loadEmployees();
-  await loadPelanggan();
-  await loadProducts();
+  try{ await loadProducts(); }catch(e){ console.warn(e); }
 
   pageReady=true;
 
   $("saveStatus").textContent=
-   `${products.length} produk • ${pelangganList.length} pelanggan • teknisi: akun login`;
+   `${products.length} produk • ${employees.length} teknisi • akun terisolasi`;
 
   setNotice(
    `Akun aktif: ${roleLabel} • Business UID: ${businessUid} • Data dibatasi ke owner ini.`,

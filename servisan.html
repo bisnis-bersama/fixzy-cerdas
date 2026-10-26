@@ -326,6 +326,16 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   line-height: 1.5;
   text-align: center;
 }
+
+/* BARCODE QR SAMA KAYAK PENJUALAN */
+.ticket-qr{display:flex;align-items:center;gap:14px;margin:0 auto 16px;padding:13px;border:1px solid #e5e7eb;border-radius:12px;min-width:0;background:#fff;max-width:560px}
+.ticket-qr-frame{flex:0 0 148px;width:148px;height:148px;border:2px solid #ffc107;border-radius:10px;padding:6px;background:#fff}
+.ticket-qr-frame img{display:block;width:100%;height:100%;object-fit:contain}
+.ticket-qr-copy{min-width:0;overflow-wrap:anywhere;text-align:left}
+.ticket-qr-copy strong{display:block;font-size:12px;font-weight:900;color:#111}
+.ticket-qr-copy p{font-size:11px;color:#6b7280;margin-top:4px;line-height:1.4}
+.ticket-qr-copy code{font-size:11px;color:#92400e;font-weight:800;display:block;margin-top:6px;word-break:break-all}
+
 </style>
 </head>
 
@@ -361,38 +371,9 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 
   <div class="card">
-  <div class="title">Data Pelanggan - Pilih di Sini (Static, Tidak Load Dari Mana Pun)</div>
+  <div class="title">Data Pelanggan</div>
   <div class="grid">
-   <div class="full">
-    <label>PILIH NAMA PELANGGAN / KETIK BARU *</label>
-    <select id="pilihNamaPelanggan" style="width:100%;padding:11px;border:2px solid #111827;border-radius:8px;background:#fff;font:inherit;box-shadow:2px 2px 0 #111827">
-     <option value="">-- Pilih Nama Pelanggan --</option>
-     <option value="__BARU__">+ Pelanggan Baru (Ketik Manual di Bawah)</option>
-     <option value="Budi">Budi</option>
-     <option value="Siti">Siti</option>
-     <option value="Agus">Agus</option>
-     <option value="Rina">Rina</option>
-     <option value="Joko">Joko</option>
-     <option value="Dewi">Dewi</option>
-     <option value="Andi">Andi</option>
-     <option value="Lina">Lina</option>
-     <option value="Eko">Eko</option>
-     <option value="Yudi">Yudi</option>
-     <option value="Thea">Thea</option>
-     <option value="Pelanggan Umum">Pelanggan Umum</option>
-    </select>
-    <div id="inputNamaBaruWrap" style="display:none;margin-top:10px">
-     <label>NAMA PELANGGAN BARU *</label>
-     <input id="namaPelangganBaru" placeholder="Ketik nama pelanggan baru di sini" style="width:100%;padding:11px;border:2px solid #111827;border-radius:8px;background:#fff;box-shadow:2px 2px 0 #111827">
-    </div>
-    <input type="hidden" id="namaPelanggan">
-    <div id="pelangganTerpilih" class="selected empty" style="margin-top:8px">Pilih nama di atas - atau pilih Pelanggan Baru untuk ketik manual</div>
-   </div>
-   <div>
-     <label>NO. WA *</label>
-     <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
-    </div>
-   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat pelanggan"></textarea></div>
+   <div class="full"><label>NAMA PELANGGAN *</label><input id="namaPelanggan" placeholder="Nama pelanggan (hanya 1 field)"></div>
   </div>
  </div>
 
@@ -479,7 +460,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 
   <div class="card">
-  <div class="title">Teknisi & Status Servis - Otomatis Akun Login</div>
+  <div class="title">Teknisi & Status Servis</div>
   <div id="infoAkunLogin" class="selected" style="background:#111827;color:#fff;border:2px solid #111827;box-shadow:3px 3px 0 #ffc107;margin-bottom:10px">Memuat akun login...</div>
   <div class="grid">
    <div><label>TEKNISI * (Otomatis)</label><select id="teknisi"><option value="">-- Memuat akun login --</option></select></div>
@@ -509,14 +490,19 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
    <div class="qr-brand"><strong id="qrNamaKonter">FIXZY</strong><span>SOFTWARE HARDWARE SOLUTION</span><small id="qrAlamatKonter">NOTA SERVIS DIGITAL</small></div>
    <div class="qr-head-title"><strong>NOTA SERVIS</strong><span>SCAN QR UNTUK MELIHAT DETAIL SERVIS</span></div>
   </div>
-  <div class="qr-main">
-   <div class="qr-frame">
-    <div class="qr-code-wrap barcode-wrap">
-     <canvas id="qrCanvas" width="900" height="180" aria-label="Barcode nomor nota"></canvas>
+    <div class="qr-main">
+   <div class="ticket-qr">
+    <div class="ticket-qr-frame">
+     <img id="qrCanvas" crossorigin="anonymous" alt="QR Nota" style="display:block;width:100%;height:100%;object-fit:contain">
     </div>
-    <div class="qr-number barcode-number"><span>NOMOR NOTA</span><strong id="qrNotaNumber">----</strong></div>
+    <div class="ticket-qr-copy">
+     <strong>SCAN QR NOTA</strong>
+     <p>Scan untuk membuka halaman pemeriksaan nota servis.</p>
+     <code id="qrNotaNumber">SRV-....</code>
+    </div>
    </div>
-   <p class="qr-caption">Scan QR ini untuk melihat detail servis<br>secara online tanpa perlu login.</p>
+  </div>
+   <p class="qr-caption" style="font-size:11px;color:#64748b;text-align:center;margin-top:6px">Barcode sama persis dengan nota penjualan</p>
   </div>
   <div class="ticket-section">
    <div class="ticket-section-title">● DATA PELANGGAN</div>
@@ -702,37 +688,6 @@ function hitung(){
  $(id).addEventListener("input",hitung);
 });
 
-
-function syncNamaPelanggan(){
- const pilih=$("pilihNamaPelanggan").value;
- const wrap=$("inputNamaBaruWrap");
- const hidden=$("namaPelanggan");
- const info=$("pelangganTerpilih");
- if(pilih==="__BARU__"){
-  wrap.style.display="block";
-  const baru=$("namaPelangganBaru").value.trim();
-  hidden.value=baru;
-  if(baru){
-   info.className="selected";
-   info.textContent="Pelanggan baru: "+baru+" (hanya nama saja, tidak load dari mana pun)";
-  }else{
-   info.className="selected empty";
-   info.textContent="Ketik nama pelanggan baru di bawah";
-  }
- }else if(pilih){
-  wrap.style.display="none";
-  hidden.value=pilih;
-  info.className="selected";
-  info.textContent="Dipilih: "+pilih+" (static di file, tidak load dari data manapun)";
- }else{
-  wrap.style.display="none";
-  hidden.value="";
-  info.className="selected empty";
-  info.textContent="Pilih nama di atas - atau pilih Pelanggan Baru untuk ketik manual";
- }
-}
-
-
 async function loadEmployees(){
  employees=[];
  const namaAkun = String(profile.nama||profile.displayName||profile.name||"").trim() || String(profile.email||"").split("@")[0] || "Akun Login";
@@ -872,9 +827,6 @@ function filterProduk(q=""){
 
 $("cariProduk").addEventListener("input",e=>filterProduk(e.target.value));
 $("cariProduk").addEventListener("focus",e=>filterProduk(e.target.value));
-$("pilihNamaPelanggan").addEventListener("change",syncNamaPelanggan);
-$("namaPelangganBaru").addEventListener("input",syncNamaPelanggan);
-
 
 $("hasilProduk").addEventListener("click",e=>{
  const b=e.target.closest(".result[data-id]");
@@ -928,13 +880,13 @@ window.hapusPola=function(){
 };
 
 function buildData(){
- const nama=($("namaPelanggan").value.trim() || $("namaPelangganBaru")?.value.trim() || "");
- const wa=$("waPelanggan").value.trim();
+ const nama=$("namaPelanggan").value.trim();
+ const waEl=$("waPelanggan");
+ const wa=waEl ? waEl.value.trim() : "-";
  const hp=$("brandTipe").value.trim();
  const kerusakan=$("kerusakan").value.trim();
 
- if(!nama)throw new Error("Nama wajib");
- if(!wa)throw new Error("WA wajib");
+ if(!nama)throw new Error("Nama pelanggan wajib - hanya 1 field ini yang dibutuhkan");
  if(!hp)throw new Error("Brand wajib");
  if(!kerusakan)throw new Error("Kerusakan wajib");
 
@@ -1001,8 +953,8 @@ function buildData(){
 
   pelanggan:{
    nama,
-   wa,
-   alamat:$("alamatPelanggan").value.trim()
+   wa:wa||"-",
+   alamat:($("alamatPelanggan")?$("alamatPelanggan").value.trim():"-")
   },
 
   servisan:{
@@ -1242,21 +1194,14 @@ async function showQR(d){
  isiKartuServis(d);
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
  const nomorLengkap=String(d.nomorNota||'').trim();
- $('qrNotaNumber').textContent=nomorLengkap;
- $('qrStatus').textContent='Membuat barcode nomor nota...';
  $('qrPopup').classList.add('show');
- const canvas=$('qrCanvas'),ctx=canvas.getContext('2d');
- canvas.width=900;canvas.height=180;
- ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
- try{
-  await loadJsBarcode();
-  window.JsBarcode(canvas,nomorLengkap,{format:'CODE128',lineColor:'#000000',background:'#ffffff',width:2.2,height:125,displayValue:false,margin:10});
-  $('qrStatus').textContent=qrPublicSaved?'Barcode nomor nota siap dipindai.':'Barcode terbentuk, tetapi data cek publik belum berhasil disimpan. Periksa izin cek publik.';
- }catch(e){
-  console.error('Barcode gagal dibuat:',e);
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  $('qrStatus').textContent='Barcode gagal dibuat: '+e.message;
- }
+ const scanUrl = getPublicCheckUrl(nomorLengkap);
+ const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=560x560&margin=2&color=111111&bgcolor=FFFFFF&data='+encodeURIComponent(scanUrl);
+ const img=$('qrCanvas');
+ img.crossOrigin='anonymous';
+ img.src=qrUrl;
+ $('qrNotaNumber').textContent=nomorLengkap;
+ $('qrStatus').textContent='✅ QR sama kayak penjualan - '+nomorLengkap;
 }
 let notaJpgSiap=false;
 let notaJpgBlob=null;

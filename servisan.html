@@ -263,61 +263,78 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  #qrPopup .ticket-table>div{font-size:8px!important}
  #qrPopup .qr-brand small{max-width:90px!important}
 }
-/* QR NOTA SERVIS — gaya seperti nota penjualan */
+/* QR NOTA SERVIS — BARCODE PREMIUM A YUDI THEA */
 #qrPopup .qr-frame {
   width: 100%;
-  max-width: 560px;
+  max-width: 580px;
   margin: auto;
-  padding: 14px;
-  border: 2px solid #e5e7eb;
-  border-radius: 20px;
-  background: #fff;
-}
-
-#qrPopup .qr-code-wrap {
-  width: 240px;
-  max-width: 100%;
-  margin: auto;
-  padding: 8px;
-  border: 4px solid #ffc107;
+  padding: 16px;
+  border: 3px solid #111827;
   border-radius: 18px;
   background: #fff;
+  box-shadow: 6px 6px 0 #111827;
 }
-
+#qrPopup .qr-code-wrap {
+  width: 100%;
+  max-width: 100%;
+  margin: auto;
+  padding: 14px 12px;
+  border: 2px dashed #111827;
+  border-radius: 14px;
+  background: repeating-linear-gradient(90deg,#fff,#fff 10px,#fffbeb 10px,#fffbeb 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 #qrPopup .qr-code-wrap img,
 #qrPopup .qr-code-wrap canvas {
   display: block;
   width: 100% !important;
+  max-width: 440px !important;
   height: auto !important;
-  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background:#fff;
+  border-radius:8px;
+  padding:8px;
 }
-
 #qrPopup .barcode-number {
   width: 100%;
   max-width: 100%;
-  margin-top: 12px;
-  padding: 12px;
-  background: #fff;
-  border: 0;
+  margin-top: 14px;
+  padding: 12px 10px;
+  background: #ffc107;
+  border: 2px solid #111827;
+  border-radius: 12px;
   text-align: center;
+  box-shadow: 3px 3px 0 #111827;
 }
-
 #qrPopup .barcode-number span {
   display: block;
-  margin-bottom: 7px;
-  color: #64748b;
-  font-size: 12px;
-  letter-spacing: 1px;
+  margin-bottom: 6px;
+  color: #111827;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
 }
-
 #qrPopup .barcode-number strong {
   display: block;
   color: #111827;
-  font-size: clamp(14px, 4vw, 20px);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(15px, 4vw, 22px);
   font-weight: 900;
-  letter-spacing: 0;
+  letter-spacing: 3px;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+#qrPopup .qr-caption {
+  margin-top: 10px;
+  font-weight: 800;
+  color: #111827;
+  background: #f8fafc;
+  border: 1.5px solid #111827;
+  border-radius: 8px;
+  padding: 8px;
 }
 
 #qrPopup .qr-caption {
@@ -360,39 +377,25 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   </div>
  </div>
 
-  <div class="card">
-  <div class="title">Data Pelanggan - Pilih di Sini (Static, Tidak Load Dari Mana Pun)</div>
+ <div class="card">
+  <div class="title">Data Pelanggan</div>
   <div class="grid">
-   <div class="full">
-    <label>PILIH NAMA PELANGGAN / KETIK BARU *</label>
-    <select id="pilihNamaPelanggan" style="width:100%;padding:11px;border:2px solid #111827;border-radius:8px;background:#fff;font:inherit;box-shadow:2px 2px 0 #111827">
-     <option value="">-- Pilih Nama Pelanggan --</option>
-     <option value="__BARU__">+ Pelanggan Baru (Ketik Manual di Bawah)</option>
-     <option value="Budi">Budi</option>
-     <option value="Siti">Siti</option>
-     <option value="Agus">Agus</option>
-     <option value="Rina">Rina</option>
-     <option value="Joko">Joko</option>
-     <option value="Dewi">Dewi</option>
-     <option value="Andi">Andi</option>
-     <option value="Lina">Lina</option>
-     <option value="Eko">Eko</option>
-     <option value="Yudi">Yudi</option>
-     <option value="Thea">Thea</option>
-     <option value="Pelanggan Umum">Pelanggan Umum</option>
-    </select>
-    <div id="inputNamaBaruWrap" style="display:none;margin-top:10px">
-     <label>NAMA PELANGGAN BARU *</label>
-     <input id="namaPelangganBaru" placeholder="Ketik nama pelanggan baru di sini" style="width:100%;padding:11px;border:2px solid #111827;border-radius:8px;background:#fff;box-shadow:2px 2px 0 #111827">
+   <div>
+    <label>NAMA PELANGGAN *</label>
+    <div class="product-search">
+     <input id="namaPelanggan" list="listPelangganStatic" autocomplete="off" placeholder="Ketik nama pelanggan baru">
+     <datalist id="listPelangganStatic">
+       <option value="Pelanggan"></option>
+     </datalist>
+     <div id="hasilPelanggan" class="results" style="display:none"></div>
     </div>
-    <input type="hidden" id="namaPelanggan">
-    <div id="pelangganTerpilih" class="selected empty" style="margin-top:8px">Pilih nama di atas - atau pilih Pelanggan Baru untuk ketik manual</div>
+    <div style="font-size:10px;color:#64748b;margin-top:4px;font-weight:700">Bisa pilih "Pelanggan" atau ketik manual nama pelanggan baru</div>
    </div>
    <div>
      <label>NO. WA *</label>
      <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
     </div>
-   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat pelanggan"></textarea></div>
+   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan"></textarea></div>
   </div>
  </div>
 
@@ -478,11 +481,11 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   </div>
  </div>
 
-  <div class="card">
-  <div class="title">Teknisi & Status Servis - Otomatis Akun Login</div>
-  <div id="infoAkunLogin" class="selected" style="background:#111827;color:#fff;border:2px solid #111827;box-shadow:3px 3px 0 #ffc107;margin-bottom:10px">Memuat akun login...</div>
+ <div class="card">
+  <div class="title">Teknisi & Status Servis</div>
+  <div id="infoAkunLogin" class="selected" style="margin-bottom:12px;background:#111827;color:#fff;border:2px solid #111827;box-shadow:3px 3px 0 #ffc107">Memuat akun login...</div>
   <div class="grid">
-   <div><label>TEKNISI * (Otomatis)</label><select id="teknisi"><option value="">-- Memuat akun login --</option></select></div>
+   <div><label>TEKNISI *</label><select id="teknisi"><option value="">-- Memuat akun login --</option></select></div>
    <div><label>STATUS</label><select id="status">
     <option value="masuk">Masuk</option>
     <option value="nunggu sparepart">Nunggu Part</option>
@@ -491,7 +494,6 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
     <option value="diambil">Diambil</option>
    </select></div>
   </div>
- </div>
  </div>
 
  <div class="card">
@@ -702,48 +704,38 @@ function hitung(){
  $(id).addEventListener("input",hitung);
 });
 
-
-function syncNamaPelanggan(){
- const pilih=$("pilihNamaPelanggan").value;
- const wrap=$("inputNamaBaruWrap");
- const hidden=$("namaPelanggan");
- const info=$("pelangganTerpilih");
- if(pilih==="__BARU__"){
-  wrap.style.display="block";
-  const baru=$("namaPelangganBaru").value.trim();
-  hidden.value=baru;
-  if(baru){
-   info.className="selected";
-   info.textContent="Pelanggan baru: "+baru+" (hanya nama saja, tidak load dari mana pun)";
-  }else{
-   info.className="selected empty";
-   info.textContent="Ketik nama pelanggan baru di bawah";
-  }
- }else if(pilih){
-  wrap.style.display="none";
-  hidden.value=pilih;
-  info.className="selected";
-  info.textContent="Dipilih: "+pilih+" (static di file, tidak load dari data manapun)";
- }else{
-  wrap.style.display="none";
-  hidden.value="";
-  info.className="selected empty";
-  info.textContent="Pilih nama di atas - atau pilih Pelanggan Baru untuk ketik manual";
- }
-}
-
-
 async function loadEmployees(){
  employees=[];
- const namaAkun = String(profile.nama||profile.displayName||profile.name||"").trim() || String(profile.email||"").split("@")[0] || "Akun Login";
- const uidVal = String(uid||"").trim();
- $("teknisi").innerHTML=`<option value="${uidVal}" selected>✅ ${esc(namaAkun)} (Akun Login)</option>`;
- const infoEl=$("infoAkunLogin");
- if(infoEl){
-  infoEl.innerHTML=`Login: <b>${esc(namaAkun)}</b> • Teknisi otomatis akun login`;
-  infoEl.className="selected";
+ try{
+   const q=query(
+    collection(db,"users"),
+    where("ownerUid","==",businessUid),
+    where("role","in",["employee","karyawan"]),
+    where("status","==","aktif")
+   );
+   const snap=await getDocs(q);
+   employees=snap.docs.map(d=>({id:d.id,...d.data()}));
+ }catch(e){
+   console.warn("loadEmployees gagal:", e);
+   employees=[];
+ }
+ // Teknisi dropdown akan diisi ulang di onAuthStateChanged dengan akun login sebagai default
+ const sel=$("teknisi");
+ if(sel){
+   sel.innerHTML = '<option value="">-- Pilih Teknisi --</option>'+
+     employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
  }
 }
+
+// ======== PELANGGAN STATIC - TIDAK AMBIL DARI DATA ========
+let daftarPelanggan = [{nama:"Pelanggan", wa:"", alamat:""}];
+// Tidak perlu load dari Firestore, cukup sediakan opsi "Pelanggan" dan bisa ketik manual
+async function loadPelanggan(){
+  // sengaja kosong - pelanggan baru diketik manual
+  console.log("Pelanggan mode manual: opsi 'Pelanggan' tersedia, bisa ketik manual");
+  return;
+}
+function filterPelanggan(q=""){ /* tidak dipakai di mode static datalist */ }
 
 function clean(v){return String(v??"").trim().toLowerCase().replace(/\s+/g," ")}
 function parseCSV(text){
@@ -872,9 +864,6 @@ function filterProduk(q=""){
 
 $("cariProduk").addEventListener("input",e=>filterProduk(e.target.value));
 $("cariProduk").addEventListener("focus",e=>filterProduk(e.target.value));
-$("pilihNamaPelanggan").addEventListener("change",syncNamaPelanggan);
-$("namaPelangganBaru").addEventListener("input",syncNamaPelanggan);
-
 
 $("hasilProduk").addEventListener("click",e=>{
  const b=e.target.closest(".result[data-id]");
@@ -900,9 +889,13 @@ $("produkManual").addEventListener("input",()=>{
  }
 });
 
+// === PELANGGAN EVENTS - STATIC MANUAL ===
 document.addEventListener("click",e=>{
  const w=document.querySelector(".product-search");
- if(w&&!w.contains(e.target))$("hasilProduk").classList.remove("show");
+ if(w&&!w.contains(e.target)){
+   const hp=$("hasilProduk");
+   if(hp) hp.classList.remove("show");
+ }
 });
 
 window.pilihDot=function(n){
@@ -928,7 +921,7 @@ window.hapusPola=function(){
 };
 
 function buildData(){
- const nama=($("namaPelanggan").value.trim() || $("namaPelangganBaru")?.value.trim() || "");
+ const nama=$("namaPelanggan").value.trim();
  const wa=$("waPelanggan").value.trim();
  const hp=$("brandTipe").value.trim();
  const kerusakan=$("kerusakan").value.trim();
@@ -1243,19 +1236,39 @@ async function showQR(d){
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
  const nomorLengkap=String(d.nomorNota||'').trim();
  $('qrNotaNumber').textContent=nomorLengkap;
- $('qrStatus').textContent='Membuat barcode nomor nota...';
+ $('qrStatus').textContent='Membuat barcode premium A YUDI THEA...';
  $('qrPopup').classList.add('show');
  const canvas=$('qrCanvas'),ctx=canvas.getContext('2d');
- canvas.width=900;canvas.height=180;
+ // resolusi tinggi untuk hasil JPG yang tajam
+ canvas.width=1000;canvas.height=260;
  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
  try{
   await loadJsBarcode();
-  window.JsBarcode(canvas,nomorLengkap,{format:'CODE128',lineColor:'#000000',background:'#ffffff',width:2.2,height:125,displayValue:false,margin:10});
-  $('qrStatus').textContent=qrPublicSaved?'Barcode nomor nota siap dipindai.':'Barcode terbentuk, tetapi data cek publik belum berhasil disimpan. Periksa izin cek publik.';
+  // Barcode premium: tebal, dengan text di bawahnya
+  window.JsBarcode(canvas,nomorLengkap,{
+    format:'CODE128',
+    lineColor:'#0b0f14',
+    background:'#ffffff',
+    width:2.6,
+    height:95,
+    displayValue:true,
+    font:'ui-monospace, monospace',
+    fontSize:20,
+    fontOptions:'bold',
+    textMargin:10,
+    margin:14,
+    marginTop:14,
+    marginBottom:14
+  });
+  $('qrStatus').textContent=qrPublicSaved?'Barcode premium A YUDI THEA siap dipindai.':'Barcode premium terbentuk, tetapi data cek publik belum berhasil disimpan. Periksa izin cek publik.';
  }catch(e){
   console.error('Barcode gagal dibuat:',e);
   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  $('qrStatus').textContent='Barcode gagal dibuat: '+e.message;
+  ctx.fillStyle='#111827';
+  ctx.font='bold 22px monospace';
+  ctx.textAlign='center';
+  ctx.fillText(nomorLengkap, canvas.width/2, canvas.height/2);
+  $('qrStatus').textContent='Barcode fallback text: '+e.message;
  }
 }
 let notaJpgSiap=false;
@@ -1465,6 +1478,16 @@ onAuthStateChanged(auth,async user=>{
   badge.textContent=roleLabel;
   badge.style.display="inline-flex";
 
+  // Tampilkan akun login dan langsung isikan ke kolom teknisi
+  let namaAkunLogin = "";
+  try{
+    namaAkunLogin = String(profile.nama||profile.namaLengkap||profile.displayName||user.displayName||user.email||"-").trim();
+    const infoLogin = $("infoAkunLogin");
+    if(infoLogin){
+      infoLogin.innerHTML = `🔐 Login sebagai: <b>${esc(namaAkunLogin)}</b> • <span style="background:#ffc107;color:#111827;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:900">${esc(roleLabel)}</span><br><span style="font-size:11px">${esc(user.email||"")}</span>`;
+    }
+  }catch(e){ console.warn(e); }
+
   $("nomorNota").value=notaBaru();
   $("barcode").value=makeBarcode($("nomorNota").value);
   $("tanggalNota").value=dateOnly();
@@ -1473,6 +1496,23 @@ onAuthStateChanged(auth,async user=>{
 
   await loadEmployees();
   await loadProducts();
+  await loadPelanggan();
+
+  // Isi teknisi langsung sesuai akun login (sesuai permintaan)
+  try{
+    const selTeknisi = $("teknisi");
+    if(selTeknisi){
+      // Buat opsi akun login sebagai opsi terpilih paling atas
+      const opsiLogin = `<option value="${uid}" selected>✅ ${esc(namaAkunLogin)} (Akun Login - ${esc(roleLabel)})</option>`;
+      const opsiLain = employees.map(x=>{
+        if(x.id===uid) return ""; // jangan duplikat
+        return `<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`;
+      }).join("");
+      // Jika owner, tetap tampilkan daftar teknisi lain sebagai alternatif tapi default tetap akun login
+      selTeknisi.innerHTML = opsiLogin + opsiLain;
+      selTeknisi.value = uid;
+    }
+  }catch(e){ console.warn("Gagal set teknisi login:", e); }
 
   pageReady=true;
 

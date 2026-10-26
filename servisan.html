@@ -370,15 +370,41 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   </div>
  </div>
 
- <div class="card">
-  <div class="title">Data Pelanggan</div>
+   <div class="card">
+  <div class="title">Data Pelanggan - Nama Saja (Pelanggan Baru Ketik Manual)</div>
   <div class="grid">
-   <div><label>NAMA PELANGGAN *</label><input id="namaPelanggan"></div>
+   <div class="full">
+    <label>NAMA PELANGGAN BARU / CARI NAMA PELANGGAN *</label>
+    <div class="product-search">
+     <input id="namaPelanggan" placeholder="Ketik nama pelanggan baru atau pilih dari daftar">
+     <div id="hasilPelanggan" class="results"></div>
+    </div>
+    <div id="pelangganTerpilih" class="selected empty">Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada</div>
+   </div>
    <div>
      <label>NO. WA *</label>
      <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
     </div>
-   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan"></textarea></div>
+   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat pelanggan"></textarea></div>
+  </div>
+ </div>
+    <div id="pelangganTerpilih" class="selected empty">Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada</div>
+   </div>
+   <div>
+     <label>NO. WA *</label>
+     <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
+    </div>
+   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat pelanggan"></textarea></div>
+  </div>
+ </div>
+    <div id="pelangganTerpilih" class="selected empty">Belum memilih - ketik manual di bawah atau pilih dari daftar</div>
+   </div>
+   <div><label>NAMA PELANGGAN *</label><input id="namaPelanggan" placeholder="Ketik manual atau pilih di atas"></div>
+   <div>
+     <label>NO. WA *</label>
+     <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
+    </div>
+   <div class="full"><label>ALAMAT</label><textarea id="alamatPelanggan" placeholder="Alamat (otomatis terisi jika pilih pelanggan)"></textarea></div>
   </div>
  </div>
 
@@ -465,9 +491,10 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  </div>
 
  <div class="card">
-  <div class="title">Teknisi & Status Servis</div>
+  <div class="title">Teknisi & Status Servis - Otomatis Akun Login</div>
+  <div id="infoAkunLogin" class="selected" style="background:#111827;color:#fff;border:2px solid #111827;box-shadow:3px 3px 0 #ffc107;margin-bottom:10px">Memuat akun login...</div>
   <div class="grid">
-   <div><label>TEKNISI *</label><select id="teknisi"><option value="">-- Pilih Teknisi --</option></select></div>
+   <div><label>TEKNISI * (Otomatis Akun Login)</label><select id="teknisi"><option value="">-- Memuat akun login --</option></select></div>
    <div><label>STATUS</label><select id="status">
     <option value="masuk">Masuk</option>
     <option value="nunggu sparepart">Nunggu Part</option>
@@ -589,7 +616,7 @@ const auth=getAuth(app);
 const db=getFirestore(app);
 
 let uid=null,businessUid=null,profile={},businessProfile={},role="";
-let products=[],employees=[],selectedProduct=null,pendingData=null;
+let products=[],employees=[],pelangganList=[],selectedPelanggan=null,selectedProduct=null,pendingData=null;
 let selectedTemplate=2,pageReady=false;
 let polaUrutan=[];
 
@@ -690,20 +717,102 @@ function hitung(){
  $(id).addEventListener("input",hitung);
 });
 
-async function loadEmployees(){
- employees=[];
- const q=query(
-  collection(db,"users"),
-  where("ownerUid","==",businessUid),
-  where("role","in",["employee","karyawan"]),
-  where("status","==","aktif")
- );
- const snap=await getDocs(q);
- employees=snap.docs.map(d=>({id:d.id,...d.data()}));
 
- $("teknisi").innerHTML=
-  '<option value="">-- Pilih Teknisi --</option>'+
-  employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
+async function loadPelanggan(){
+ pelangganList=[];
+ try{
+  // Coba beberapa kemungkinan koleksi pelanggan
+  const collectionsToTry = ["pelanggan","customers","customer","pelanggan_list"];
+  for(const colName of collectionsToTry){
+   try{
+    const q = query(collection(db,colName), where("ownerUid","==",businessUid));
+    const snap = await getDocs(q);
+    if(!snap.empty){
+     pelangganList = snap.docs.map(d=>({id:d.id, ...d.data()}));
+     if(pelangganList.length>0) break;
+    }
+   }catch(e){}
+  }
+  // Fallback: coba tanpa filter ownerUid, filter di client
+  if(pelangganList.length===0){
+   try{
+    const q2 = query(collection(db,"pelanggan"));
+    const snap2 = await getDocs(q2);
+    const all = snap2.docs.map(d=>({id:d.id, ...d.data()}));
+    pelangganList = all.filter(p=>{
+     const owner = String(p.ownerUid||p.ownerId||p.uid||"");
+     return !owner || owner===businessUid;
+    }).slice(0,100);
+   }catch(e){}
+  }
+ }catch(e){
+  console.warn("Gagal load pelanggan:",e);
+ }
+}
+
+function filterPelanggan(q=""){
+ const box=$("hasilPelanggan");
+ const key=String(q).trim().toLowerCase();
+ if(!key){
+  box.classList.remove("show");
+  return;
+ }
+ const list=pelangganList.filter(p=>{
+  const nama=String(p.nama||p.namaPelanggan||"").toLowerCase();
+  return nama.includes(key);
+ }).slice(0,30);
+
+ if(!list.length){
+  box.innerHTML='<div class="result">Pelanggan baru - ketik nama saja, akan disimpan sebagai pelanggan baru</div>';
+ }else{
+  box.innerHTML=list.map(p=>`
+   <button type="button" class="result" data-id="${p.id}">
+    <div class="pname">${esc(p.nama||p.namaPelanggan||"-")}</div>
+    <div class="pmeta">Nama pelanggan saja - klik untuk pakai nama ini</div>
+   </button>`).join("");
+ }
+ box.classList.add("show");
+}
+
+function pilihPelangganById(id){
+ const p=pelangganList.find(x=>x.id===id);
+ if(!p)return;
+ selectedPelanggan=p;
+ // HANYA NAMA SAJA - sesuai request, jangan sama WA nya
+ $("namaPelanggan").value=String(p.nama||p.namaPelanggan||"");
+ $("pelangganTerpilih").className="selected";
+ $("pelangganTerpilih").innerHTML=`<b>${esc(p.nama||"-")}</b> • Dipilih - pelanggan baru cukup nama saja`;
+ $("hasilPelanggan").classList.remove("show");
+}
+
+
+function pilihPelangganById(id){
+ const p=pelangganList.find(x=>x.id===id);
+ if(!p)return;
+ selectedPelanggan=p;
+ $("namaPelanggan").value=String(p.nama||p.namaPelanggan||"");
+ $("waPelanggan").value=String(p.wa||p.noWa||p.telepon||p.hp||"");
+ $("alamatPelanggan").value=String(p.alamat||"");
+ $("pelangganTerpilih").className="selected";
+ $("pelangganTerpilih").innerHTML=`<b>${esc(p.nama||"-")}</b> • ${esc(p.wa||"-")} • Dipilih dari daftar`;
+ $("hasilPelanggan").classList.remove("show");
+ $("namaPelanggan").value=p.nama||"";
+}
+
+
+async function loadEmployees(){
+ // TEKNISI SESUAI AKUN LOGIN - sesuai request user
+ employees=[];
+ const namaAkun = String(profile.nama||profile.displayName||profile.name||uid||"").trim();
+ const emailAkun = String(profile.email||"").trim();
+ const display = namaAkun || emailAkun || "Akun Login";
+ 
+ $("teknisi").innerHTML=`<option value="${uid}" selected>✅ ${esc(display)} (Akun Login)</option>`;
+ 
+ const infoEl=$("infoAkunLogin");
+ if(infoEl){
+  infoEl.innerHTML=`Login sebagai: <b>${esc(display)}</b> • Teknisi otomatis akun ini • Owner: <b>${esc(businessUid)}</b>`;
+ }
 }
 
 function clean(v){return String(v??"").trim().toLowerCase().replace(/\s+/g," ")}
@@ -834,6 +943,38 @@ function filterProduk(q=""){
 $("cariProduk").addEventListener("input",e=>filterProduk(e.target.value));
 $("cariProduk").addEventListener("focus",e=>filterProduk(e.target.value));
 
+
+$("namaPelanggan").addEventListener("input",e=>{
+ const val=e.target.value.trim();
+ filterPelanggan(val);
+ if(val && selectedPelanggan && val!==String(selectedPelanggan.nama||selectedPelanggan.namaPelanggan||"")){
+  selectedPelanggan=null;
+  $("pelangganTerpilih").className="selected empty";
+  $("pelangganTerpilih").textContent="Pelanggan baru: "+val+" - cukup nama saja";
+ }else if(!val){
+  selectedPelanggan=null;
+  $("pelangganTerpilih").className="selected empty";
+  $("pelangganTerpilih").textContent="Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada";
+ }
+});
+$("namaPelanggan").addEventListener("focus",e=>filterPelanggan(e.target.value));
+$("hasilPelanggan").addEventListener("click",e=>{
+ const b=e.target.closest(".result[data-id]");
+ if(!b)return;
+ pilihPelangganById(b.dataset.id);
+});
+
+document.addEventListener("click",e=>{
+ const w1=document.querySelectorAll(".product-search");
+ w1.forEach(w=>{
+  if(!w.contains(e.target)){
+   const res=w.querySelector(".results");
+   if(res)res.classList.remove("show");
+  }
+ });
+});
+
+
 $("hasilProduk").addEventListener("click",e=>{
  const b=e.target.closest(".result[data-id]");
  if(!b)return;
@@ -856,6 +997,26 @@ $("produkManual").addEventListener("input",()=>{
   $("produkTerpilih").className="selected";
   $("produkTerpilih").textContent="Manual: "+$("produkManual").value;
  }
+});
+
+$("namaPelanggan").addEventListener("input",e=>{
+ const val=e.target.value.trim();
+ filterPelanggan(val);
+ if(val && selectedPelanggan && val!==String(selectedPelanggan.nama||selectedPelanggan.namaPelanggan||"")){
+  selectedPelanggan=null;
+  $("pelangganTerpilih").className="selected empty";
+  $("pelangganTerpilih").textContent="Pelanggan baru: "+val+" - cukup nama saja";
+ }else if(!val){
+  selectedPelanggan=null;
+  $("pelangganTerpilih").className="selected empty";
+  $("pelangganTerpilih").textContent="Ketik nama pelanggan baru - atau pilih dari daftar jika sudah ada";
+ }
+});
+$("namaPelanggan").addEventListener("focus",e=>filterPelanggan(e.target.value));
+$("hasilPelanggan").addEventListener("click",e=>{
+ const b=e.target.closest(".result[data-id]");
+ if(!b)return;
+ pilihPelangganById(b.dataset.id);
 });
 
 document.addEventListener("click",e=>{
@@ -1424,12 +1585,13 @@ onAuthStateChanged(auth,async user=>{
   setInfo();
 
   await loadEmployees();
+  await loadPelanggan();
   await loadProducts();
 
   pageReady=true;
 
   $("saveStatus").textContent=
-   `${products.length} produk • ${employees.length} teknisi • akun terisolasi`;
+   `${products.length} produk • ${pelangganList.length} pelanggan • teknisi: akun login`;
 
   setNotice(
    `Akun aktif: ${roleLabel} • Business UID: ${businessUid} • Data dibatasi ke owner ini.`,

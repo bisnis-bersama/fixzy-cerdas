@@ -383,10 +383,13 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
    <div>
     <label>NAMA PELANGGAN *</label>
     <div class="product-search">
-     <input id="namaPelanggan" autocomplete="off" placeholder="Ketik nama / pilih dari daftar — bisa manual">
-     <div id="hasilPelanggan" class="results"></div>
+     <input id="namaPelanggan" list="listPelangganStatic" autocomplete="off" placeholder="Ketik nama pelanggan baru">
+     <datalist id="listPelangganStatic">
+       <option value="Pelanggan"></option>
+     </datalist>
+     <div id="hasilPelanggan" class="results" style="display:none"></div>
     </div>
-    <div style="font-size:10px;color:#64748b;margin-top:4px;font-weight:700">Dropdown dari data A YUDI THEA (servis hp) • tetap bisa ketik manual</div>
+    <div style="font-size:10px;color:#64748b;margin-top:4px;font-weight:700">Bisa pilih "Pelanggan" atau ketik manual nama pelanggan baru</div>
    </div>
    <div>
      <label>NO. WA *</label>
@@ -480,9 +483,9 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 
  <div class="card">
   <div class="title">Teknisi & Status Servis</div>
-  <div id="infoAkunLogin" class="selected" style="margin-bottom:12px;background:#fffbeb;border:1.5px dashed #f59e0b;color:#111827">Memuat akun login...</div>
+  <div id="infoAkunLogin" class="selected" style="margin-bottom:12px;background:#111827;color:#fff;border:2px solid #111827;box-shadow:3px 3px 0 #ffc107">Memuat akun login...</div>
   <div class="grid">
-   <div><label>TEKNISI *</label><select id="teknisi"><option value="">-- Pilih Teknisi --</option></select></div>
+   <div><label>TEKNISI *</label><select id="teknisi"><option value="">-- Memuat akun login --</option></select></div>
    <div><label>STATUS</label><select id="status">
     <option value="masuk">Masuk</option>
     <option value="nunggu sparepart">Nunggu Part</option>
@@ -703,95 +706,36 @@ function hitung(){
 
 async function loadEmployees(){
  employees=[];
- const q=query(
-  collection(db,"users"),
-  where("ownerUid","==",businessUid),
-  where("role","in",["employee","karyawan"]),
-  where("status","==","aktif")
- );
- const snap=await getDocs(q);
- employees=snap.docs.map(d=>({id:d.id,...d.data()}));
-
- $("teknisi").innerHTML=
-  '<option value="">-- Pilih Teknisi --</option>'+
-  employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
-
- // auto-select jika akun login adalah teknisi
  try{
-   if(uid && employees.some(e=>e.id===uid)){
-     $("teknisi").value = uid;
-   }
- }catch(e){}
+   const q=query(
+    collection(db,"users"),
+    where("ownerUid","==",businessUid),
+    where("role","in",["employee","karyawan"]),
+    where("status","==","aktif")
+   );
+   const snap=await getDocs(q);
+   employees=snap.docs.map(d=>({id:d.id,...d.data()}));
+ }catch(e){
+   console.warn("loadEmployees gagal:", e);
+   employees=[];
+ }
+ // Teknisi dropdown akan diisi ulang di onAuthStateChanged dengan akun login sebagai default
+ const sel=$("teknisi");
+ if(sel){
+   sel.innerHTML = '<option value="">-- Pilih Teknisi --</option>'+
+     employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
+ }
 }
 
-// ======== PELANGGAN DROPDOWN A YUDI THEA ========
-let daftarPelanggan = [];
-
+// ======== PELANGGAN STATIC - TIDAK AMBIL DARI DATA ========
+let daftarPelanggan = [{nama:"Pelanggan", wa:"", alamat:""}];
+// Tidak perlu load dari Firestore, cukup sediakan opsi "Pelanggan" dan bisa ketik manual
 async function loadPelanggan(){
-  daftarPelanggan = [];
-  try{
-    // ambil dari koleksi servis milik businessUid (riwayat pelanggan A YUDI THEA)
-    const q = query(collection(db,"servis"), where("ownerUid","==",businessUid));
-    const snap = await getDocs(q);
-    const map = new Map();
-    snap.forEach(docSnap=>{
-      const d = docSnap.data()||{};
-      const p = d.pelanggan||{};
-      const nama = String(p.nama||d.namaPelanggan||"").trim();
-      if(!nama) return;
-      const key = nama.toLowerCase();
-      const wa = String(p.wa||p.noWa||d.nomorWa||"").trim();
-      const alamat = String(p.alamat||d.alamatPelanggan||"").trim();
-      // simpan yang paling lengkap / terbaru
-      if(!map.has(key)){
-        map.set(key,{nama, wa, alamat, count:1, lastDoc: d});
-      }else{
-        const cur = map.get(key);
-        cur.count += 1;
-        if(wa) cur.wa = wa;
-        if(alamat) cur.alamat = alamat;
-        // keep latest if more complete
-        map.set(key,cur);
-      }
-    });
-    daftarPelanggan = Array.from(map.values()).sort((a,b)=> b.count - a.count || a.nama.localeCompare(b.nama));
-    console.log("Pelanggan dimuat:", daftarPelanggan.length);
-  }catch(e){
-    console.warn("Gagal memuat pelanggan:", e);
-    daftarPelanggan = [];
-  }
+  // sengaja kosong - pelanggan baru diketik manual
+  console.log("Pelanggan mode manual: opsi 'Pelanggan' tersedia, bisa ketik manual");
+  return;
 }
-
-function filterPelanggan(q=""){
-  const box = $("hasilPelanggan");
-  if(!box) return;
-  const key = String(q).trim().toLowerCase();
-  // jika kosong tampilkan 20 teratas (pelanggan sering)
-  let list = [];
-  if(!key){
-    list = daftarPelanggan.slice(0,20);
-  }else{
-    list = daftarPelanggan.filter(p=>
-      String(p.nama||"").toLowerCase().includes(key) ||
-      String(p.wa||"").toLowerCase().includes(key) ||
-      String(p.alamat||"").toLowerCase().includes(key)
-    ).slice(0,50);
-  }
-  if(!list.length){
-    if(key){
-      box.innerHTML = `<div class="result" style="color:#64748b">Tidak ada — tekan Enter untuk pakai "${esc(q)}" sebagai pelanggan baru</div>`;
-    }else{
-      box.innerHTML = `<div class="result" style="color:#64748b">Belum ada riwayat pelanggan di A YUDI THEA</div>`;
-    }
-  }else{
-    box.innerHTML = list.map(p=>`
-      <button type="button" class="result" data-nama="${esc(p.nama)}" data-wa="${esc(p.wa||'')}" data-alamat="${esc(p.alamat||'')}">
-        <div class="pname">${esc(p.nama)} <span style="font-size:10px;color:#16a34a;font-weight:800">• ${p.count}x servis</span></div>
-        <div class="pmeta">WA: ${esc(p.wa||"-")} • ${esc((p.alamat||"-").slice(0,60))}</div>
-      </button>`).join("");
-  }
-  box.classList.add("show");
-}
+function filterPelanggan(q=""){ /* tidak dipakai di mode static datalist */ }
 
 function clean(v){return String(v??"").trim().toLowerCase().replace(/\s+/g," ")}
 function parseCSV(text){
@@ -945,36 +889,12 @@ $("produkManual").addEventListener("input",()=>{
  }
 });
 
-// === PELANGGAN EVENTS ===
-const namaPelangganEl = $("namaPelanggan");
-if(namaPelangganEl){
-  namaPelangganEl.addEventListener("input", e=> filterPelanggan(e.target.value));
-  namaPelangganEl.addEventListener("focus", e=> filterPelanggan(e.target.value));
-}
-const hasilPelangganEl = $("hasilPelanggan");
-if(hasilPelangganEl){
-  hasilPelangganEl.addEventListener("click", e=>{
-    const b = e.target.closest(".result[data-nama]");
-    if(!b) return;
-    const nama = b.dataset.nama || "";
-    const wa = b.dataset.wa || "";
-    const alamat = b.dataset.alamat || "";
-    $("namaPelanggan").value = nama;
-    if(wa) $("waPelanggan").value = wa;
-    if(alamat) $("alamatPelanggan").value = alamat;
-    hasilPelangganEl.classList.remove("show");
-  });
-}
-
+// === PELANGGAN EVENTS - STATIC MANUAL ===
 document.addEventListener("click",e=>{
- const prodSearch = document.querySelectorAll(".product-search");
- let inside = false;
- prodSearch.forEach(w=>{ if(w.contains(e.target)) inside = true; });
- if(!inside){
-   const hp = $("hasilProduk");
+ const w=document.querySelector(".product-search");
+ if(w&&!w.contains(e.target)){
+   const hp=$("hasilProduk");
    if(hp) hp.classList.remove("show");
-   const hpel = $("hasilPelanggan");
-   if(hpel) hpel.classList.remove("show");
  }
 });
 
@@ -1558,12 +1478,13 @@ onAuthStateChanged(auth,async user=>{
   badge.textContent=roleLabel;
   badge.style.display="inline-flex";
 
-  // Tampilkan akun login di panel teknisi
+  // Tampilkan akun login dan langsung isikan ke kolom teknisi
+  let namaAkunLogin = "";
   try{
-    const namaAkun = String(profile.nama||profile.namaLengkap||profile.displayName||user.displayName||user.email||"-");
+    namaAkunLogin = String(profile.nama||profile.namaLengkap||profile.displayName||user.displayName||user.email||"-").trim();
     const infoLogin = $("infoAkunLogin");
     if(infoLogin){
-      infoLogin.innerHTML = `🔐 Akun login: <b>${esc(namaAkun)}</b> • <span style="background:#111827;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px">${esc(roleLabel)}</span> • ${esc(user.email||"")}<br><span style="font-size:10px;color:#64748b">Otomatis terpilih sebagai teknisi jika akun adalah teknisi</span>`;
+      infoLogin.innerHTML = `🔐 Login sebagai: <b>${esc(namaAkunLogin)}</b> • <span style="background:#ffc107;color:#111827;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:900">${esc(roleLabel)}</span><br><span style="font-size:11px">${esc(user.email||"")}</span>`;
     }
   }catch(e){ console.warn(e); }
 
@@ -1576,6 +1497,22 @@ onAuthStateChanged(auth,async user=>{
   await loadEmployees();
   await loadProducts();
   await loadPelanggan();
+
+  // Isi teknisi langsung sesuai akun login (sesuai permintaan)
+  try{
+    const selTeknisi = $("teknisi");
+    if(selTeknisi){
+      // Buat opsi akun login sebagai opsi terpilih paling atas
+      const opsiLogin = `<option value="${uid}" selected>✅ ${esc(namaAkunLogin)} (Akun Login - ${esc(roleLabel)})</option>`;
+      const opsiLain = employees.map(x=>{
+        if(x.id===uid) return ""; // jangan duplikat
+        return `<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`;
+      }).join("");
+      // Jika owner, tetap tampilkan daftar teknisi lain sebagai alternatif tapi default tetap akun login
+      selTeknisi.innerHTML = opsiLogin + opsiLain;
+      selTeknisi.value = uid;
+    }
+  }catch(e){ console.warn("Gagal set teknisi login:", e); }
 
   pageReady=true;
 

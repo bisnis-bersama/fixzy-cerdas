@@ -1,6 +1,27 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>A YUDI THEA | Input Servisan</title>
@@ -242,61 +263,78 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  #qrPopup .ticket-table>div{font-size:8px!important}
  #qrPopup .qr-brand small{max-width:90px!important}
 }
-/* QR NOTA SERVIS — gaya seperti nota penjualan */
+/* QR NOTA SERVIS — BARCODE PREMIUM A YUDI THEA */
 #qrPopup .qr-frame {
   width: 100%;
-  max-width: 560px;
+  max-width: 580px;
   margin: auto;
-  padding: 14px;
-  border: 2px solid #e5e7eb;
-  border-radius: 20px;
-  background: #fff;
-}
-
-#qrPopup .qr-code-wrap {
-  width: 240px;
-  max-width: 100%;
-  margin: auto;
-  padding: 8px;
-  border: 4px solid #ffc107;
+  padding: 16px;
+  border: 3px solid #111827;
   border-radius: 18px;
   background: #fff;
+  box-shadow: 6px 6px 0 #111827;
 }
-
+#qrPopup .qr-code-wrap {
+  width: 100%;
+  max-width: 100%;
+  margin: auto;
+  padding: 14px 12px;
+  border: 2px dashed #111827;
+  border-radius: 14px;
+  background: repeating-linear-gradient(90deg,#fff,#fff 10px,#fffbeb 10px,#fffbeb 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 #qrPopup .qr-code-wrap img,
 #qrPopup .qr-code-wrap canvas {
   display: block;
   width: 100% !important;
+  max-width: 440px !important;
   height: auto !important;
-  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background:#fff;
+  border-radius:8px;
+  padding:8px;
 }
-
 #qrPopup .barcode-number {
   width: 100%;
   max-width: 100%;
-  margin-top: 12px;
-  padding: 12px;
-  background: #fff;
-  border: 0;
+  margin-top: 14px;
+  padding: 12px 10px;
+  background: #ffc107;
+  border: 2px solid #111827;
+  border-radius: 12px;
   text-align: center;
+  box-shadow: 3px 3px 0 #111827;
 }
-
 #qrPopup .barcode-number span {
   display: block;
-  margin-bottom: 7px;
-  color: #64748b;
-  font-size: 12px;
-  letter-spacing: 1px;
+  margin-bottom: 6px;
+  color: #111827;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
 }
-
 #qrPopup .barcode-number strong {
   display: block;
   color: #111827;
-  font-size: clamp(14px, 4vw, 20px);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(15px, 4vw, 22px);
   font-weight: 900;
-  letter-spacing: 0;
+  letter-spacing: 3px;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+#qrPopup .qr-caption {
+  margin-top: 10px;
+  font-weight: 800;
+  color: #111827;
+  background: #f8fafc;
+  border: 1.5px solid #111827;
+  border-radius: 8px;
+  padding: 8px;
 }
 
 #qrPopup .qr-caption {
@@ -342,7 +380,14 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
  <div class="card">
   <div class="title">Data Pelanggan</div>
   <div class="grid">
-   <div><label>NAMA PELANGGAN *</label><input id="namaPelanggan"></div>
+   <div>
+    <label>NAMA PELANGGAN *</label>
+    <div class="product-search">
+     <input id="namaPelanggan" autocomplete="off" placeholder="Ketik nama / pilih dari daftar — bisa manual">
+     <div id="hasilPelanggan" class="results"></div>
+    </div>
+    <div style="font-size:10px;color:#64748b;margin-top:4px;font-weight:700">Dropdown dari data A YUDI THEA (servis hp) • tetap bisa ketik manual</div>
+   </div>
    <div>
      <label>NO. WA *</label>
      <input id="waPelanggan" type="tel" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx">
@@ -435,6 +480,7 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 
  <div class="card">
   <div class="title">Teknisi & Status Servis</div>
+  <div id="infoAkunLogin" class="selected" style="margin-bottom:12px;background:#fffbeb;border:1.5px dashed #f59e0b;color:#111827">Memuat akun login...</div>
   <div class="grid">
    <div><label>TEKNISI *</label><select id="teknisi"><option value="">-- Pilih Teknisi --</option></select></div>
    <div><label>STATUS</label><select id="status">
@@ -669,6 +715,82 @@ async function loadEmployees(){
  $("teknisi").innerHTML=
   '<option value="">-- Pilih Teknisi --</option>'+
   employees.map(x=>`<option value="${x.id}">${esc(x.nama||x.email||x.id)}</option>`).join("");
+
+ // auto-select jika akun login adalah teknisi
+ try{
+   if(uid && employees.some(e=>e.id===uid)){
+     $("teknisi").value = uid;
+   }
+ }catch(e){}
+}
+
+// ======== PELANGGAN DROPDOWN A YUDI THEA ========
+let daftarPelanggan = [];
+
+async function loadPelanggan(){
+  daftarPelanggan = [];
+  try{
+    // ambil dari koleksi servis milik businessUid (riwayat pelanggan A YUDI THEA)
+    const q = query(collection(db,"servis"), where("ownerUid","==",businessUid));
+    const snap = await getDocs(q);
+    const map = new Map();
+    snap.forEach(docSnap=>{
+      const d = docSnap.data()||{};
+      const p = d.pelanggan||{};
+      const nama = String(p.nama||d.namaPelanggan||"").trim();
+      if(!nama) return;
+      const key = nama.toLowerCase();
+      const wa = String(p.wa||p.noWa||d.nomorWa||"").trim();
+      const alamat = String(p.alamat||d.alamatPelanggan||"").trim();
+      // simpan yang paling lengkap / terbaru
+      if(!map.has(key)){
+        map.set(key,{nama, wa, alamat, count:1, lastDoc: d});
+      }else{
+        const cur = map.get(key);
+        cur.count += 1;
+        if(wa) cur.wa = wa;
+        if(alamat) cur.alamat = alamat;
+        // keep latest if more complete
+        map.set(key,cur);
+      }
+    });
+    daftarPelanggan = Array.from(map.values()).sort((a,b)=> b.count - a.count || a.nama.localeCompare(b.nama));
+    console.log("Pelanggan dimuat:", daftarPelanggan.length);
+  }catch(e){
+    console.warn("Gagal memuat pelanggan:", e);
+    daftarPelanggan = [];
+  }
+}
+
+function filterPelanggan(q=""){
+  const box = $("hasilPelanggan");
+  if(!box) return;
+  const key = String(q).trim().toLowerCase();
+  // jika kosong tampilkan 20 teratas (pelanggan sering)
+  let list = [];
+  if(!key){
+    list = daftarPelanggan.slice(0,20);
+  }else{
+    list = daftarPelanggan.filter(p=>
+      String(p.nama||"").toLowerCase().includes(key) ||
+      String(p.wa||"").toLowerCase().includes(key) ||
+      String(p.alamat||"").toLowerCase().includes(key)
+    ).slice(0,50);
+  }
+  if(!list.length){
+    if(key){
+      box.innerHTML = `<div class="result" style="color:#64748b">Tidak ada — tekan Enter untuk pakai "${esc(q)}" sebagai pelanggan baru</div>`;
+    }else{
+      box.innerHTML = `<div class="result" style="color:#64748b">Belum ada riwayat pelanggan di A YUDI THEA</div>`;
+    }
+  }else{
+    box.innerHTML = list.map(p=>`
+      <button type="button" class="result" data-nama="${esc(p.nama)}" data-wa="${esc(p.wa||'')}" data-alamat="${esc(p.alamat||'')}">
+        <div class="pname">${esc(p.nama)} <span style="font-size:10px;color:#16a34a;font-weight:800">• ${p.count}x servis</span></div>
+        <div class="pmeta">WA: ${esc(p.wa||"-")} • ${esc((p.alamat||"-").slice(0,60))}</div>
+      </button>`).join("");
+  }
+  box.classList.add("show");
 }
 
 function clean(v){return String(v??"").trim().toLowerCase().replace(/\s+/g," ")}
@@ -823,9 +945,37 @@ $("produkManual").addEventListener("input",()=>{
  }
 });
 
+// === PELANGGAN EVENTS ===
+const namaPelangganEl = $("namaPelanggan");
+if(namaPelangganEl){
+  namaPelangganEl.addEventListener("input", e=> filterPelanggan(e.target.value));
+  namaPelangganEl.addEventListener("focus", e=> filterPelanggan(e.target.value));
+}
+const hasilPelangganEl = $("hasilPelanggan");
+if(hasilPelangganEl){
+  hasilPelangganEl.addEventListener("click", e=>{
+    const b = e.target.closest(".result[data-nama]");
+    if(!b) return;
+    const nama = b.dataset.nama || "";
+    const wa = b.dataset.wa || "";
+    const alamat = b.dataset.alamat || "";
+    $("namaPelanggan").value = nama;
+    if(wa) $("waPelanggan").value = wa;
+    if(alamat) $("alamatPelanggan").value = alamat;
+    hasilPelangganEl.classList.remove("show");
+  });
+}
+
 document.addEventListener("click",e=>{
- const w=document.querySelector(".product-search");
- if(w&&!w.contains(e.target))$("hasilProduk").classList.remove("show");
+ const prodSearch = document.querySelectorAll(".product-search");
+ let inside = false;
+ prodSearch.forEach(w=>{ if(w.contains(e.target)) inside = true; });
+ if(!inside){
+   const hp = $("hasilProduk");
+   if(hp) hp.classList.remove("show");
+   const hpel = $("hasilPelanggan");
+   if(hpel) hpel.classList.remove("show");
+ }
 });
 
 window.pilihDot=function(n){
@@ -1166,19 +1316,39 @@ async function showQR(d){
  qrPublicUrl=getPublicCheckUrl(d.nomorNota);
  const nomorLengkap=String(d.nomorNota||'').trim();
  $('qrNotaNumber').textContent=nomorLengkap;
- $('qrStatus').textContent='Membuat barcode nomor nota...';
+ $('qrStatus').textContent='Membuat barcode premium A YUDI THEA...';
  $('qrPopup').classList.add('show');
  const canvas=$('qrCanvas'),ctx=canvas.getContext('2d');
- canvas.width=900;canvas.height=180;
+ // resolusi tinggi untuk hasil JPG yang tajam
+ canvas.width=1000;canvas.height=260;
  ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
  try{
   await loadJsBarcode();
-  window.JsBarcode(canvas,nomorLengkap,{format:'CODE128',lineColor:'#000000',background:'#ffffff',width:2.2,height:125,displayValue:false,margin:10});
-  $('qrStatus').textContent=qrPublicSaved?'Barcode nomor nota siap dipindai.':'Barcode terbentuk, tetapi data cek publik belum berhasil disimpan. Periksa izin cek publik.';
+  // Barcode premium: tebal, dengan text di bawahnya
+  window.JsBarcode(canvas,nomorLengkap,{
+    format:'CODE128',
+    lineColor:'#0b0f14',
+    background:'#ffffff',
+    width:2.6,
+    height:95,
+    displayValue:true,
+    font:'ui-monospace, monospace',
+    fontSize:20,
+    fontOptions:'bold',
+    textMargin:10,
+    margin:14,
+    marginTop:14,
+    marginBottom:14
+  });
+  $('qrStatus').textContent=qrPublicSaved?'Barcode premium A YUDI THEA siap dipindai.':'Barcode premium terbentuk, tetapi data cek publik belum berhasil disimpan. Periksa izin cek publik.';
  }catch(e){
   console.error('Barcode gagal dibuat:',e);
   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-  $('qrStatus').textContent='Barcode gagal dibuat: '+e.message;
+  ctx.fillStyle='#111827';
+  ctx.font='bold 22px monospace';
+  ctx.textAlign='center';
+  ctx.fillText(nomorLengkap, canvas.width/2, canvas.height/2);
+  $('qrStatus').textContent='Barcode fallback text: '+e.message;
  }
 }
 let notaJpgSiap=false;
@@ -1388,6 +1558,15 @@ onAuthStateChanged(auth,async user=>{
   badge.textContent=roleLabel;
   badge.style.display="inline-flex";
 
+  // Tampilkan akun login di panel teknisi
+  try{
+    const namaAkun = String(profile.nama||profile.namaLengkap||profile.displayName||user.displayName||user.email||"-");
+    const infoLogin = $("infoAkunLogin");
+    if(infoLogin){
+      infoLogin.innerHTML = `🔐 Akun login: <b>${esc(namaAkun)}</b> • <span style="background:#111827;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px">${esc(roleLabel)}</span> • ${esc(user.email||"")}<br><span style="font-size:10px;color:#64748b">Otomatis terpilih sebagai teknisi jika akun adalah teknisi</span>`;
+    }
+  }catch(e){ console.warn(e); }
+
   $("nomorNota").value=notaBaru();
   $("barcode").value=makeBarcode($("nomorNota").value);
   $("tanggalNota").value=dateOnly();
@@ -1396,6 +1575,7 @@ onAuthStateChanged(auth,async user=>{
 
   await loadEmployees();
   await loadProducts();
+  await loadPelanggan();
 
   pageReady=true;
 
@@ -1417,5 +1597,5 @@ onAuthStateChanged(auth,async user=>{
  }
 });
 </script>
-</body>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
 </html>

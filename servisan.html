@@ -325,12 +325,18 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
   display: block;
   color: #111827;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: clamp(15px, 4vw, 22px);
+  font-size: clamp(13px, 3.2vw, 18px);
   font-weight: 900;
-  letter-spacing: 3px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+@media(max-width:380px){
+  #qrPopup .barcode-number strong { font-size: 12px; letter-spacing:1px; }
+}
+#qrPopup .barcode-number { max-width: 92%; margin: 14px auto 0; }
+#qrPopup #qrCanvas { height: 140px !important; }
 #qrPopup .qr-caption {
   margin-top: 10px;
   font-weight: 800;
@@ -512,11 +518,11 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <div class="popup" id="qrPopup" style="z-index:10050">
  <div class="qr-ticket">
   <div class="qr-ticket-head" style="flex-direction:column; align-items:flex-start; gap:8px;">
-   <div style="width:100%; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-    <div class="qr-brand" style="flex:1; min-width:180px;">
-      <strong id="qrNamaKonter" style="font-size:26px; letter-spacing:-0.5px;">A YUDI THEA</strong>
-      <span style="display:block; margin-top:4px; font-size:11px; font-weight:800; letter-spacing:0;">Nama Akun: <b id="qrNamaAkun">-</b> • <span id="qrEmailAkun">-</span></span>
-      <small id="qrAlamatKonter" style="display:block; margin-top:2px; font-size:11px; font-weight:800;">No WA Akun: <b id="qrWaAkun">-</b></small>
+   <div style="width:100%; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start;">
+    <div class="qr-brand" style="flex:1; min-width:160px;">
+      <strong id="qrNamaKonter" style="font-size:24px; letter-spacing:-0.5px; line-height:1;">A YUDI THEA</strong>
+      <span style="display:block; margin-top:6px; font-size:10px; font-weight:800; line-height:1.3; word-break:break-word;">Nama Akun: <b id="qrNamaAkun" style="word-break:break-all;">-</b><br><span id="qrEmailAkun" style="color:#e5e7eb; font-size:9px; word-break:break-all;">-</span></span>
+      <small id="qrAlamatKonter" style="display:block; margin-top:4px; font-size:10px; font-weight:800; background:#facc15; color:#111827; padding:2px 6px; border-radius:4px; width:fit-content;">No WA: <b id="qrWaAkun">-</b></small>
     </div>
     <div class="qr-head-title" style="text-align:right; min-width:140px;">
       <strong>NOTA SERVIS</strong><span>BARCODE SERVIS - CODE128</span>
@@ -654,17 +660,23 @@ function getAlamatKonter(){
  return String(p.alamatKonter||p.alamatToko||p.alamatUsaha||p.alamat||"").trim();
 }
 function updateQrBrand(nama=getNamaKonter()){
+ // Header nota selalu pakai AKUN ADMIN / NAMA KONTER, bukan karyawan yang nyetak
  const brand=String(nama||getNamaKonter()).trim()||"A YUDI THEA";
- const namaAkun=String(profile?.nama||profile?.namaLengkap||"").trim() || (window.currentUserEmail||"").split('@')[0] || "A Yudi Thea";
- const emailAkun=window.currentUserEmail||"";
- const waAkun=String(profile?.wa||profile?.noWa||profile?.whatsapp||businessProfile?.wa||businessProfile?.noWa||"").trim() || "-";
+ // Nama akun admin = businessProfile (owner), bukan profile karyawan
+ const bp=businessProfile||{};
+ const adminNama=String(bp.nama||bp.namaLengkap||bp.namaKonter||bp.namaToko||brand).trim() || "A Yudi Thea";
+ const adminEmail=String(bp.email||"").trim() || ""; // kalau tidak ada, kosongkan
+ const adminWa=String(bp.wa||bp.noWa||bp.whatsapp||bp.noWA||bp.nomorWa||"").trim() || String(getAlamatKonter()||"").trim() || "-";
+
  ["qrNamaKonter","qrNamaKonterFooter"].forEach(id=>{const el=$(id);if(el)el.textContent=brand;});
- const elNama=$("qrNamaAkun"); if(elNama) elNama.textContent=namaAkun;
- const elEmail=$("qrEmailAkun"); if(elEmail) elEmail.textContent=emailAkun;
- const elWa=$("qrWaAkun"); if(elWa) elWa.textContent=waAkun;
+ const elNama=$("qrNamaAkun"); if(elNama) elNama.textContent=adminNama+" (ADMIN)";
+ const elEmail=$("qrEmailAkun"); if(elEmail) elEmail.textContent=adminEmail || brand;
+ const elWa=$("qrWaAkun"); if(elWa) elWa.textContent=adminWa;
  const elBadge=$("qrNotaBadge"); if(elBadge && window.qrCurrentData?.nomorNota) elBadge.textContent=window.qrCurrentData.nomorNota;
- const a=$("qrAlamatKonter"); if(a && a.tagName!=="SMALL") a.textContent=waAkun; // compatibility
  const f=$("qrAlamatFooter");if(f)f.textContent=brand;
+ // Simpan untuk footer
+ window._adminKonterBrand = brand;
+ window._adminNama = adminNama;
 }
 window.currentUserEmail = "";
 

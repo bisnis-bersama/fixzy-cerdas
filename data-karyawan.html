@@ -127,7 +127,13 @@ function setupHeader(user){
 async function boot(loadFn){onAuthStateChanged(auth,async user=>{if(!user){$("status").innerHTML='<span class="err">❌ Sesi login tidak ditemukan.</span>';return;}uid=user.uid;try{await loadProfile(user);setupHeader(user);await loadFn();}catch(e){$("status").innerHTML='<span class="err">🔒 '+esc(e.message||e)+'</span>';}});}
 function periodKey(){const p=$("periode").value,v=$("periodeTanggal").value;if(p==="hari")return v||today();if(p==="tahun")return(v||monthNow()).slice(0,4);return v||monthNow();}
 function matchPeriod(x){const d=dateOf(x),k=periodKey();if(!d||!k)return false;if(k.length===10)return d===k;if(k.length===7)return d.startsWith(k);return d.startsWith(k);}
-function kasbonFor(a){return pengeluaran.filter(x=>matchPeriod(x)&&isKasbon(x)&&sameEmployee(x,{id:"",nama:kasbonName(x)}));}
+function kasbonFor(a){
+  return pengeluaran.filter(x =>
+    matchPeriod(x) &&
+    isKasbon(x) &&
+    sameEmployee(x,a)
+  );
+}
 function calculate(a){
  const rows=absensi.filter(x=>matchPeriod(x)&&sameEmployee(x,a));
  const hadir=rows.filter(isHadir).length,libur=rows.filter(isLibur).length,tidak=rows.filter(x=>!isHadir(x)&&!isLibur(x)).length;

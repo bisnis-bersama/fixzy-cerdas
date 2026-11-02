@@ -8,30 +8,28 @@
 </style></head>
 <body>
 <header><div class="head"><div class="brand"><img src="logo.png" class="logo" alt="FIXZY"><div><h1>FIXZY - IZIN AKSES</h1><small>Karyawan, Reseller & Hak Akses Menu</small></div></div><div class="head-actions"><button class="btn refresh" onclick="muatSemua()">↻ Refresh</button></div></div></header>
-<nav class="page-nav" aria-label="Navigasi Karyawan">
-  <button type="button" class="" onclick="window.location.assign(new URL('data-karyawan.html', window.location.href).href)">📄 Ringkasan Gaji</button>
-  <button type="button" class="" onclick="window.location.assign(new URL('absensi-karyawan.html', window.location.href).href)">📅 Absensi</button>
-  <button type="button" class="current" onclick="window.location.assign(new URL('izin-akses.html', window.location.href).href)">🔐 Izin Akses</button>
+<nav class="page-nav" aria-label="Navigasi FIXZY">
+  <button type="button" class="" onclick="bukaHalamanFixzy('data-karyawan.html')">📄 Ringkasan Gaji</button>
+  <button type="button" class="" onclick="bukaHalamanFixzy('absensi-karyawan.html')">📅 Absensi</button>
+  <button type="button" class="active" onclick="bukaHalamanFixzy('izin-akses.html')">🔐 Izin Akses</button>
 </nav>
+<script>
+// Navigasi FIXZY: pindah pada tab/halaman utama, bukan di dalam iframe.
+function bukaHalamanFixzy(file){
+  const target = new URL(file, window.location.href).href;
+  try {
+    window.top.location.assign(target);
+  } catch (err) {
+    window.location.assign(target);
+  }
+}
+</script>
 <main><section class="card"><div class="body"><div class="title">Kelola Akun & Hak Akses</div><div class="toolbar"><div class="field"><label>FILTER ROLE</label><select id="roleFilter" onchange="render()"><option value="">Semua</option><option value="employee">Karyawan</option><option value="reseller">Reseller</option></select></div><div class="field"><label>PENCARIAN</label><input id="cari" placeholder="Cari nama atau email..." oninput="render()"></div><div class="actions"><button class="btn primary" onclick="bukaTambah()">＋ Tambah Akun</button><button class="btn secondary" onclick="resetFilter()">Reset</button></div></div><div id="status" class="status">Memeriksa sesi Owner...</div></div></section>
 <section class="summary"><div class="sum"><small>TOTAL AKUN</small><b id="total">0</b></div><div class="sum green"><small>AKTIF</small><b id="aktif">0</b></div><div class="sum blue"><small>KARYAWAN</small><b id="jmlKaryawan">0</b></div><div class="sum orange"><small>RESELLER</small><b id="jmlReseller">0</b></div></section>
 <section class="card"><div class="body" style="padding-bottom:8px"><div class="title" style="font-size:14px">Daftar Akun & Izin</div><div class="status">Hak akses disimpan ke Firebase pada field <b>izin</b> dan <b>permissions</b>.</div></div><div class="table-wrap"><table><thead><tr><th>Nama</th><th>Email</th><th>No. WA</th><th>Role</th><th>Jabatan</th><th>Status</th><th>Hak Akses</th><th>Aksi</th></tr></thead><tbody id="tbody"><tr><td colspan="8" style="text-align:center;padding:25px">Memuat Firebase...</td></tr></tbody></table></div></section></main>
 <div class="popup" id="popup"><div class="popup-box"><h3 id="popupTitle">Tambah Akun</h3><div class="grid"><div class="field"><label>NAMA</label><input id="fNama"></div><div class="field"><label>ROLE</label><select id="fRole"><option value="employee">Karyawan</option><option value="reseller">Reseller</option></select></div><div class="field"><label>EMAIL LOGIN</label><input id="fEmail" type="email"></div><div class="field"><label>NO. WA</label><input id="fWA" type="tel" placeholder="08xxxxxxxxxx"></div><div class="field" id="passWrap"><label>PASSWORD AWAL</label><input id="fPassword" type="password" placeholder="Minimal 6 karakter"></div><div class="field"><label>JABATAN / POSISI</label><input id="fJabatan" placeholder="Teknisi / Kasir / Reseller"></div><div class="field"><label>UPAH HARIAN</label><input id="fUpah" type="number" min="0" step="1000"></div><div class="field full"><label>STATUS AKUN</label><select id="fStatus"><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></div><div class="full group"><div class="group-title">🔐 HAK AKSES HTML / MENU — DIATUR OWNER</div><div class="permission-actions"><button type="button" class="btn secondary" onclick="pilihSemuaIzin()">☑ Pilih Semua</button><button type="button" class="btn secondary" onclick="hapusSemuaIzin()">☐ Hapus Semua</button><button type="button" class="btn secondary" onclick="pilihAksesOperasional()">⚙️ Operasional</button><span id="izinCount" class="count">0 izin dipilih</span></div><div class="checks" id="htmlPermissionChecks">
 <label class="check"><input type="checkbox" value="index.html" class="izin">🏠 Halaman Utama</label><label class="check"><input type="checkbox" value="login.html" class="izin">🔐 Login</label><label class="check"><input type="checkbox" value="register.html" class="izin">📝 Registrasi</label><label class="check"><input type="checkbox" value="absensi-karyawan.html" class="izin">🕘 Absensi Karyawan</label><label class="check"><input type="checkbox" value="cek-paket.html" class="izin">🔑 Cek Paket / Aktivasi</label><label class="check"><input type="checkbox" value="dashboard-admin.html" class="izin">📊 Dashboard Admin</label><label class="check"><input type="checkbox" value="data-karyawan.html" class="izin">👥 Data Karyawan</label><label class="check"><input type="checkbox" value="data-penjualan.html" class="izin">🛒 Data Penjualan</label><label class="check"><input type="checkbox" value="data-servis.html" class="izin">🔧 Data Servis</label><label class="check"><input type="checkbox" value="izin-akses.html" class="izin">🔐 Izin Akses</label><label class="check"><input type="checkbox" value="izin-akses1.html" class="izin">🔐 Izin Akses 1</label><label class="check"><input type="checkbox" value="page.html" class="izin">ℹ️ About</label><label class="check"><input type="checkbox" value="pengaturan.html" class="izin">⚙️ Template Nota / Pengaturan</label><label class="check"><input type="checkbox" value="pengeluaran.html" class="izin">🛍️ Pengeluaran</label><label class="check"><input type="checkbox" value="penjualan.html" class="izin">🛒 Input Penjualan</label><label class="check"><input type="checkbox" value="ringkasan-pendapatan.html" class="izin">💰 Ringkasan Pendapatan</label><label class="check"><input type="checkbox" value="servisan.html" class="izin">🧾 Input Servisan</label><label class="check"><input type="checkbox" value="stock.html" class="izin">📦 Stock Produk</label><label class="check"><input type="checkbox" value="upah-kerja.html" class="izin">💵 Upah Kerja</label></div><div class="status">Login dan registrasi sebaiknya tidak diberikan kepada akun operasional. Akses Admin tetap harus dilindungi pemeriksaan role.</div></div><div id="editInfo" class="status"></div><div class="popup-actions"><button class="btn secondary" onclick="tutupPopup()">Batal</button><button class="btn primary" onclick="simpanAkun()">💾 Simpan</button></div></div></div>
 <div class="popup" id="notice"><div class="popup-box" style="width:min(500px,calc(100% - 22px))"><h3 id="noticeTitle">FIXZY</h3><div id="noticeText" class="notice-text"></div><div class="popup-actions"><button class="btn primary" onclick="tutupNotice()">OK</button></div></div></div><div class="popup" id="waPopup"><div class="popup-box" style="width:min(540px,calc(100% - 22px))"><h3>📲 Kirim Data Login ke WhatsApp?</h3><div id="waText" class="notice-text"></div><div class="popup-actions"><button class="btn secondary" onclick="tutupWaPopup()">Tidak</button><button class="btn primary" onclick="kirimWhatsApp()">📲 Kirim Link & Akun Login via WhatsApp</button></div></div></div>
-<script>
-function bukaNavigasi(file){
-  const target=new URL(file,location.href).href;
-  // Minta aplikasi induk berpindah halaman jika listener tersedia.
-  if(window.parent!==window){
-    try{window.parent.postMessage({type:"FIXZY_NAVIGATE",page:file,url:target},"*")}catch(e){}
-    // Fallback supaya tombol tetap bekerja jika halaman induk tidak menangani pesan.
-    setTimeout(()=>{if(location.href===location.href)location.href=target},350);
-    return;
-  }
-  location.href=target;
-}
-</script>
 <script type="module">
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth,onAuthStateChanged,createUserWithEmailAndPassword,updateProfile,signOut}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";

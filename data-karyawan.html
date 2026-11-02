@@ -45,97 +45,22 @@ input,select{height:43px;width:100%;border:1px solid #cbd5e1;border-radius:11px;
 .salary-actions{display:flex;gap:8px;margin-top:10px}.wa-btn{background:#16a34a;color:#fff;flex:1}
 .card-title{font-size:17px;font-weight:900;margin:0 0 10px}.status-pill{display:inline-block;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900}.status-hadir{background:#dcfce7;color:#166534}.status-tidak{background:#fee2e2;color:#991b1b}.empty{text-align:center;color:var(--muted);padding:25px}
 @media(max-width:1050px){.kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.header{min-height:64px;padding:8px 10px;gap:8px}.logo{width:42px;height:42px}.brand h1{font-size:14px}.owner{display:none}.wrap{padding:9px 8px}.toolbar{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.salary-summary{grid-template-columns:1fr}}
-/* ===== NAVIGASI FIXZY - TAMPILAN AWAL ===== */
-
-.page-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 10px;
-    margin: 15px 0;
-    background: #171717;
-    border: 1px solid #333;
-    border-radius: 10px;
-}
-
-.page-nav a,
-.page-nav button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 16px;
-    border: 1px solid #444;
-    border-radius: 7px;
-    background: #252525;
-    color: #ddd;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all .2s ease;
-}
-
-.page-nav a:hover,
-.page-nav button:hover {
-    background: #333;
-    border-color: #ffc107;
-    color: #ffc107;
-}
-
-.page-nav a.active,
-.page-nav button.current {
-    background: #ffc107;
-    border-color: #ffc107;
-    color: #111;
-    font-weight: 700;
-}
-
-.page-nav a:focus,
-.page-nav button:focus {
-    outline: 2px solid #ffc107;
-    outline-offset: 2px;
-}
-
-/* Tampilan HP */
-@media (max-width: 600px) {
-    .page-nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 7px;
-        padding: 8px;
-    }
-
-    .page-nav a,
-    .page-nav button {
-        width: 100%;
-        padding: 10px 6px;
-        font-size: 12px;
-        text-align: center;
-    }
-}
 </style>
 </head>
 <body>
 <header class="header"><img src="logo.png" class="logo" alt="FIXZY"><div class="brand"><h1 id="brandTitle">RINGKASAN GAJI KARYAWAN</h1><p id="brandSub">Per karyawan • kalender • absensi</p></div><div class="owner"><b id="ownerName">Memuat...</b><span id="ownerEmail">Firebase</span></div><button class="refresh" id="refreshBtn">↻</button></header>
 <main class="wrap">
-<nav class="page-nav" aria-label="Navigasi FIXZY">
-  <button type="button" class="active" onclick="bukaHalamanFixzy('data-karyawan.html')">📄 Ringkasan Gaji</button>
-  <button type="button" class="" onclick="bukaHalamanFixzy('absensi-karyawan.html')">📅 Absensi</button>
-  <button type="button" class="" onclick="bukaHalamanFixzy('izin-akses.html')">🔐 Izin Akses</button>
+<nav class="page-nav">
+  <a class="active" href="data-karyawan.html">
+    📄 Ringkasan Gaji
+  </a>
+  <a href="absensi-karyawan.html">
+    📅 Absensi
+  </a>
+  <a href="izin-akses.html">
+    🔐 Izin Akses
+  </a>
 </nav>
-<script>
-// Navigasi FIXZY: pindah pada tab/halaman utama, bukan di dalam iframe.
-function bukaHalamanFixzy(file){
-  const target = new URL(file, window.location.href).href;
-  try {
-    window.top.location.assign(target);
-  } catch (err) {
-    window.location.assign(target);
-  }
-}
-</script>
 <section class="card"><div id="status" class="status">Memeriksa sesi Firebase...</div></section>
 <section class="card"><div class="toolbar"><div class="field"><label>PERIODE UPAH</label><select id="periode"><option value="bulan">Bulan ini</option><option value="hari">Hari ini</option><option value="tahun">Tahun ini</option></select></div><div class="field"><label>TANGGAL / BULAN</label><input id="periodeTanggal" type="month"></div><div class="field"><label>CARI KARYAWAN</label><input id="cari" placeholder="Nama, jabatan..."></div><button class="btn dark" id="refresh2">↻ Refresh</button></div></section>
 <section class="kpis"><div class="kpi k1"><small>KARYAWAN</small><b id="karyawan">0</b></div><div class="kpi k2"><small>HARI HADIR</small><b id="hadir">0</b></div><div class="kpi k3"><small>TOTAL UPAH</small><b id="gross">Rp 0</b></div><div class="kpi k4"><small>KASBON</small><b id="kasbon">Rp 0</b></div><div class="kpi k5"><small>SISA UPAH</small><b id="net">Rp 0</b></div></section>
@@ -253,5 +178,25 @@ $("periode").onchange=()=>{const p=$("periode").value,f=$("periodeTanggal");f.ty
 $("periodeTanggal").onchange=refresh;$("periodeTanggal").value=monthNow();
 boot(refresh);
 </script>
-<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script><script>
+function bukaNavigasi(file){
+  const allowed = ["absensi-karyawan.html", "data-karyawan.html", "izin-akses.html"];
+  if (!allowed.includes(file)) return;
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: "FIXZY_NAVIGATE", page: file }, location.origin);
+  } else {
+    location.href = file;
+  }
+}
+document.addEventListener("click", function(event){
+  const link = event.target.closest(".page-nav a[href]");
+  if (!link) return;
+  const file = link.getAttribute("href");
+  if (["absensi-karyawan.html", "data-karyawan.html", "izin-akses.html"].includes(file)) {
+    event.preventDefault();
+    bukaNavigasi(file);
+  }
+});
+</script>
+</body>
 </html>

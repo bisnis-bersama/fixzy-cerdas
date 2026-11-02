@@ -33,7 +33,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica
 .refresh{height:44px;width:44px;border:0;border-radius:12px;background:var(--yellow);font-weight:900;font-size:20px}
 .wrap{max-width:1250px;margin:auto;padding:12px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 4px 16px #0000000a}
 .status{font-size:12px;color:var(--muted);line-height:1.5}.ok{color:#15803d;font-weight:800}.err{color:#b91c1c;font-weight:800}
-.page-nav{display:flex;gap:8px;overflow:auto;margin-bottom:12px}.page-nav button{flex:1;min-width:130px;border:0;cursor:pointer;text-align:center;padding:10px 8px;border-radius:11px;background:#e2e8f0;color:#172033;font-size:11px;font-weight:900}.page-nav button.current{background:var(--yellow);color:#111}
+.page-nav{display:flex;gap:8px;overflow:auto;margin-bottom:12px}.page-nav a{flex:1;min-width:130px;text-decoration:none;text-align:center;padding:10px 8px;border-radius:11px;background:#e2e8f0;color:#172033;font-size:11px;font-weight:900}.page-nav a.active{background:var(--yellow);color:#111}
 .toolbar{display:grid;grid-template-columns:1fr 1fr 1.5fr auto;gap:9px;align-items:end}.field{display:flex;flex-direction:column;gap:5px}label{font-size:11px;font-weight:900;color:#475569}
 input,select{height:43px;width:100%;border:1px solid #cbd5e1;border-radius:11px;padding:0 11px;background:#fff;outline:none}input:focus,select:focus{border-color:var(--yellow);box-shadow:0 0 0 3px #ffc10722}
 .btn{height:43px;border:0;border-radius:11px;padding:0 15px;font-weight:900}.yellow{background:var(--yellow);color:#111}.dark{background:var(--navy);color:#fff}
@@ -50,11 +50,22 @@ input,select{height:43px;width:100%;border:1px solid #cbd5e1;border-radius:11px;
 <body>
 <header class="header"><img src="logo.png" class="logo" alt="FIXZY"><div class="brand"><h1 id="brandTitle">RINGKASAN GAJI KARYAWAN</h1><p id="brandSub">Per karyawan • kalender • absensi</p></div><div class="owner"><b id="ownerName">Memuat...</b><span id="ownerEmail">Firebase</span></div><button class="refresh" id="refreshBtn">↻</button></header>
 <main class="wrap">
-<nav class="page-nav" aria-label="Navigasi Karyawan">
-  <button type="button" class="current" onclick="window.location.assign(new URL('data-karyawan.html', window.location.href).href)">📄 Ringkasan Gaji</button>
-  <button type="button" class="" onclick="window.location.assign(new URL('absensi-karyawan.html', window.location.href).href)">📅 Absensi</button>
-  <button type="button" class="" onclick="window.location.assign(new URL('izin-akses.html', window.location.href).href)">🔐 Izin Akses</button>
+<nav class="page-nav" aria-label="Navigasi FIXZY">
+  <button type="button" class="active" onclick="bukaHalamanFixzy('data-karyawan.html')">📄 Ringkasan Gaji</button>
+  <button type="button" class="" onclick="bukaHalamanFixzy('absensi-karyawan.html')">📅 Absensi</button>
+  <button type="button" class="" onclick="bukaHalamanFixzy('izin-akses.html')">🔐 Izin Akses</button>
 </nav>
+<script>
+// Navigasi FIXZY: pindah pada tab/halaman utama, bukan di dalam iframe.
+function bukaHalamanFixzy(file){
+  const target = new URL(file, window.location.href).href;
+  try {
+    window.top.location.assign(target);
+  } catch (err) {
+    window.location.assign(target);
+  }
+}
+</script>
 <section class="card"><div id="status" class="status">Memeriksa sesi Firebase...</div></section>
 <section class="card"><div class="toolbar"><div class="field"><label>PERIODE UPAH</label><select id="periode"><option value="bulan">Bulan ini</option><option value="hari">Hari ini</option><option value="tahun">Tahun ini</option></select></div><div class="field"><label>TANGGAL / BULAN</label><input id="periodeTanggal" type="month"></div><div class="field"><label>CARI KARYAWAN</label><input id="cari" placeholder="Nama, jabatan..."></div><button class="btn dark" id="refresh2">↻ Refresh</button></div></section>
 <section class="kpis"><div class="kpi k1"><small>KARYAWAN</small><b id="karyawan">0</b></div><div class="kpi k2"><small>HARI HADIR</small><b id="hadir">0</b></div><div class="kpi k3"><small>TOTAL UPAH</small><b id="gross">Rp 0</b></div><div class="kpi k4"><small>KASBON</small><b id="kasbon">Rp 0</b></div><div class="kpi k5"><small>SISA UPAH</small><b id="net">Rp 0</b></div></section>

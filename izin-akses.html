@@ -17,13 +17,15 @@
 <div class="popup" id="notice"><div class="popup-box" style="width:min(500px,calc(100% - 22px))"><h3 id="noticeTitle">FIXZY</h3><div id="noticeText" class="notice-text"></div><div class="popup-actions"><button class="btn primary" onclick="tutupNotice()">OK</button></div></div></div><div class="popup" id="waPopup"><div class="popup-box" style="width:min(540px,calc(100% - 22px))"><h3>📲 Kirim Data Login ke WhatsApp?</h3><div id="waText" class="notice-text"></div><div class="popup-actions"><button class="btn secondary" onclick="tutupWaPopup()">Tidak</button><button class="btn primary" onclick="kirimWhatsApp()">📲 Kirim Link & Akun Login via WhatsApp</button></div></div></div>
 <script>
 function bukaNavigasi(file){
-  const allowed=["absensi-karyawan.html","data-karyawan.html","izin-akses.html"];
-  if(!allowed.includes(file)) return;
+  const target=new URL(file,location.href).href;
+  // Minta aplikasi induk berpindah halaman jika listener tersedia.
   if(window.parent!==window){
-    window.parent.postMessage({type:"FIXZY_NAVIGATE",page:file},location.origin);
+    try{window.parent.postMessage({type:"FIXZY_NAVIGATE",page:file,url:target},"*")}catch(e){}
+    // Fallback supaya tombol tetap bekerja jika halaman induk tidak menangani pesan.
+    setTimeout(()=>{if(location.href===location.href)location.href=target},350);
     return;
   }
-  location.href=file;
+  location.href=target;
 }
 </script>
 <script type="module">

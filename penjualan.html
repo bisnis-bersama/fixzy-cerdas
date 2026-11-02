@@ -69,6 +69,25 @@ body.dark .secondary{background:#334155!important;color:#fff!important;border-co
 body.dark .popup-box{background:#111827!important;color:#e5e7eb!important;border-color:#475569!important}
 body.dark .template-card{background:#0f172a!important;color:#e5e7eb!important;border-color:#475569!important}
 body.dark .template-preview{background:#111827!important;border-color:#475569!important}
+
+/* Tambahan khusus Data Pelanggan: daftar pelanggan rutin */
+.customer-tools{display:flex;gap:7px;align-items:center;margin-top:7px}
+.customer-tools .btn{font-size:12px;padding:9px 11px}
+.customer-popup{position:fixed;inset:0;background:#0009;z-index:10050;display:none;align-items:center;justify-content:center;padding:16px}
+.customer-popup.show{display:flex}
+.customer-popup-box{width:100%;max-width:420px;max-height:85vh;overflow:auto;background:#fff;color:#172033;border-radius:16px;padding:16px;box-shadow:0 15px 45px #0004}
+.customer-popup-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.customer-popup-head strong{font-size:17px}
+.customer-popup-close{border:0;background:#e5e7eb;border-radius:8px;padding:7px 11px;font-weight:900}
+.customer-popup-box .field{margin-top:10px}
+.customer-list{display:grid;gap:7px;margin-top:12px}
+.customer-list-item{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid #e2e8f0;border-radius:10px;padding:9px}
+.customer-list-item button{border:0;border-radius:8px;padding:9px;background:#ffc107;color:#111;font-weight:900}
+.customer-list-item small{display:block;color:#64748b;margin-top:3px}
+.customer-empty{padding:12px;text-align:center;color:#64748b;background:#f8fafc;border-radius:10px;font-size:12px}
+body.dark .customer-popup-box{background:#111827;color:#e5e7eb}
+body.dark .customer-list-item{border-color:#334155}
+body.dark .customer-empty{background:#0f172a;color:#94a3b8}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -90,8 +109,8 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 </header>
 <main class="wrap">
 <section class="card"><div class="title">👤 Data Pelanggan & Transaksi</div><div class="grid">
-<div class="field"><label>Nama pelanggan *</label><input id="customer" placeholder="Nama pelanggan"></div>
-<div class="field"><label>Nomor WhatsApp *</label><input id="wa" inputmode="tel" placeholder="08xxxxxxxxxx"></div>
+<div class="field"><label>Nama pelanggan *</label><input id="customer" list="customerSuggestions" placeholder="Ketik nama atau pilih Pelanggan"><datalist id="customerSuggestions"><option value="Pelanggan"></option></datalist></div>
+<div class="field"><label>Nomor WhatsApp *</label><input id="wa" inputmode="tel" placeholder="08xxxxxxxxxx"><div class="customer-tools"><button class="btn dark" type="button" id="openCustomerPopup">Pilih pelanggan rutin</button></div></div>
 <div class="field full"><label>Alamat pelanggan</label><input id="address" placeholder="Alamat (opsional)"></div>
 <div class="field"><label>Tanggal transaksi</label><input id="date" type="date"></div>
 <div class="field"><label>Status transaksi</label><select id="status"><option value="Tunai">Tunai</option><option value="Tagihan">Tagihan</option><option value="Batal">Batal</option></select></div>
@@ -121,7 +140,18 @@ body.dark .template-preview{background:#111827!important;border-color:#475569!im
 <button class="btn green" onclick="sendWA()">Kirim Nota via WhatsApp</button>
 </div>
 </section>
-</main><div id="loading" class="loading"><div>Memproses...</div></div>
+</main>
+<div id="customerPopup" class="customer-popup" aria-hidden="true">
+ <div class="customer-popup-box" role="dialog" aria-modal="true" aria-labelledby="customerPopupTitle">
+  <div class="customer-popup-head"><strong id="customerPopupTitle">Pelanggan Rutin</strong><button type="button" class="customer-popup-close" id="closeCustomerPopup">Tutup ✕</button></div>
+  <p class="muted">Simpan nomor pelanggan yang sering berbelanja. Pilih nomor dari daftar untuk mengisinya otomatis ke kolom WhatsApp.</p>
+  <div class="field"><label>Nama pelanggan</label><input id="routineCustomerName" placeholder="Nama / sebutan pelanggan"></div>
+  <div class="field"><label>Nomor WhatsApp</label><input id="routineCustomerWa" inputmode="tel" placeholder="08xxxxxxxxxx"></div>
+  <div class="actions"><button type="button" class="btn yellow" id="saveRoutineCustomer">Simpan Nomor</button></div>
+  <div id="routineCustomerList" class="customer-list"></div>
+ </div>
+</div>
+<div id="loading" class="loading"><div>Memproses...</div></div>
 <script type="module">
 import{initializeApp,getApps,getApp}from'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
 import{getAuth,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
@@ -240,6 +270,71 @@ window.downloadSaleJPG=async()=>{
 function num(v){if(typeof v==='number')return v;let s=String(v??'').trim().replace(/[^\d,.-]/g,'');if(!s)return 0;let dots=(s.match(/\./g)||[]).length,commas=(s.match(/,/g)||[]).length;if(dots&&commas){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');}else if(commas){let a=s.split(',');s=a.length===2&&a[1].length<=2?s.replace(',','.'):s.replace(/,/g,'');}else if(dots){let a=s.split('.');if(!(a.length===2&&a[1].length<=2))s=s.replace(/\./g,'');}return Number(s)||0}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function msg(t){$('message').textContent=t;$('message').classList.add('show')}
+
+/* Daftar pelanggan rutin disimpan lokal di perangkat/browser ini. */
+function routineStorageKey(){
+ return 'fixzy_pelanggan_rutin_'+String(ownerUid||uid||'default');
+}
+function getRoutineCustomers(){
+ try{
+  const data=JSON.parse(localStorage.getItem(routineStorageKey())||'[]');
+  return Array.isArray(data)?data:[];
+ }catch(e){return[];}
+}
+function saveRoutineCustomers(list){
+ try{localStorage.setItem(routineStorageKey(),JSON.stringify(list));return true;}
+ catch(e){alert('Nomor tidak dapat disimpan di browser ini.');return false;}
+}
+function renderRoutineCustomers(){
+ const list=getRoutineCustomers(),box=$('routineCustomerList');
+ if(!list.length){
+  box.innerHTML='<div class="customer-empty">Belum ada nomor pelanggan tersimpan. Tambahkan melalui kolom di atas.</div>';
+  return;
+ }
+ box.innerHTML=list.map((item,index)=>`<div class="customer-list-item"><div><b>${esc(item.nama||'Pelanggan')}</b><small>${esc(item.wa||'')}</small></div><div style="display:flex;gap:6px"><button type="button" onclick="selectRoutineCustomer(${index})">PILIH</button><button type="button" style="background:#dc2626;color:white" onclick="deleteRoutineCustomer(${index})">×</button></div></div>`).join('');
+}
+function openRoutinePopup(){
+ renderRoutineCustomers();
+ $('customerPopup').classList.add('show');
+ $('customerPopup').setAttribute('aria-hidden','false');
+}
+function closeRoutinePopup(){
+ $('customerPopup').classList.remove('show');
+ $('customerPopup').setAttribute('aria-hidden','true');
+}
+window.selectRoutineCustomer=index=>{
+ const item=getRoutineCustomers()[index];
+ if(!item)return;
+ $('wa').value=item.wa||'';
+ if(!$('customer').value.trim()||$('customer').value.trim()==='Pelanggan')$('customer').value=item.nama||'Pelanggan';
+ closeRoutinePopup();
+};
+window.deleteRoutineCustomer=index=>{
+ const list=getRoutineCustomers();
+ if(!list[index])return;
+ if(!confirm('Hapus nomor pelanggan ini dari daftar rutin?'))return;
+ list.splice(index,1);
+ if(saveRoutineCustomers(list))renderRoutineCustomers();
+};
+$('openCustomerPopup').addEventListener('click',openRoutinePopup);
+$('closeCustomerPopup').addEventListener('click',closeRoutinePopup);
+$('customerPopup').addEventListener('click',e=>{if(e.target===$('customerPopup'))closeRoutinePopup();});
+$('saveRoutineCustomer').addEventListener('click',()=>{
+ const nama=$('routineCustomerName').value.trim()||'Pelanggan';
+ const wa=$('routineCustomerWa').value.trim();
+ if(!wa){alert('Isi nomor WhatsApp terlebih dahulu.');return;}
+ const digits=wa.replace(/\D/g,'');
+ if(digits.length<8){alert('Nomor WhatsApp belum valid.');return;}
+ const list=getRoutineCustomers();
+ const existing=list.findIndex(x=>String(x.wa||'').replace(/\D/g,'')===digits);
+ const item={nama,wa};
+ if(existing>=0)list[existing]=item;else list.push(item);
+ if(saveRoutineCustomers(list)){
+  $('routineCustomerName').value='';
+  $('routineCustomerWa').value='';
+  renderRoutineCustomers();
+ }
+});
 function parseCSV(text){let out=[],row=[],cell='',q=false;text=text.replace(/^\uFEFF/,'');for(let i=0;i<text.length;i++){let c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}else if(c===','&&!q){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(cell);cell='';if(row.some(x=>x.trim()))out.push(row);row=[]}else cell+=c}if(cell!==''||row.length){row.push(cell);if(row.some(x=>x.trim()))out.push(row)}return out}
 function normalize(rows,source){if(!rows.length)return[];let headers=rows[0].map(clean),out=[];for(let i=1;i<rows.length;i++){let r=rows[i],o={};headers.forEach((h,j)=>o[h]=r[j]??'');let get=(keys)=>{for(let k of keys){let v=o[clean(k)];if(v!==undefined&&String(v).trim()!=='')return v}return''};let name=get(['nama barang','nama produk','nama','produk','product','barang'])||r[1]||r[0];if(!String(name).trim())continue;let modal=num(get(['modal','harga modal','harga beli','hpp'])||r[3]),jual=num(get(['jual','harga jual','harga penjualan'])||r[4]),stok=num(get(['stock','stok','sisa stok','jumlah stok'])||r[6]);let kode=get(['kode','sku','kode produk','barcode','id'])||r[0]||'';out.push({id:source+'-'+i,nama:String(name).trim(),kode:String(kode).trim(),supplier:get(['supplier','suplier','nama supplier'])||source,modal,jual,stokSheet:Math.max(0,stok),stok:Math.max(0,stok),terjual:0})}return out}
 function csvUrl(raw){let u=new URL(raw),h=u.hostname.toLowerCase();if(!h.includes('docs.google.com')||!u.pathname.includes('/spreadsheets/'))return raw;let gid=u.searchParams.get('gid')||'0';let pub=u.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub(?:html)?/i);if(pub)return`https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv`;let id=u.pathname.match(/\/spreadsheets\/d\/([^/]+)/i);if(id)return`https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`;return raw}

@@ -84,17 +84,17 @@ function kasbonName(x){return String(x.namaKaryawan||x.nama||x.karyawan||"");}
 function isEmployeeRole(r){return ["employee","karyawan","kasir","kurir","teknisi","staff","user","pegawai"].includes(norm(r));}
 function isOwnerRole(r){return ["owner","superadmin","admin","pemilik"].includes(norm(r));}
 function sameEmployee(x,a){
- // Utamakan ID karyawan. Jika data pengeluaran memiliki ID, jangan
- // fallback ke nama karena pencocokan sebagian bisa memasukkan kasbon orang lain.
- const fields=["userId","uid","karyawanUid","employeeUid","karyawanId","employeeId"];
- const expenseIds=fields.filter(f=>x[f]!==undefined&&x[f]!==null&&String(x[f]).trim()!=="");
- if(expenseIds.length){
-   return expenseIds.some(f=>String(x[f])===String(a.id));
- }
- // Jika tidak ada ID, nama harus cocok persis setelah normalisasi.
+ // Kasbon/absensi harus cocok dengan karyawan yang tepat.
+ // Jika transaksi punya ID karyawan, gunakan ID tersebut sebagai identitas utama.
+ const fields=["karyawanUid","employeeUid","karyawanId","employeeId"];
+ const txIds=fields.map(f=>x[f]).filter(v=>v!==undefined&&v!==null&&String(v).trim()!=="").map(String);
+ const aid=String(a.id??"").trim();
+ if(txIds.length){ return !!aid && txIds.some(id=>id===aid); }
+ // userId/uid pada transaksi bisa menunjuk pemilik akun, jadi tidak dipakai
+ // sebagai ID karyawan. Untuk transaksi tanpa ID karyawan, wajib nama persis.
  const an=norm(nama(a));
- const xn=norm(x.namaKaryawan||x.nama||x.karyawan||"");
- return !!an&&!!xn&&an===xn;
+ const xn=norm(x.namaKaryawan||x.karyawan||x.nama||"");
+ return !!an && !!xn && an===xn;
 }
 async function loadProfile(user){
  const s=await getDoc(doc(db,"users",user.uid));

@@ -50,7 +50,29 @@ input,select{height:43px;width:100%;border:1px solid #cbd5e1;border-radius:11px;
 <body>
 <header class="header"><img src="logo.png" class="logo" alt="FIXZY"><div class="brand"><h1 id="brandTitle">RINGKASAN GAJI KARYAWAN</h1><p id="brandSub">Per karyawan • kalender • absensi</p></div><div class="owner"><b id="ownerName">Memuat...</b><span id="ownerEmail">Firebase</span></div><button class="refresh" id="refreshBtn">↻</button></header>
 <main class="wrap">
-<nav class="page-nav"><a class="active" href="data-karyawan.html">📄 Ringkasan Gaji</a><a href="absensi-karyawan.html">📅 Absensi</a><a href="izin-akses.html" id="navSetting">⚙️ Setting Upah</a></nav>
+<nav class="page-nav" aria-label="Navigasi FIXZY">
+  <a href="data-karyawan.html" data-fixzy-page="data-karyawan.html">📄 Ringkasan Gaji</a>
+  <a href="absensi-karyawan.html" data-fixzy-page="absensi-karyawan.html">📅 Absensi</a>
+  <a href="izin-akses.html" data-fixzy-page="izin-akses.html">🔐 Izin Akses</a>
+</nav>
+<script>
+(function(){
+  const nav = document.querySelector('.page-nav');
+  if(!nav) return;
+  nav.addEventListener('click', function(ev){
+    const link = ev.target.closest('a[data-fixzy-page]');
+    if(!link) return;
+    ev.preventDefault();
+    const page = link.dataset.fixzyPage;
+    if(window.parent !== window){
+      window.parent.postMessage({type:'FIXZY_NAVIGATE', page}, '*');
+    } else {
+      window.location.href = page;
+    }
+  });
+})();
+</script>
+
 <section class="card"><div id="status" class="status">Memeriksa sesi Firebase...</div></section>
 <section class="card"><div class="toolbar"><div class="field"><label>PERIODE UPAH</label><select id="periode"><option value="bulan">Bulan ini</option><option value="hari">Hari ini</option><option value="tahun">Tahun ini</option></select></div><div class="field"><label>TANGGAL / BULAN</label><input id="periodeTanggal" type="month"></div><div class="field"><label>CARI KARYAWAN</label><input id="cari" placeholder="Nama, jabatan..."></div><button class="btn dark" id="refresh2">↻ Refresh</button></div></section>
 <section class="kpis"><div class="kpi k1"><small>KARYAWAN</small><b id="karyawan">0</b></div><div class="kpi k2"><small>HARI HADIR</small><b id="hadir">0</b></div><div class="kpi k3"><small>TOTAL UPAH</small><b id="gross">Rp 0</b></div><div class="kpi k4"><small>KASBON</small><b id="kasbon">Rp 0</b></div><div class="kpi k5"><small>SISA UPAH</small><b id="net">Rp 0</b></div></section>
@@ -127,13 +149,7 @@ function setupHeader(user){
 async function boot(loadFn){onAuthStateChanged(auth,async user=>{if(!user){$("status").innerHTML='<span class="err">❌ Sesi login tidak ditemukan.</span>';return;}uid=user.uid;try{await loadProfile(user);setupHeader(user);await loadFn();}catch(e){$("status").innerHTML='<span class="err">🔒 '+esc(e.message||e)+'</span>';}});}
 function periodKey(){const p=$("periode").value,v=$("periodeTanggal").value;if(p==="hari")return v||today();if(p==="tahun")return(v||monthNow()).slice(0,4);return v||monthNow();}
 function matchPeriod(x){const d=dateOf(x),k=periodKey();if(!d||!k)return false;if(k.length===10)return d===k;if(k.length===7)return d.startsWith(k);return d.startsWith(k);}
-function kasbonFor(a){
-  return pengeluaran.filter(x =>
-    matchPeriod(x) &&
-    isKasbon(x) &&
-    sameEmployee(x,a)
-  );
-}
+function kasbonFor(a){return pengeluaran.filter(x=>matchPeriod(x)&&isKasbon(x)&&sameEmployee(x,{id:"",nama:kasbonName(x)}));}
 function calculate(a){
  const rows=absensi.filter(x=>matchPeriod(x)&&sameEmployee(x,a));
  const hadir=rows.filter(isHadir).length,libur=rows.filter(isLibur).length,tidak=rows.filter(x=>!isHadir(x)&&!isLibur(x)).length;

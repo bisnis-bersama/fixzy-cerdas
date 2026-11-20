@@ -1,42 +1,216 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><meta name="theme-color" content="#111827">
-<title>FIXZY | Stok Manual</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>FIXZY | Tampilan Stok Terkini</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}:root{--bg:#f5f7fb;--line:#e5e7eb;--txt:#172033;--muted:#64748b;--green:#16a34a}html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif}body{background:linear-gradient(180deg,#fff 0,#f5f7fb 250px)}button,input{font:inherit}button{cursor:pointer}.header{position:sticky;top:0;z-index:20;background:#111827;color:#fff;box-shadow:0 2px 12px #17203322}.header-in{max-width:1000px;margin:auto;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{display:flex;align-items:center;gap:10px;min-width:0}.logo{width:42px;height:42px;flex-shrink:0;border-radius:12px;object-fit:cover;background:#000}.brand h1{font-size:18px;font-weight:900;color:#fff}.brand p{font-size:10px;color:#cbd5e1;margin-top:3px}.head-actions{display:flex;gap:8px}.head-btn{min-height:40px;border:0;border-radius:10px;background:#fff;color:#111827;padding:0 12px;font-size:12px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.head-btn.yellow{background:#ffc107}.container{width:min(1000px,100%);margin:auto;padding:16px 14px 70px}.card{background:#fff;border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:14px;box-shadow:0 5px 18px #17203308}.title{font-size:15px;font-weight:900;margin-bottom:5px}.sub{font-size:11px;color:var(--muted);line-height:1.5}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:14px}.field{min-width:0}.field.full{grid-column:1/-1}label{display:block;font-size:11px;font-weight:800;color:#475569;margin-bottom:6px}input{width:100%;height:44px;border:1px solid #cbd5e1;border-radius:10px;padding:0 12px;outline:none;background:#fff;color:var(--txt)}input:focus{border-color:#f59e0b;box-shadow:0 0 0 3px #f59e0b18}input[readonly]{background:#f8fafc;color:#64748b}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.btn{min-height:43px;border:0;border-radius:10px;padding:10px 15px;font-weight:900}.primary{background:linear-gradient(135deg,#ffc107,#f59e0b);color:#111827}.light{background:#eef2f7;color:#334155}.msg{display:none;margin-top:11px;padding:10px;border-radius:10px;font-size:11px;white-space:pre-line;line-height:1.5;overflow-wrap:anywhere}.msg.show{display:block}.msg.ok{color:#166534;background:#f0fdf4;border:1px solid #bbf7d0}.msg.err{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca}.toolbar{display:flex;gap:9px;align-items:center;margin:12px 0}.search{flex:1;min-width:0}.count{font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;min-width:700px;border-collapse:collapse}th{padding:11px;background:#f8fafc;color:#475569;font-size:10px;text-align:left}td{padding:10px;border-bottom:1px solid #edf0f3;font-size:11px;vertical-align:middle}.price{font-weight:900;color:#b45309}.stock{font-weight:900;color:#15803d}.edit-btn{border:0;border-radius:8px;padding:8px 10px;background:#e0f2fe;color:#075985;font-size:10px;font-weight:900}.mobile-list{display:none;gap:9px}.item{border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.item-name{font-size:12px;font-weight:900;overflow-wrap:anywhere}.item-meta{font-size:10px;color:var(--muted);margin-top:3px}.item-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.item-grid div{background:#f8fafc;border-radius:8px;padding:8px;font-size:10px;overflow-wrap:anywhere}.item-grid b{display:block;color:#94a3b8;font-size:8px;margin-bottom:3px}.item-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}.empty{padding:22px;text-align:center;color:var(--muted);font-size:11px}.loading{display:none;position:fixed;inset:0;z-index:100;background:#11182766;align-items:center;justify-content:center}.loading.show{display:flex}.loader{background:#fff;border-radius:16px;padding:23px;text-align:center}.spin{width:30px;height:30px;border:4px solid #e5e7eb;border-top-color:#f59e0b;border-radius:50%;animation:s .8s linear infinite;margin:auto auto 10px}@keyframes s{to{transform:rotate(360deg)}}@media(max-width:600px){.header-in{padding:9px 10px}.logo{width:42px;height:42px}.brand h1{font-size:16px}.head-btn{min-height:37px;padding:0 9px;font-size:10px}.container{padding:10px}.card{padding:12px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.table-wrap{display:none}.mobile-list{display:grid}.toolbar{display:grid;grid-template-columns:1fr auto}}
-</style></head>
+*{box-sizing:border-box}body{margin:0;background:#f1f5f9;color:#111827;font-family:Arial,sans-serif}
+header{background:#0b0f14;color:#fff;border-bottom:4px solid #ffc107;padding:13px 15px;position:sticky;top:0;z-index:5}
+.head{max-width:1250px;margin:auto;display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;object-fit:contain;border-radius:10px}.brand{flex:1;min-width:0}.brand b{font-size:18px}.brand small{display:block;color:#cbd5e1;margin-top:4px;font-size:11px}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 13px;font-weight:800}.yellow{background:#ffc107;color:#111}.dark{background:#111827;color:white}
+main{max-width:1250px;margin:auto;padding:14px}.notice,.card{background:white;border:1px solid #dbe3ed;border-radius:15px;padding:14px;margin-bottom:13px;box-shadow:0 3px 12px #0f172a0a}.notice{font-size:12px;line-height:1.6;color:#475569}.notice b{color:#111827}
+.sales-detail{background:#fff;border:1px solid #dbe3ed;border-radius:15px;padding:14px;margin-bottom:13px;box-shadow:0 3px 12px #0f172a0a}.sales-title{font-size:16px;font-weight:900;margin-bottom:5px;color:#111827}.sales-subtitle{font-size:11px;color:#64748b;line-height:1.5;margin-bottom:12px}.sales-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.sales-box{min-width:0;padding:12px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}.sales-box small{display:block;color:#64748b;font-size:10px;font-weight:900;line-height:1.4}.sales-box b{display:block;font-size:17px;margin-top:7px;overflow-wrap:anywhere}.sales-box.revenue{background:#fef3c7;border-color:#fcd34d}.sales-box.revenue b{color:#92400e}.sales-box.profit{background:#dcfce7;border-color:#86efac}.sales-box.profit b{color:#166534}.sales-warning{font-size:10px;color:#64748b;line-height:1.5;margin-top:10px}
+@media(max-width:400px){.sales-box{padding:9px}.sales-box b{font-size:14px}}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}.search{flex:1;min-width:210px;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font:inherit}select.search{background:#fff;color:#111827;min-width:145px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:13px}.stat{border:2px solid #111827;border-radius:13px;padding:13px;background:#fff;box-shadow:3px 3px 0 #111827}.stat small{display:block;font-size:10px;color:#64748b;font-weight:900}.stat b{display:block;font-size:21px;margin-top:7px}.stat.yellowbg{background:#fef3c7}.stat.greenbg{background:#dcfce7}.stat.darkbg{background:#111827;color:#fff}.stat.darkbg small{color:#cbd5e1}
+.tablewrap{overflow:auto;border:2px solid #111827;border-radius:12px}table{width:100%;border-collapse:collapse;min-width:750px}th{background:#111827;color:#fff;text-align:left;padding:11px;font-size:11px;white-space:nowrap}td{padding:10px;border-bottom:1px solid #e2e8f0;font-size:12px}tr:last-child td{border-bottom:0}.num{text-align:right;white-space:nowrap}.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-weight:900;font-size:10px}.ok{background:#dcfce7;color:#166534}.low{background:#fef3c7;color:#92400e}.zero{background:#fee2e2;color:#991b1b}.muted{color:#64748b;font-size:11px}.empty{text-align:center;padding:25px;color:#64748b}
+@media(max-width:750px){main{padding:9px}.stats{grid-template-columns:1fr 1fr}.stat{padding:10px}.stat b{font-size:18px}.head{gap:8px}.logo{width:40px;height:40px}.brand b{font-size:15px}button{padding:9px 10px;font-size:12px}.toolbar .search{width:100%;min-width:0}.toolbar select.search{flex:1}}
+</style>
+</head>
 <body>
-<header class="header"><div class="header-in"><div class="brand">
-   <img src="logo.png" class="logo" onerror="this.style.display='none'">
-   <div><h1>FIXZY</h1><p>Kelola Produk & Stok Manual</p></div>
-  </div><div class="head-actions"><a class="head-btn" href="stock.html">← Kembali</a><button class="head-btn yellow" id="reloadBtn" type="button">↻ Refresh</button></div></div></header>
-<main class="container">
-<section class="card" id="formCard"><div class="title" id="formTitle">＋ Tambah Produk Manual</div><div class="sub">Produk disimpan terpisah dari Spreadsheet. Untuk produk yang sudah ada, gunakan tombol Edit lalu isi jumlah pada bagian Tambah Stok.</div>
-<form id="productForm"><div class="form-grid">
-<div class="field"><label for="kode">Kode Produk (opsional)</label><input id="kode" maxlength="80" placeholder="Contoh: CHG-001"></div>
-<div class="field"><label for="nama">Nama Produk *</label><input id="nama" maxlength="160" required placeholder="Nama barang"></div>
-<div class="field"><label for="supplier">Supplier</label><input id="supplier" maxlength="120" placeholder="Nama supplier"></div>
-<div class="field"><label for="modal">Harga Modal</label><input id="modal" type="number" min="0" step="1" value="0"></div>
-<div class="field"><label for="jual">Harga Jual</label><input id="jual" type="number" min="0" step="1" value="0"></div>
-<div class="field" id="initialStockField"><label for="stokAwal">Stok Awal *</label><input id="stokAwal" type="number" min="0" step="1" value="0"></div>
-<div class="field" id="addStockField" style="display:none"><label for="tambahStok">Tambah Stok</label><input id="tambahStok" type="number" min="0" step="1" value="0" placeholder="Masukkan jumlah tambahan"></div>
-<div class="field" id="currentStockField" style="display:none"><label for="stokSaatIni">Stok Saat Ini</label><input id="stokSaatIni" readonly></div>
-</div><div class="actions"><button class="btn primary" id="saveBtn" type="submit">💾 Simpan Produk</button><button class="btn light" id="cancelBtn" type="button" style="display:none">Batal Edit</button></div></form><div id="formMsg" class="msg"></div></section>
-<section class="card"><div class="title">📦 Daftar Stok Manual</div><div class="sub">Daftar produk manual milik akun yang sedang login.</div><div class="toolbar"><input id="search" class="search" placeholder="🔎 Cari nama / kode / supplier..."><span class="count" id="count">0 produk</span></div><div id="listMsg" class="sub">Memuat data...</div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Nama Produk</th><th>Kode</th><th>Supplier</th><th>Modal</th><th>Jual</th><th>Stok</th><th>Aksi</th></tr></thead><tbody id="tbody"></tbody></table></div><div class="mobile-list" id="mobileList" style="margin-top:10px"></div></section>
-</main><div class="loading" id="loading"><div class="loader"><div class="spin"></div><b id="loadingText">Memuat...</b></div></div>
+<header><div class="head"><img class="logo" src="logo.png" alt="FIXZY"><div class="brand"><b>📦 STOK TERKINI FIXZY</b><small>Stok Spreadsheet dikurangi penjualan Firestore • Tampilan saja</small><small id="accountInfo">Memeriksa sesi login...</small></div><button class="yellow" onclick="loadAll()">↻ Muat ulang</button></div></header>
+<main>
+<div class="notice" id="status">⏳ Menghubungkan ke FIXZY...</div>
+<section class="sales-detail">
+ <div class="sales-title">📊 Ringkasan Penjualan, Servis &amp; Laba</div>
+ <div class="sales-subtitle">Modal dan jumlah produk penjualan serta pemakaian servis digabung untuk total usaha. Hasil penjualan dan hasil servis tetap ditampilkan terpisah.</div>
+ <div class="sales-grid">
+  <div class="sales-box revenue"><small>HASIL PENJUALAN</small><b id="salesRevenue">Rp0</b></div>
+  <div class="sales-box revenue"><small>HASIL SERVIS</small><b id="serviceRevenue">Rp0</b></div>
+  <div class="sales-box"><small>TOTAL QTY (JUAL + SERVIS)</small><b id="totalQty">0 pcs</b></div>
+  <div class="sales-box"><small>TOTAL MODAL (JUAL + SERVIS)</small><b id="totalModalAll">Rp0</b></div>
+  <div class="sales-box profit"><small>TOTAL LABA KOTOR</small><b id="totalProfit">Rp0</b></div>
+ </div>
+ <div class="sales-warning" id="salesWarning">Menunggu data transaksi penjualan.</div>
+</section>
+<div class="stats">
+ <div class="stat darkbg"><small>JENIS PRODUK</small><b id="countProducts">0</b></div>
+ <div class="stat yellowbg"><small>TOTAL STOK AWAL (GABUNGAN)</small><b id="stockStart">0</b></div>
+ <div class="stat"><small>STOK KOSONG</small><b id="stockEmpty">0</b></div>
+ <div class="stat greenbg"><small>STOK TERSISA TERHITUNG</small><b id="stockRemain">0</b></div>
+</div>
+<div class="card">
+ <div class="toolbar"><input id="search" class="search" placeholder="Cari nama produk atau kode..." oninput="render()"><select id="statusFilter" class="search" aria-label="Filter status stok" onchange="render()"><option value="all">Semua status</option><option value="ready">Ready</option><option value="empty">Kosong</option></select><button class="dark" onclick="exportCSV()">⬇ Ekspor CSV</button></div>
+ <div class="muted" id="resultCount" style="margin-bottom:9px">Menunggu data...</div>
+ <div class="tablewrap"><table><thead><tr><th>No.</th><th>Kode</th><th>Nama Produk</th><th>Supplier</th><th>Harga Modal</th><th>Harga Jual</th><th>Sumber</th><th>Stok Awal</th><th>Keluar (Jual + Servis)</th><th>Stok Tersisa</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="11" class="empty">Memuat data...</td></tr></tbody></table></div>
+</div>
+</main>
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import {getFirestore,collection,doc,getDocs,addDoc,runTransaction,serverTimestamp,query,where} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-const firebaseConfig={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
-const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);let uid=null,items=[],editingId=null;
-const money=n=>"Rp "+Number(n||0).toLocaleString("id-ID");const val=id=>$(id).value.trim();const number=id=>Number($(id).value||0);
-function loading(v,t="Memuat..."){$("loadingText").textContent=t;$("loading").classList.toggle("show",v)}function message(t,type="info"){const e=$("formMsg");e.textContent=t;e.className="msg show "+type}function clearMessage(){$("formMsg").textContent="";$("formMsg").className="msg"}function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-function resetForm(){editingId=null;$("productForm").reset();$("modal").value="0";$("jual").value="0";$("stokAwal").value="0";$("tambahStok").value="0";$("formTitle").textContent="＋ Tambah Produk Manual";$("saveBtn").textContent="💾 Simpan Produk";$("cancelBtn").style.display="none";$("initialStockField").style.display="";$("addStockField").style.display="none";$("currentStockField").style.display="none";clearMessage()}
-function editItem(id){const p=items.find(x=>x.id===id);if(!p)return;editingId=id;$("kode").value=p.kode||"";$("nama").value=p.nama||"";$("supplier").value=p.supplier||"";$("modal").value=Number(p.modal||0);$("jual").value=Number(p.jual||0);$("stokSaatIni").value=Number(p.stok||0).toLocaleString("id-ID");$("tambahStok").value="0";$("formTitle").textContent="✏️ Edit Produk & Tambah Stok";$("saveBtn").textContent="💾 Simpan Perubahan";$("cancelBtn").style.display="inline-block";$("initialStockField").style.display="none";$("addStockField").style.display="";$("currentStockField").style.display="";clearMessage();$("formCard").scrollIntoView({behavior:"smooth",block:"start"})}
-async function saveProduct(e){e.preventDefault();if(!uid){message("Akun belum siap. Pastikan sudah login melalui aplikasi FIXZY.","err");return}const nama=val("nama"),modal=number("modal"),jual=number("jual"),stokAwal=number("stokAwal"),tambah=number("tambahStok");if(!nama){message("Nama produk wajib diisi.","err");return}if([modal,jual,stokAwal,tambah].some(n=>!Number.isFinite(n)||n<0||!Number.isInteger(n))){message("Harga dan jumlah stok harus berupa angka bulat dan tidak boleh negatif.","err");return}const data={uid,kode:val("kode"),nama,supplier:val("supplier"),modal,jual,updatedAt:serverTimestamp()};loading(true,editingId?"Menyimpan perubahan...":"Menyimpan produk...");try{let successText;if(editingId){const ref=doc(db,"stok_manual",editingId);await runTransaction(db,async tx=>{const snap=await tx.get(ref);if(!snap.exists()||snap.data().uid!==uid)throw new Error("Produk tidak ditemukan atau bukan milik akun ini.");const current=Number(snap.data().stok||0);tx.update(ref,{...data,stok:current+tambah})});successText=tambah>0?`Perubahan tersimpan. Stok berhasil ditambah ${tambah} unit.`:"Perubahan produk berhasil disimpan."}else{await addDoc(collection(db,"stok_manual"),{...data,stok:stokAwal,createdAt:serverTimestamp()});successText="Produk baru berhasil ditambahkan ke stok manual."}resetForm();message(successText,"ok");await loadItems()}catch(err){message("Gagal menyimpan: "+err.message,"err")}finally{loading(false)}}
-async function loadItems(){if(!uid){$("listMsg").textContent="Menunggu login Firebase...";return}loading(true,"Memuat stok manual...");try{const q=query(collection(db,"stok_manual"),where("uid","==",uid)),snap=await getDocs(q);items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(a.nama||"").localeCompare(String(b.nama||""),"id"));render();$("listMsg").textContent=items.length?`Ada ${items.length} produk stok manual.`:"Belum ada produk manual. Silakan tambah produk melalui formulir di atas."}catch(err){$("listMsg").textContent="Gagal memuat data: "+err.message}finally{loading(false)}}
-function render(){const q=val("search").toLowerCase(),arr=items.filter(p=>[p.nama,p.kode,p.supplier].join(" ").toLowerCase().includes(q));$("count").textContent=arr.length+" produk";$("tbody").innerHTML=arr.map(p=>`<tr><td><b>${esc(p.nama)}</b></td><td>${esc(p.kode||"-")}</td><td>${esc(p.supplier||"-")}</td><td class="price">${money(p.modal)}</td><td class="price">${money(p.jual)}</td><td class="stock">${Number(p.stok||0).toLocaleString("id-ID")}</td><td><button class="edit-btn" data-edit="${esc(p.id)}">Edit / Tambah Stok</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">Tidak ada produk.</td></tr>';$("mobileList").innerHTML=arr.map(p=>`<div class="item"><div class="item-name">${esc(p.nama)}</div><div class="item-meta">${esc(p.kode||"Tanpa kode")} · ${esc(p.supplier||"Tanpa supplier")}</div><div class="item-grid"><div><b>Harga Modal</b><span class="price">${money(p.modal)}</span></div><div><b>Harga Jual</b><span class="price">${money(p.jual)}</span></div><div><b>Stok Tersedia</b><span class="stock">${Number(p.stok||0).toLocaleString("id-ID")}</span></div></div><div class="item-foot"><span class="item-meta">Produk stok manual</span><button class="edit-btn" data-edit="${esc(p.id)}">Edit / Tambah Stok</button></div></div>`).join("")||'<div class="empty">Tidak ada produk.</div>';document.querySelectorAll("[data-edit]").forEach(b=>b.addEventListener("click",()=>editItem(b.dataset.edit)))}
-$("productForm").addEventListener("submit",saveProduct);$("cancelBtn").addEventListener("click",resetForm);$("search").addEventListener("input",render);$("reloadBtn").addEventListener("click",loadItems);onAuthStateChanged(auth,user=>{if(!user){uid=null;$("listMsg").textContent="Session akun FIXZY belum aktif. Buka halaman ini dari aplikasi FIXZY yang sudah login.";return}uid=user.uid;loadItems()});
-</script></body></html>
+import{initializeApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import{getFirestore,doc,getDoc,collection,getDocs,query,where}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+const cfg={apiKey:"AIzaSyC_PcarMTT5Un7qfSLzf92o5OGn5rginsI",authDomain:"fixzy-update.firebaseapp.com",projectId:"fixzy-update",storageBucket:"fixzy-update.firebasestorage.app",messagingSenderId:"995892519622",appId:"1:995892519622:web:fa41047944d8e5b35d6dc7"};
+const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),$=id=>document.getElementById(id);
+let uid="",ownerUid="",products=[],sales=[],services=[];
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clean=v=>String(v??"").trim().toLowerCase().replace(/[\s_\-()./]+/g,"");
+function num(v){if(typeof v==="number")return Number.isFinite(v)?v:0;let s=String(v??"").trim().replace(/[^\d,.-]/g,"");if(!s)return 0;let dot=s.lastIndexOf("."),comma=s.lastIndexOf(",");if(dot>=0&&comma>=0){if(comma>dot)s=s.replace(/\./g,"").replace(",",".");else s=s.replace(/,/g,"")}else if(comma>=0){const dec=s.length-comma-1;s=dec===3?s.replace(/,/g,""):s.replace(",",".")}else if(dot>=0&&s.length-dot-1===3)s=s.replace(/\./g,"");const n=Number(s);return Number.isFinite(n)?n:0}
+function parseCSV(text){const out=[];let row=[],cell="",q=false;text=text.replace(/^\uFEFF/,"");for(let i=0;i<text.length;i++){let c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}else if(c===","&&!q){row.push(cell);cell=""}else if((c==="\n"||c==="\r")&&!q){if(c==="\r"&&n==="\n")i++;row.push(cell);cell="";if(row.some(x=>String(x).trim()))out.push(row);row=[]}else cell+=c}if(cell!==""||row.length){row.push(cell);if(row.some(x=>String(x).trim()))out.push(row)}return out}
+function csvUrl(url){const u=new URL(url);if(!u.hostname.includes("docs.google.com")||!u.pathname.includes("/spreadsheets/"))throw Error("Tautan bukan Google Spreadsheet");const gid=u.searchParams.get("gid")||(url.match(/[?#&]gid=([^&#]+)/i)||[])[1]||"0";const pub=u.pathname.match(/\/spreadsheets\/d\/e\/([^/]+)\/pub(?:html)?/i);if(pub)return `https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?gid=${encodeURIComponent(gid)}&single=true&output=csv`;const id=u.pathname.match(/\/spreadsheets\/d\/([^/]+)/i);if(!id)throw Error("ID Spreadsheet tidak ditemukan");return `https://docs.google.com/spreadsheets/d/${id[1]}/export?format=csv&gid=${encodeURIComponent(gid)}`}
+function pick(obj,keys){for(const k of keys){const v=obj[clean(k)];if(v!==undefined&&String(v).trim()!=="")return v}return ""}
+function normalize(rows,source){if(!rows.length)return[];const headers=rows[0].map(clean),out=[];for(let i=1;i<rows.length;i++){const raw=rows[i],o={};headers.forEach((h,j)=>o[h]=raw[j]??"");const name=pick(o,["nama barang","nama produk","nama","produk","product","barang"]);if(!name)continue;const modalRaw=pick(o,["modal","harga modal","harga beli","hpp","harga pokok"]);const jualRaw=pick(o,["jual","harga jual","harga penjualan"]);const stockRaw=pick(o,["stock","stok","sisa stok","sisa","jumlah stok"]);out.push({kode:String(pick(o,["kode","sku","kode produk","id"])||raw[0]||"").trim(),nama:String(name).trim(),modal:modalRaw!==""?num(modalRaw):(raw[3]!==undefined&&String(raw[3]).trim()!==""?num(raw[3]):null),jual:jualRaw!==""?num(jualRaw):(raw[4]!==undefined&&String(raw[4]).trim()!==""?num(raw[4]):null),supplier:String(pick(o,["supplier","suplier","nama supplier","nama suplier","vendor"])||raw[5]||"").trim(),stok:Math.max(0,num(stockRaw!==""?stockRaw:(raw[6]??""))),sourceSpreadsheet:source})}return out}
+async function ownedDocs(col){const map=new Map();for(const field of ["ownerUid","ownerId","uid","userId","createdBy","businessUid"]){for(const val of [...new Set([ownerUid,uid].filter(Boolean))]){try{const s=await getDocs(query(collection(db,col),where(field,"==",val)));s.forEach(d=>map.set(d.id,{id:d.id,...d.data()}))}catch(e){console.warn(col,field,e.message)}}}return [...map.values()]}
+function itemKey(item){const code=clean(item?.kode||item?.code||item?.sku||item?.productCode||"");if(code)return "c:"+code;return "n:"+clean(item?.nama||item?.namaProduk||item?.name||item?.produk||item?.productName||"")}
+function saleIsCancelled(s){const st=clean(s?.status||s?.paymentStatus);return ["batal","dibatalkan","cancel","canceled"].includes(st)}
+let currentUser=null,currentProfile=null,sessionStarted=false;
+async function loadAll(){if(!uid||!currentUser){$("status").textContent="⚠️ Sesi Firebase belum tersedia. Buka halaman ini dari FIXZY setelah login.";return} $("status").textContent="⏳ Membaca pengaturan Spreadsheet dan transaksi Firestore...";try{const p=currentProfile||{};const role=clean(p.role);ownerUid=(role==="owner"||role==="superadmin"||p.isOwner===true)?uid:String(p.ownerUid||p.ownerId||uid).trim();
+const settings=await getDoc(doc(db,"pengaturan_spreadsheet",ownerUid));if(!settings.exists())throw Error("Link Spreadsheet belum disimpan di halaman Produk.");const d=settings.data(),links=Array.isArray(d.spreadsheetLinks)?d.spreadsheetLinks:[];if(!links.length&&d.spreadsheetUrl)links.push(d.spreadsheetUrl);if(!links.length)throw Error("Tidak ada link Spreadsheet tersimpan.");
+let all=[],errors=[];for(let i=0;i<links.length;i++){try{const res=await fetch(csvUrl(links[i]),{cache:"no-store"});if(!res.ok)throw Error("HTTP "+res.status);const txt=await res.text();if(/<html|<!doctype/i.test(txt.slice(0,400)))throw Error("Spreadsheet belum dipublikasikan sebagai CSV");all.push(...normalize(parseCSV(txt),"Spreadsheet "+(i+1)))}catch(e){errors.push("Spreadsheet "+(i+1)+": "+e.message)}}
+// Ambil produk manual dari koleksi Firebase terpisah.
+const manualDocs=await ownedDocs("stok_manual");
+const manual=manualDocs.map(p=>({
+ kode:String(p.kode||p.sku||p.code||"").trim(),
+ nama:String(p.nama||p.namaProduk||p.name||"").trim(),
+ modal:p.modal===undefined||p.modal===null?null:num(p.modal),
+ jual:p.jual===undefined||p.jual===null?null:num(p.jual),
+ supplier:String(p.supplier||p.suplier||"").trim(),
+ stok:Math.max(0,num(p.stok??p.stock??0)),
+ sumber:"Manual"
+})).filter(p=>p.nama);
+if(!all.length&&!manual.length)throw Error(errors.join(" • ")||"Produk tidak ditemukan di Spreadsheet maupun stok manual.");
+// Produk dari kedua sumber ditampilkan sebagai baris terpisah.
+products=[...all.map(p=>({...p,sumber:"Spreadsheet"})),...manual];
+sales=await ownedDocs("penjualan");
+services=await ownedDocs("servis");
+const qty=sales.filter(s=>!saleIsCancelled(s)).reduce((sum,s)=>sum+(Array.isArray(s.items)?s.items.reduce((n,it)=>n+Math.max(0,num(it.qty??it.jumlah??it.quantity??1)),0):0),0);
+$("status").textContent=`✅ ${products.length} baris produk • ${sales.length} penjualan • ${services.length} data servis dibaca`+(errors.length?` • Peringatan: ${errors.join(" | ")}`:"");
+render();}catch(e){console.error(e);$("status").textContent="❌ "+(e.message||e);products=[];sales=[];services=[];render()}}
+function serviceIsCancelled(s){const st=clean(s?.status||s?.statusServis||"");return ["batal","dibatalkan","cancel","canceled"].includes(st)}
+function serviceItems(s){
+ const nameOf=o=>o?.nama||o?.namaProduk||o?.namaBarang||o?.name||o?.productName||o?.itemName||o?.produk||o?.barang||o?.deskripsiProduk||"";
+ const codeOf=o=>o?.kode||o?.kodeProduk||o?.code||o?.sku||o?.barcode||o?.productCode||o?.idProduk||"";
+ const qtyOf=o=>Math.max(0,num(o?.qty??o?.jumlah??o?.quantity??o?.jumlahProduk??1));
+ const candidates=[];
+ for(const k of ["penggunaanProduk","produkDigunakanObj","produkDipakai","sparepartObj","produkTerpakai","sparepartDipakai"]){const v=s?.[k];if(v&&typeof v==="object"&&!Array.isArray(v))candidates.push(v)}
+ for(const k of ["items","produkList","spareparts","daftarProduk","produkDigunakanList"]){if(Array.isArray(s?.[k]))candidates.push(...s[k].filter(v=>v&&typeof v==="object"))}
+ const out=[];const seen=new Set();
+ for(const it of candidates){const name=nameOf(it),code=codeOf(it);if(!name&&!code)continue;const key=(clean(code)||clean(name))+"|"+qtyOf(it);if(seen.has(key))continue;seen.add(key);out.push({it,name,code,qty:qtyOf(it)})}
+ // Older service records sometimes saved the product name as plain text.
+ if(!out.length){const textName=String(s?.produkDigunakan||s?.produk||s?.sparepart||"").trim();if(textName)out.push({it:{},name:textName,code:"",qty:Math.max(0,num(s?.qtyProduk??s?.jumlahProduk??1))})}
+ return out;
+}
+function calculate(){const byCode=new Map(),byName=new Map();
+ for(const s of sales){if(saleIsCancelled(s))continue;for(const it of(Array.isArray(s.items)?s.items:[])){const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));const code=clean(it.kode||it.code||it.sku||it.productCode||"");const name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");if(code)byCode.set(code,(byCode.get(code)||0)+qty);else if(name)byName.set(name,(byName.get(name)||0)+qty)}}
+ for(const serv of services){if(serviceIsCancelled(serv))continue;for(const x of serviceItems(serv)){if(!x.qty)continue;const code=clean(x.code),name=clean(x.name);if(code)byCode.set(code,(byCode.get(code)||0)+x.qty);else if(name)byName.set(name,(byName.get(name)||0)+x.qty)}}
+ return products.map(p=>{
+  const code=clean(p.kode),name=clean(p.nama);
+  // Kode adalah pencocokan utama; nama juga dihitung sebagai cadangan.
+  // Ini mencegah servis terlewat jika kode dari sumber transaksi berbeda.
+  const byCodeQty=code?(byCode.get(code)||0):0;
+  const byNameQty=name?(byName.get(name)||0):0;
+  const used=byCodeQty>0?byCodeQty:byNameQty;
+  const base=num(p.stokSheet??p.stok);
+  return {...p,terjual:used,sisa:base-used};
+ })}
+function calculateSalesDetail(){
+ let salesQty=0,salesModal=0,salesRevenue=0,serviceQty=0,serviceModal=0,serviceRevenue=0,incomplete=0,serviceMissing=0;
+ const byCode=new Map(),byName=new Map();
+ products.forEach(p=>{const c=clean(p.kode),n=clean(p.nama);if(c&&!byCode.has(c))byCode.set(c,p);if(n&&!byName.has(n))byName.set(n,p)});
+ const val=(obj,keys)=>{for(const k of keys){const v=obj?.[k];if(v!==undefined&&v!==null&&String(v).trim()!=="")return v}return null};
+ for(const sale of sales){if(saleIsCancelled(sale))continue;for(const it of(Array.isArray(sale.items)?sale.items:[])){
+  const qty=Math.max(0,num(it.qty??it.jumlah??it.quantity??1));if(!qty)continue;
+  const code=clean(it.kode||it.code||it.sku||it.productCode||""),name=clean(it.nama||it.namaProduk||it.name||it.produk||it.productName||"");
+  const p=(code&&byCode.get(code))||(name&&byName.get(name));
+  const mv=val(it,["hargaModal","harga_modal","modal","hargaBeli","harga_beli","hpp","costPrice"]),jv=val(it,["hargaJual","harga_jual","harga","price","unitPrice"]);
+  const m=mv!==null?num(mv):(p?p.modal:null),j=jv!==null?num(jv):(p?p.jual:null);
+  salesQty+=qty;if(m===null||j===null){incomplete++;continue}salesModal+=m*qty;salesRevenue+=j*qty;
+ }}
+ for(const serv of services){if(serviceIsCancelled(serv))continue;
+  // Hasil servis pada panel ini adalah HARGA JUAL PRODUK yang dipakai,
+  // bukan total tagihan servis (yang bisa mencakup jasa teknisi).
+  for(const x of serviceItems(serv)){if(!x.qty)continue;serviceQty+=x.qty;
+   const code=clean(x.code),name=clean(x.name),p=(code&&byCode.get(code))||(name&&byName.get(name));
+   const mv=val(x.it,["modalSatuan","hargaModal","harga_modal","modal","hargaBeli","harga_beli","hpp","costPrice"]),totalMv=val(x.it,["totalModal","total_modal"]);
+   const m=mv!==null?num(mv):(totalMv!==null?num(totalMv)/x.qty:(p?p.modal:null));
+   if(m===null){serviceMissing++;}else{serviceModal+=m*x.qty;}
+   const jv=val(x.it,["hargaJualSatuan","hargaJual","harga_jual","jual","harga","price","unitPrice"]),totalJv=val(x.it,["totalHargaProduk","totalHargaJual","totalJual"]);
+   const j=jv!==null?num(jv):(totalJv!==null?num(totalJv)/x.qty:(p?p.jual:null));
+   if(j!==null)serviceRevenue+=j*x.qty;
+  }
+ }
+ const totalQty=salesQty+serviceQty,totalModal=salesModal+serviceModal,totalRevenue=salesRevenue+serviceRevenue,totalProfit=totalRevenue-totalModal;
+ const fmt=n=>"Rp"+Math.round(n).toLocaleString("id-ID");
+ $("salesRevenue").textContent=fmt(salesRevenue);
+ $("serviceRevenue").textContent=fmt(serviceRevenue);
+ $("totalQty").textContent=totalQty.toLocaleString("id-ID")+" pcs";
+ $("totalModalAll").textContent=fmt(totalModal);
+ $("totalProfit").textContent=fmt(totalProfit);
+ let msg="Total qty dan modal menggabungkan barang terjual serta produk yang dipakai servis. Total laba kotor = hasil penjualan + hasil servis − modal barang terjual − modal produk servis.";
+ if(incomplete)msg+=` ${incomplete} item penjualan belum memiliki harga modal/jual lengkap.`;
+ if(serviceMissing)msg+=` Peringatan: modal ${serviceMissing} item produk servis belum ditemukan pada transaksi atau Spreadsheet.`;
+ $("salesWarning").textContent=msg;
+}
+function render(){const q=clean($("search").value),statusFilter=$("statusFilter")?.value||"all",data=calculate(),filtered=data.filter(p=>{const matchesText=!q||clean(p.nama).includes(q)||clean(p.kode).includes(q)||clean(p.supplier).includes(q);const matchesStatus=statusFilter==="empty"?p.sisa<=0:statusFilter==="ready"?p.sisa>0:true;return matchesText&&matchesStatus});$("countProducts").textContent=data.length.toLocaleString("id-ID");$("stockStart").textContent=data.reduce((a,p)=>a+p.stok,0).toLocaleString("id-ID");$("stockEmpty").textContent=data.filter(p=>p.sisa<=0).length.toLocaleString("id-ID");$("stockRemain").textContent=data.reduce((a,p)=>a+p.sisa,0).toLocaleString("id-ID");$("resultCount").textContent=`Menampilkan ${filtered.length} dari ${data.length} produk`+(statusFilter==="empty"?" • Status: Kosong":statusFilter==="ready"?" • Status: Ready":"");
+$("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="badge zero">Stok minus / perlu cek</span>':p.sisa===0?'<span class="badge zero">Habis</span>':p.sisa<=3?'<span class="badge low">Stok menipis</span>':'<span class="badge ok">Tersedia</span>';const source=p.sumber==="Manual"?'<span class="badge low">Manual</span>':'<span class="badge ok">Spreadsheet</span>';const fmt=v=>v===null||v===undefined?"-":"Rp"+Math.round(num(v)).toLocaleString("id-ID");return `<tr><td>${i+1}</td><td>${esc(p.kode||"-")}</td><td><b>${esc(p.nama)}</b></td><td>${esc(p.supplier||"-")}</td><td class="num">${fmt(p.modal)}</td><td class="num">${fmt(p.jual)}</td><td>${source}</td><td class="num">${p.stok.toLocaleString("id-ID")}</td><td class="num">${p.terjual.toLocaleString("id-ID")}</td><td class="num"><b>${p.sisa.toLocaleString("id-ID")}</b></td><td>${status}</td></tr>`}).join("")||'<tr><td colspan="11" class="empty">Tidak ada produk yang cocok.</td></tr>';calculateSalesDetail()}
+window.render=render;window.loadAll=loadAll;
+window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Harga Modal","Harga Jual","Sumber","Stok Awal","Keluar (Jual + Servis)","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.modal,p.jual,p.sumber,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
+async function initFixzySession(user){
+ const parentSession=(()=>{try{return window.parent!==window ? (window.parent.fixzySession||null) : null}catch(e){return null}})();
+ const session=parentSession && parentSession.uid ? parentSession : null;
+ const activeUser=user||((session&&session.uid)?{uid:session.uid,email:session.email||""}:null);
+ if(sessionStarted && activeUser?.uid===uid) return;
+ sessionStarted=true; uid=activeUser?.uid||""; currentUser=activeUser; currentProfile=null; ownerUid="";
+ if(!activeUser){
+  $("accountInfo").textContent="Sesi login belum aktif";
+  $("status").textContent="⚠️ Sesi belum tersedia. Buka halaman dari menu FIXZY setelah login.";
+  products=[];sales=[];services=[];render();return;
+ }
+ try{
+  // Prioritas: sesi autentikasi yang sudah divalidasi oleh index.html FIXZY.
+  // Jika halaman dibuka mandiri, gunakan fallback Firebase Auth + users/{uid}.
+  if(session && session.profile){ currentProfile=session.profile; }
+  else {
+   const snap=await getDoc(doc(db,"users",activeUser.uid));
+   if(!snap.exists()) throw Error("Profil akun tidak ditemukan pada users/"+activeUser.uid);
+   currentProfile=snap.data()||{};
+  }
+  const role=clean(session?.role||currentProfile.role||currentProfile.jabatan);
+  const status=clean(currentProfile.status||"aktif");
+  if(["blocked","rejected"].includes(status)) throw Error("Akun diblokir / ditolak.");
+  const allowed=["owner","employee","karyawan","kasir","kurir","reseller","superadmin","admin"];
+  if(role && !allowed.includes(role)) throw Error("Role akun tidak diizinkan: "+role);
+  ownerUid=String(session?.ownerUid || (role==="owner"?activeUser.uid:(currentProfile.ownerUid||currentProfile.ownerId||activeUser.uid))).trim();
+  if(!ownerUid) throw Error("UID Owner tidak ditemukan pada sesi FIXZY.");
+  const displayName=currentProfile.namaKonter||currentProfile.namaPemilik||currentProfile.nama||activeUser.email||"Akun FIXZY";
+  const exp=currentProfile.exp||currentProfile.expAt||currentProfile.expiredAt||currentProfile.tanggalBerakhir;
+  let expText="-";
+  if(exp){const d=typeof exp.toDate==="function"?exp.toDate():exp.seconds!==undefined?new Date(exp.seconds*1000):new Date(exp);if(!isNaN(d.getTime()))expText=d.toLocaleDateString("id-ID");}
+  $("accountInfo").textContent=`Akun: ${displayName} • ${role.toUpperCase()||"AKUN FIXZY"} • Exp: ${expText}`;
+  await loadAll();
+ }catch(e){console.error("FIXZY LOGIN/ACCESS:",e);$("accountInfo").textContent="Profil sesi FIXZY gagal dibaca";$("status").textContent="🔒 "+(e.message||"Akses ditolak.");products=[];sales=[];services=[];render();}
+}
+// Pola sesi mengikuti tampil-stock.html: tunggu status autentikasi Firebase,
+// lalu baca users/{uid}. Jika callback tidak berjalan, tampilkan pesan jelas.
+let authCallbackArrived=false;
+const authTimeout=setTimeout(()=>{
+ if(!authCallbackArrived){
+  $("accountInfo").textContent="Sesi Firebase belum terdeteksi";
+  $("status").textContent="⚠️ Pemeriksaan sesi Firebase belum merespons. Pastikan halaman dibuka pada domain FIXZY yang sama setelah login, lalu tekan Muat ulang.";
+ }
+},10000);
+// Gunakan sesi index.html jika halaman dibuka di dalam FIXZY; ini pola proyek ZIP.
+try{ if(window.parent!==window && window.parent.fixzySession?.uid){ authCallbackArrived=true;clearTimeout(authTimeout); initFixzySession(null); } }catch(e){}
+onAuthStateChanged(auth,async user=>{
+ authCallbackArrived=true;clearTimeout(authTimeout);
+ await initFixzySession(user);
+},error=>{
+ authCallbackArrived=true;clearTimeout(authTimeout);
+ console.error("Firebase Auth listener:",error);
+ $("accountInfo").textContent="Gagal memeriksa sesi Firebase";
+ $("status").textContent="❌ Gagal memeriksa sesi login: "+(error?.message||error);
+});
+</script>
+</body>
+</html>

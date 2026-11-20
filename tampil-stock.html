@@ -37,14 +37,14 @@ main{max-width:1250px;margin:auto;padding:14px}.notice,.card{background:white;bo
 </section>
 <div class="stats">
  <div class="stat darkbg"><small>JENIS PRODUK</small><b id="countProducts">0</b></div>
- <div class="stat yellowbg"><small>TOTAL STOK SPREADSHEET</small><b id="stockStart">0</b></div>
+ <div class="stat yellowbg"><small>TOTAL STOK AWAL (GABUNGAN)</small><b id="stockStart">0</b></div>
  <div class="stat"><small>STOK KOSONG</small><b id="stockEmpty">0</b></div>
  <div class="stat greenbg"><small>STOK TERSISA TERHITUNG</small><b id="stockRemain">0</b></div>
 </div>
 <div class="card">
  <div class="toolbar"><input id="search" class="search" placeholder="Cari nama produk atau kode..." oninput="render()"><select id="statusFilter" class="search" aria-label="Filter status stok" onchange="render()"><option value="all">Semua status</option><option value="ready">Ready</option><option value="empty">Kosong</option></select><button class="dark" onclick="exportCSV()">⬇ Ekspor CSV</button></div>
  <div class="muted" id="resultCount" style="margin-bottom:9px">Menunggu data...</div>
- <div class="tablewrap"><table><thead><tr><th>No.</th><th>Kode</th><th>Nama Produk</th><th>Supplier</th><th>Stok Spreadsheet</th><th>Keluar (Jual + Servis)</th><th>Stok Tersisa</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="empty">Memuat data...</td></tr></tbody></table></div>
+ <div class="tablewrap"><table><thead><tr><th>No.</th><th>Kode</th><th>Nama Produk</th><th>Supplier</th><th>Harga Modal</th><th>Harga Jual</th><th>Sumber</th><th>Stok Awal</th><th>Keluar (Jual + Servis)</th><th>Stok Tersisa</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="11" class="empty">Memuat data...</td></tr></tbody></table></div>
 </div>
 </main>
 <script type="module">
@@ -68,9 +68,20 @@ let currentUser=null,currentProfile=null,sessionStarted=false;
 async function loadAll(){if(!uid||!currentUser){$("status").textContent="⚠️ Sesi Firebase belum tersedia. Buka halaman ini dari FIXZY setelah login.";return} $("status").textContent="⏳ Membaca pengaturan Spreadsheet dan transaksi Firestore...";try{const p=currentProfile||{};const role=clean(p.role);ownerUid=(role==="owner"||role==="superadmin"||p.isOwner===true)?uid:String(p.ownerUid||p.ownerId||uid).trim();
 const settings=await getDoc(doc(db,"pengaturan_spreadsheet",ownerUid));if(!settings.exists())throw Error("Link Spreadsheet belum disimpan di halaman Produk.");const d=settings.data(),links=Array.isArray(d.spreadsheetLinks)?d.spreadsheetLinks:[];if(!links.length&&d.spreadsheetUrl)links.push(d.spreadsheetUrl);if(!links.length)throw Error("Tidak ada link Spreadsheet tersimpan.");
 let all=[],errors=[];for(let i=0;i<links.length;i++){try{const res=await fetch(csvUrl(links[i]),{cache:"no-store"});if(!res.ok)throw Error("HTTP "+res.status);const txt=await res.text();if(/<html|<!doctype/i.test(txt.slice(0,400)))throw Error("Spreadsheet belum dipublikasikan sebagai CSV");all.push(...normalize(parseCSV(txt),"Spreadsheet "+(i+1)))}catch(e){errors.push("Spreadsheet "+(i+1)+": "+e.message)}}
-if(!all.length)throw Error(errors.join(" • ")||"Produk tidak ditemukan di Spreadsheet");
-// Jangan gabungkan produk bernama sama dari sheet berbeda secara otomatis.
-products=all;
+// Ambil produk manual dari koleksi Firebase terpisah.
+const manualDocs=await ownedDocs("stok_manual");
+const manual=manualDocs.map(p=>({
+ kode:String(p.kode||p.sku||p.code||"").trim(),
+ nama:String(p.nama||p.namaProduk||p.name||"").trim(),
+ modal:p.modal===undefined||p.modal===null?null:num(p.modal),
+ jual:p.jual===undefined||p.jual===null?null:num(p.jual),
+ supplier:String(p.supplier||p.suplier||"").trim(),
+ stok:Math.max(0,num(p.stok??p.stock??0)),
+ sumber:"Manual"
+})).filter(p=>p.nama);
+if(!all.length&&!manual.length)throw Error(errors.join(" • ")||"Produk tidak ditemukan di Spreadsheet maupun stok manual.");
+// Produk dari kedua sumber ditampilkan sebagai baris terpisah.
+products=[...all.map(p=>({...p,sumber:"Spreadsheet"})),...manual];
 sales=await ownedDocs("penjualan");
 services=await ownedDocs("servis");
 const qty=sales.filter(s=>!saleIsCancelled(s)).reduce((sum,s)=>sum+(Array.isArray(s.items)?s.items.reduce((n,it)=>n+Math.max(0,num(it.qty??it.jumlah??it.quantity??1)),0):0),0);
@@ -142,9 +153,9 @@ function calculateSalesDetail(){
  $("salesWarning").textContent=msg;
 }
 function render(){const q=clean($("search").value),statusFilter=$("statusFilter")?.value||"all",data=calculate(),filtered=data.filter(p=>{const matchesText=!q||clean(p.nama).includes(q)||clean(p.kode).includes(q)||clean(p.supplier).includes(q);const matchesStatus=statusFilter==="empty"?p.sisa<=0:statusFilter==="ready"?p.sisa>0:true;return matchesText&&matchesStatus});$("countProducts").textContent=data.length.toLocaleString("id-ID");$("stockStart").textContent=data.reduce((a,p)=>a+p.stok,0).toLocaleString("id-ID");$("stockEmpty").textContent=data.filter(p=>p.sisa<=0).length.toLocaleString("id-ID");$("stockRemain").textContent=data.reduce((a,p)=>a+p.sisa,0).toLocaleString("id-ID");$("resultCount").textContent=`Menampilkan ${filtered.length} dari ${data.length} produk`+(statusFilter==="empty"?" • Status: Kosong":statusFilter==="ready"?" • Status: Ready":"");
-$("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="badge zero">Stok minus / perlu cek</span>':p.sisa===0?'<span class="badge zero">Habis</span>':p.sisa<=3?'<span class="badge low">Stok menipis</span>':'<span class="badge ok">Tersedia</span>';return `<tr><td>${i+1}</td><td>${esc(p.kode||"-")}</td><td><b>${esc(p.nama)}</b></td><td>${esc(p.supplier||"-")}</td><td class="num">${p.stok.toLocaleString("id-ID")}</td><td class="num">${p.terjual.toLocaleString("id-ID")}</td><td class="num"><b>${p.sisa.toLocaleString("id-ID")}</b></td><td>${status}</td></tr>`}).join("")||'<tr><td colspan="8" class="empty">Tidak ada produk yang cocok.</td></tr>';calculateSalesDetail()}
+$("rows").innerHTML=filtered.map((p,i)=>{const status=p.sisa<0?'<span class="badge zero">Stok minus / perlu cek</span>':p.sisa===0?'<span class="badge zero">Habis</span>':p.sisa<=3?'<span class="badge low">Stok menipis</span>':'<span class="badge ok">Tersedia</span>';const source=p.sumber==="Manual"?'<span class="badge low">Manual</span>':'<span class="badge ok">Spreadsheet</span>';const fmt=v=>v===null||v===undefined?"-":"Rp"+Math.round(num(v)).toLocaleString("id-ID");return `<tr><td>${i+1}</td><td>${esc(p.kode||"-")}</td><td><b>${esc(p.nama)}</b></td><td>${esc(p.supplier||"-")}</td><td class="num">${fmt(p.modal)}</td><td class="num">${fmt(p.jual)}</td><td>${source}</td><td class="num">${p.stok.toLocaleString("id-ID")}</td><td class="num">${p.terjual.toLocaleString("id-ID")}</td><td class="num"><b>${p.sisa.toLocaleString("id-ID")}</b></td><td>${status}</td></tr>`}).join("")||'<tr><td colspan="11" class="empty">Tidak ada produk yang cocok.</td></tr>';calculateSalesDetail()}
 window.render=render;window.loadAll=loadAll;
-window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Stok Spreadsheet","Keluar (Jual + Servis)","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
+window.exportCSV=()=>{const data=calculate(),head=["Kode","Nama Produk","Supplier","Harga Modal","Harga Jual","Sumber","Stok Awal","Keluar (Jual + Servis)","Stok Tersisa","Status"],lines=[head,...data.map(p=>[p.kode,p.nama,p.supplier,p.modal,p.jual,p.sumber,p.stok,p.terjual,p.sisa,p.sisa<0?"Stok minus":p.sisa===0?"Habis":p.sisa<=3?"Menipis":"Tersedia"])];const csv="\uFEFF"+lines.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="FIXZY-stok-terkini.csv";a.click();URL.revokeObjectURL(a.href)};
 async function initFixzySession(user){
  const parentSession=(()=>{try{return window.parent!==window ? (window.parent.fixzySession||null) : null}catch(e){return null}})();
  const session=parentSession && parentSession.uid ? parentSession : null;
